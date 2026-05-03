@@ -1,6 +1,7 @@
 import SoundAnalysis
 import AVFoundation
 import CoreMedia
+import CoreML
 import os.log
 
 // MARK: - SoundAnalysis wrapper with 3-of-5 majority-vote smoothing
@@ -33,12 +34,36 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         )!
         analyzer = SNAudioStreamAnalyzer(format: format)
 
-        // Built-in classifier — label set includes "snoring"
-        request = try! SNClassifySoundRequest(classifierIdentifier: .version1)
-        request.windowDuration = CMTime(seconds: 1.0, preferredTimescale: CMTimeScale(AudioMonitorService.targetSampleRate))
-        request.overlapFactor = 0.5
+        // Built-in classifier — label set includes "snoring".
+        // Load the bundled mlmodelc manually with cpuAndGPU compute units to avoid
+        // the ANE "InnerProduct kernel has no weights" error on some devices / OS versions.
+        request = Self.makeRequest()
 
         super.init()
+    }
+
+    private static func makeRequest() -> SNClassifySoundRequest {
+        let mlConfig = MLModelConfiguration()
+        mlConfig.computeUnits = .cpuAndGPU
+
+        let modelURL = URL(fileURLWithPath:
+            "/System/Library/Frameworks/SoundAnalysis.framework/SNSoundClassifierVersion1Model.mlmodelc")
+
+        if let mlModel = try? MLModel(contentsOf: modelURL, configuration: mlConfig),
+           let req = try? SNClassifySoundRequest(mlModel: mlModel) {
+            req.windowDuration = CMTime(seconds: 1.0,
+                                        preferredTimescale: CMTimeScale(AudioMonitorService.targetSampleRate))
+            req.overlapFactor = 0.5
+            return req
+        }
+
+        // Fallback: let the system choose compute units (may still log an ANE warning,
+        // but the classifier will fall back to CPU automatically and continue working).
+        let fallback = try! SNClassifySoundRequest(classifierIdentifier: .version1)
+        fallback.windowDuration = CMTime(seconds: 1.0,
+                                         preferredTimescale: CMTimeScale(AudioMonitorService.targetSampleRate))
+        fallback.overlapFactor = 0.5
+        return fallback
     }
 
     // MARK: Lifecycle

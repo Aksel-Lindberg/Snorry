@@ -23,10 +23,10 @@ final class AlertSettings {
     var volumeHigh: Float
 
     init() {
-        notifyDelaySeconds  = 30
-        audioLowDelaySeconds  = 60
-        audioMedDelaySeconds  = 90
-        audioHighDelaySeconds = 120
+        notifyDelaySeconds  = 2
+        audioLowDelaySeconds  = 5
+        audioMedDelaySeconds  = 10
+        audioHighDelaySeconds = 15
         clearDelaySeconds   = 5
         volumeLow  = 0.20
         volumeMed  = 0.60

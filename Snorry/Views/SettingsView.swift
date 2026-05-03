@@ -46,9 +46,9 @@ struct SettingsView: View {
                     get: { vm.notifyDelay },
                     set: { vm.notifyDelay = $0; vm.save() }
                 ),
-                range: 10...120,
+                range: 2...120,
                 unit: "s",
-                step: 5
+                step: 1
             )
             SliderRow(
                 label: "Low alarm after",
@@ -56,9 +56,9 @@ struct SettingsView: View {
                     get: { vm.audioLowDelay },
                     set: { vm.audioLowDelay = $0; vm.save() }
                 ),
-                range: 30...180,
+                range: 5...180,
                 unit: "s",
-                step: 10
+                step: 1
             )
             SliderRow(
                 label: "Medium alarm after",
@@ -66,9 +66,9 @@ struct SettingsView: View {
                     get: { vm.audioMedDelay },
                     set: { vm.audioMedDelay = $0; vm.save() }
                 ),
-                range: 60...240,
+                range: 10...240,
                 unit: "s",
-                step: 10
+                step: 1
             )
             SliderRow(
                 label: "Full alarm after",
@@ -76,9 +76,9 @@ struct SettingsView: View {
                     get: { vm.audioHighDelay },
                     set: { vm.audioHighDelay = $0; vm.save() }
                 ),
-                range: 90...300,
+                range: 15...300,
                 unit: "s",
-                step: 10
+                step: 1
             )
             SliderRow(
                 label: "Clear after silence",

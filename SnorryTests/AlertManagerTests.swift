@@ -6,11 +6,11 @@ struct AlertManagerTests {
 
     private func makeManager() -> AlertManager {
         let m = AlertManager()
-        // Shorter delays for fast unit tests
+        // Use production-matching defaults; these are already very short (2/5/10/15 s)
         m.config.notifyDelay      = 2
-        m.config.audioLowDelay    = 4
-        m.config.audioMedDelay    = 6
-        m.config.audioHighDelay   = 8
+        m.config.audioLowDelay    = 5
+        m.config.audioMedDelay    = 10
+        m.config.audioHighDelay   = 15
         m.config.clearDelay       = 1
         m.start()
         return m
@@ -38,7 +38,7 @@ struct AlertManagerTests {
         let mgr = makeManager()
         let start = Date()
         mgr.update(isSnoring: true, at: start)
-        mgr.update(isSnoring: true, at: start.addingTimeInterval(4.5))
+        mgr.update(isSnoring: true, at: start.addingTimeInterval(5.5))  // past audioLowDelay=5
         #expect(mgr.phase == .audioLow)
         mgr.stop()
     }
@@ -67,7 +67,7 @@ struct AlertManagerTests {
         mgr.config.volumeHigh = 1.0
         let start = Date()
         mgr.update(isSnoring: true, at: start)
-        mgr.update(isSnoring: true, at: start.addingTimeInterval(4.5))
+        mgr.update(isSnoring: true, at: start.addingTimeInterval(5.5))  // past audioLowDelay=5
         #expect(mgr.phase == .audioLow)
         #expect(abs(mgr.currentVolume - 0.2) < 0.001)
         mgr.stop()

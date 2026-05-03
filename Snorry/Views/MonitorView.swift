@@ -5,6 +5,7 @@ import Charts
 struct MonitorView: View {
 
     @Bindable var vm: MonitorViewModel
+    @Environment(\.dismiss) private var dismiss
 
     @State private var pulseAnimation = false
 
@@ -30,6 +31,10 @@ struct MonitorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        // Dismiss whenever monitoring stops (button tap or external cause)
+        .onChange(of: vm.isMonitoring) { _, monitoring in
+            if !monitoring { dismiss() }
+        }
     }
 
     // MARK: Sub-views
@@ -149,6 +154,7 @@ struct MonitorView: View {
     private var stopButton: some View {
         Button {
             vm.stopMonitoring()
+            dismiss()
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "stop.circle.fill")

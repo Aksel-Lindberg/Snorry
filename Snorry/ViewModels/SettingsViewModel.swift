@@ -6,10 +6,10 @@ import SwiftData
 final class SettingsViewModel {
 
     // Alert thresholds
-    var notifyDelay: Double      = 30
-    var audioLowDelay: Double    = 60
-    var audioMedDelay: Double    = 90
-    var audioHighDelay: Double   = 120
+    var notifyDelay: Double      = 2
+    var audioLowDelay: Double    = 5
+    var audioMedDelay: Double    = 10
+    var audioHighDelay: Double   = 15
     var clearDelay: Double       = 5
     var volumeLow: Float         = 0.20
     var volumeMed: Float         = 0.60
