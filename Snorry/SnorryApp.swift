@@ -1,32 +1,60 @@
-//
-//  SnorryApp.swift
-//  Snorry
-//
-//  Created by Aksel Lindberg on 02/05/2026.
-//
-
 import SwiftUI
 import SwiftData
 
 @main
 struct SnorryApp: App {
+
+    @State private var appEnv = AppEnvironment()
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            SnoreSession.self,
+            SnoreEvent.self,
+            WaveformSample.self,
+            AlertSettings.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+        // First attempt — succeeds if the on-disk store matches the current schema.
+        if let container = try? ModelContainer(for: schema, configurations: [config]) {
+            return container
+        }
+
+        // Schema mismatch (e.g. leftover template "Item" store) — delete and recreate.
+        let storeURL = URL.applicationSupportDirectory
+            .appendingPathComponent("default.store")
+        let candidates = [storeURL,
+                          storeURL.appendingPathExtension("shm"),
+                          storeURL.appendingPathExtension("wal")]
+        candidates.forEach { try? FileManager.default.removeItem(at: $0) }
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(for: schema, configurations: [config])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            fatalError("Could not create ModelContainer even after store reset: \(error)")
         }
     }()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environment(appEnv)
+                .preferredColorScheme(.dark)
+                .task {
+                    // Recover any session interrupted by a prior process kill
+                    let store = SessionStore(context: sharedModelContainer.mainContext)
+                    store.recoverOrphanedSession()
+                    // Pre-warm notification authorization state
+                    await appEnv.notifications.requestAuthorization()
+                }
         }
         .modelContainer(sharedModelContainer)
     }
+}
+
+// MARK: - Services container (injected as environment object)
+@Observable
+final class AppEnvironment {
+    let notifications = NotificationManager.shared
+    // Services that depend on SwiftData context are instantiated per-view-model.
 }
