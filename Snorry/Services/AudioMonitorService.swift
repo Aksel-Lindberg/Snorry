@@ -6,8 +6,11 @@ import os.log
 struct MonitorTick: Sendable {
     let dBFS: Float
     let timestamp: Date
-    /// Reference to the buffer for waveform display (short-lived).
+    /// 16 kHz mono Float32 buffer — for the classifier and waveform display.
     let buffer: AVAudioPCMBuffer
+    /// Native device-format buffer (e.g. 48 kHz stereo Float32) — for clip recording
+    /// so replayed clips match the original sound, not the downsampled analysis path.
+    let nativeBuffer: AVAudioPCMBuffer
 }
 
 // MARK: - Pre-roll circular ring buffer (thread-safe)
@@ -78,8 +81,14 @@ final class AudioMonitorService: @unchecked Sendable {
     private let engine = AVAudioEngine()
     private var converter: AVAudioConverter?
 
-    /// 36 s pre-roll (1800 buffers × 20 ms) — covers the full BRPM confirmation window.
+    /// 36 s pre-roll of 16 kHz mono buffers — fed to `ClipRecorder` for analysis-aligned clips.
     let preRoll = PreRollRingBuffer()
+
+    /// 36 s pre-roll of native-format buffers — fed to `ClipRecorder` so clips replay at full quality.
+    let nativePreRoll = PreRollRingBuffer()
+
+    /// Native hardware input format (set when `start()` is called).
+    private(set) var inputFormat: AVAudioFormat?
 
     private var continuation: AsyncStream<MonitorTick>.Continuation?
     private(set) var stream: AsyncStream<MonitorTick>?
@@ -97,6 +106,7 @@ final class AudioMonitorService: @unchecked Sendable {
 
         let inputNode = engine.inputNode
         let inputFormat = inputNode.outputFormat(forBus: 0)
+        self.inputFormat = inputFormat
 
         converter = AVAudioConverter(from: inputFormat, to: targetFormat)
 
@@ -122,6 +132,7 @@ final class AudioMonitorService: @unchecked Sendable {
         continuation?.finish()
         continuation = nil
         stream = nil
+        inputFormat = nil
         AudioSessionManager.shared.deactivate()
         logger.info("AudioMonitorService stopped")
     }
@@ -129,14 +140,17 @@ final class AudioMonitorService: @unchecked Sendable {
     // MARK: Buffer processing
 
     private func process(buffer: AVAudioPCMBuffer) {
+        let now = Date()
+        // Store the native-format buffer first so it's available for full-quality clip recording.
+        nativePreRoll.append(buffer, at: now)
+
         guard let conv = converter,
               let converted = convert(buffer: buffer, using: conv) else { return }
 
-        let now = Date()
         preRoll.append(converted, at: now)
 
         let db = AudioMath.rmsDBFS(buffer: converted)
-        let tick = MonitorTick(dBFS: db, timestamp: now, buffer: converted)
+        let tick = MonitorTick(dBFS: db, timestamp: now, buffer: converted, nativeBuffer: buffer)
         continuation?.yield(tick)
     }
 

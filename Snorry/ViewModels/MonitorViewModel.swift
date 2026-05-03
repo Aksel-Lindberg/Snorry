@@ -211,9 +211,11 @@ final class MonitorViewModel {
                 classifier.analyze(buffer: tick.buffer, at: time)
                 detector.feed(tick: tick)
 
-                // Write PCM to the clip for whichever snore-event file is currently open.
+                // Write native-format PCM to the clip for whichever snore-event file is currently open.
+                // Using the native buffer (not the 16 kHz analysis buffer) preserves the full
+                // frequency range so replay sounds exactly like the original recording.
                 if clipOpen {
-                    clipRecorder.write(buffer: tick.buffer)
+                    clipRecorder.write(buffer: tick.nativeBuffer)
                 }
 
                 // Update live dB + waveform on main actor
@@ -319,11 +321,20 @@ final class MonitorViewModel {
             sessionStore?.beginEvent(id: id, at: at)
 
             // One AAC file per SwiftData SnoreEvent: pre-roll → end of detector bout (silence gap).
+            // Use the native hardware format so the clip replays at the original volume and
+            // frequency range — not the 16 kHz downsampled path the classifier uses.
+            let fmt = audioService.inputFormat ?? AVAudioFormat(
+                commonFormat: .pcmFormatFloat32,
+                sampleRate: AudioMonitorService.targetSampleRate,
+                channels: 1,
+                interleaved: false
+            )!
             let path = clipRecorder.beginClip(
-                sessionID:   activeSession?.id ?? UUID(),
-                eventID:     id,
-                preRoll:     audioService.preRoll,
-                captureFrom: captureFrom
+                sessionID:    activeSession?.id ?? UUID(),
+                eventID:      id,
+                nativePreRoll: audioService.nativePreRoll,
+                inputFormat:  fmt,
+                captureFrom:  captureFrom
             )
             clipOpen = path != nil
             if let p = path {

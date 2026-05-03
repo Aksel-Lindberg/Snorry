@@ -9,14 +9,19 @@ final class ClipRecorder: @unchecked Sendable {
     private var currentRelativePath: String?
     private let logger = Logger(subsystem: "app.Snorry", category: "ClipRecorder")
 
-    // AAC encoder settings — bitrate high enough that replays faithfully match
-    // what was captured (16 kbps was too thin for natural snore playback).
-    private var aacSettings: [String: Any] {
+    // MARK: AAC encoder settings
+
+    /// Builds encoder settings matched to the native hardware input format so that
+    /// replayed clips sound exactly like the original recording — full sample-rate
+    /// and original channel count, no amplitude adjustment.
+    private func aacSettings(for format: AVAudioFormat) -> [String: Any] {
         [
             AVFormatIDKey: kAudioFormatMPEG4AAC,
-            AVSampleRateKey: AudioMonitorService.targetSampleRate,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderBitRateKey: 64_000   // 64 kbps mono — good speech/snore clarity, modest file size
+            AVSampleRateKey: format.sampleRate,
+            AVNumberOfChannelsKey: format.channelCount,
+            // 128 kbps gives excellent snore clarity at 44.1/48 kHz;
+            // it stays modest in file size (≈1 MB/min for mono, ≈2 MB/min for stereo).
+            AVEncoderBitRateKey: 128_000
         ]
     }
 
@@ -25,14 +30,15 @@ final class ClipRecorder: @unchecked Sendable {
     /// Begin a new clip for `eventID` within `sessionID`.
     ///
     /// - Parameters:
-    ///   - captureFrom: Only pre-roll entries at or after this timestamp are written.
+    ///   - nativePreRoll: Ring buffer holding native-format (full sample-rate) PCM buffers.
+    ///   - inputFormat:   The native hardware `AVAudioFormat` — determines the AAC output rate
+    ///                    and channel count so replay volume matches what was recorded.
+    ///   - captureFrom:   Only pre-roll entries at or after this timestamp are written.
     ///     Pass the first-onset timestamp so the clip starts from the first real snore
-    ///     sound, with a 1-second lead-in for context — not from 36 s of silence.
-    ///
-    /// Audio is written at the same levels as captured (no extra gain) so replay
-    /// matches the original recording; use the device volume for listening level.
+    ///     sound, with a 1-second lead-in for context.
     func beginClip(sessionID: UUID, eventID: UUID,
-                   preRoll: PreRollRingBuffer,
+                   nativePreRoll: PreRollRingBuffer,
+                   inputFormat: AVAudioFormat,
                    captureFrom: Date) -> String? {
         endClip()   // safety: close any open file
 
@@ -43,18 +49,25 @@ final class ClipRecorder: @unchecked Sendable {
         do {
             try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(),
                                                     withIntermediateDirectories: true)
+            // AVAudioFile handles PCM→AAC internally; commonFormat must match the
+            // buffers we write (AVAudioEngine taps are always Float32 non-interleaved).
             audioFile = try AVAudioFile(forWriting: fileURL,
-                                        settings: aacSettings,
+                                        settings: aacSettings(for: inputFormat),
                                         commonFormat: .pcmFormatFloat32,
                                         interleaved: false)
             currentRelativePath = relativePath
 
             // Write pre-roll starting 1 s before the first onset for context.
             let leadIn = captureFrom.addingTimeInterval(-1.0)
-            for entry in preRoll.snapshot(from: leadIn) {
+            for entry in nativePreRoll.snapshot(from: leadIn) {
                 try audioFile?.write(from: entry.buffer)
             }
-            logger.info("Clip started: \(relativePath) (pre-roll from \(leadIn))")
+            logger.info("""
+                Clip started: \(relativePath) \
+                (\(inputFormat.sampleRate, privacy: .public) Hz, \
+                \(inputFormat.channelCount, privacy: .public) ch, \
+                pre-roll from \(leadIn))
+                """)
         } catch {
             logger.error("Could not begin clip: \(error)")
             audioFile = nil
@@ -63,7 +76,7 @@ final class ClipRecorder: @unchecked Sendable {
         return relativePath
     }
 
-    /// Write a live buffer to the current clip (same levels as input).
+    /// Write a live native-format buffer to the current clip (same levels as input).
     func write(buffer: AVAudioPCMBuffer) {
         guard let file = audioFile else { return }
         do {
@@ -79,7 +92,7 @@ final class ClipRecorder: @unchecked Sendable {
         let path = currentRelativePath
         audioFile = nil
         currentRelativePath = nil
-        if let p = path { logger.info("Clip closed: \(p)") }
+        if let closedPath = path { logger.info("Clip closed: \(closedPath)") }
         return path
     }
 }

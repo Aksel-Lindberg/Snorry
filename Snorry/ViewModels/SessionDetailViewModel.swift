@@ -66,15 +66,13 @@ final class SessionDetailViewModel {
             // Tear down recording session cleanly before playback (.playAndRecord can block file playback otherwise).
             let session = AVAudioSession.sharedInstance()
             try session.setActive(false, options: .notifyOthersOnDeactivation)
-            try session.setCategory(
-                .playback,
-                mode: .default,
-                options: [.defaultToSpeaker]
-            )
+            // .defaultToSpeaker is only valid for .playAndRecord; .playback routes
+            // to the loudspeaker automatically when no headphones are connected.
+            try session.setCategory(.playback, mode: .default)
             try session.setActive(true)
 
-            let p = try AVAudioPlayer(contentsOf: url)
-            player = p
+            let audioPlayer = try AVAudioPlayer(contentsOf: url)
+            player = audioPlayer
 
             let delegate = SnorePlaybackDelegate()
             delegate.onFinish = { [weak self] in
@@ -83,11 +81,11 @@ final class SessionDetailViewModel {
                 }
             }
             playbackDelegate = delegate
-            p.delegate = delegate
+            audioPlayer.delegate = delegate
 
-            p.volume = 1.0
-            p.prepareToPlay()
-            guard p.play() else {
+            audioPlayer.volume = 1.0
+            audioPlayer.prepareToPlay()
+            guard audioPlayer.play() else {
                 playbackDiagnostic = "Audio engine did not start playback."
                 playbackDidFinish()
                 return
@@ -129,9 +127,9 @@ final class SessionDetailViewModel {
 
     var durationString: String {
         guard let dur = session.duration else { return "—" }
-        let h = Int(dur) / 3600
-        let m = Int(dur) % 3600 / 60
-        return h > 0 ? "\(h)h \(m)m" : "\(m)m"
+        let hours = Int(dur) / 3600
+        let minutes = Int(dur) % 3600 / 60
+        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
     }
 
     var snorePercentString: String {
