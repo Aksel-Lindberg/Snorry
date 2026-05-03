@@ -31,9 +31,8 @@ final class MonitorViewModel {
         return .quiet
     }
 
-    /// Rolling window of dBFS samples for live waveform (max 300 = ~6 s at 50 fps)
-    var waveformBuffer: [Float] = []
-    private let waveformMaxCount = 300
+    /// Normalised FFT power per linear frequency band (0…1), left = low Hz, right = Nyquist.
+    var spectrumBands: [Float] = []
 
     /// Live timeline (one point per second)
     var timelinePoints: [TimelinePoint] = []
@@ -59,6 +58,8 @@ final class MonitorViewModel {
     private let alarmPlayer  = AlarmTonePlayer()
     private let clipRecorder = ClipRecorder()
     private let notifications = NotificationManager.shared
+    /// Hann-windowed FFT → linear spectral bands for the live spectrogram card.
+    private let spectrumAnalyzer = LiveSpectrumAnalyzer(bandCount: 52)
 
     private var sessionStore: SessionStore?
     private var activeSession: SnoreSession?
@@ -119,7 +120,7 @@ final class MonitorViewModel {
         isSnoring = false
         elapsedSeconds = 0
         snoreEventCount = 0
-        waveformBuffer = []
+        spectrumBands = []
         timelinePoints = []
         alertPhase = .idle
 
@@ -179,8 +180,8 @@ final class MonitorViewModel {
     // MARK: Async pipelines
 
     private func startTasks() {
-        // 1. Consume AudioMonitorService ticks → feed classifier + detector + clip recorder
-        monitorTask = Task { [weak self] in
+        // 1. Consume AudioMonitorService ticks → classifier + detector + clip recorder
+        monitorTask = Task { @MainActor [weak self] in
             guard let self else { return }
             guard let stream = audioService.stream else { return }
             for await tick in stream {
@@ -197,12 +198,18 @@ final class MonitorViewModel {
                 }
 
                 // Update live dB + waveform on main actor
-                currentDB = tick.dBFS
-                let norm = AudioMath.normalisedLevel(tick.dBFS)
-                waveformBuffer.append(Float(norm))
-                if waveformBuffer.count > waveformMaxCount {
-                    waveformBuffer.removeFirst()
+                // Live power spectrum — same PCM as recording / classifier (~20 ms frame).
+                let rawBands = spectrumAnalyzer.bands(fromPCM: tick.buffer)
+                if spectrumBands.count != rawBands.count {
+                    spectrumBands = rawBands
+                } else {
+                    let a: Float = 0.38
+                    for i in rawBands.indices {
+                        spectrumBands[i] = a * rawBands[i] + (1 - a) * spectrumBands[i]
+                    }
                 }
+
+                currentDB = tick.dBFS
                 if tick.dBFS > (activeSession?.peakDB ?? -160) {
                     activeSession?.peakDB = tick.dBFS
                 }
@@ -219,8 +226,8 @@ final class MonitorViewModel {
             }
         }
 
-        // 3. Detector events → clip recorder + store + alert
-        detectorTask = Task { [weak self] in
+        // 3. Detector events → clip recorder + store + alert (@MainActor: SessionStore is main-thread only)
+        detectorTask = Task { @MainActor [weak self] in
             guard let self else { return }
             guard let stream = detector.stream else { return }
             for await event in stream {
@@ -230,7 +237,7 @@ final class MonitorViewModel {
         }
 
         // 4. Alert manager phase changes → notification + alarm
-        alertTask = Task { [weak self] in
+        alertTask = Task { @MainActor [weak self] in
             guard let self else { return }
             guard let stream = alertManager.phaseStream else { return }
             for await phase in stream {
@@ -241,7 +248,7 @@ final class MonitorViewModel {
         }
 
         // 5. Elapsed timer (1 Hz)
-        elapsedTimer = Task { [weak self] in
+        elapsedTimer = Task { @MainActor [weak self] in
             while true {
                 guard !Task.isCancelled else { break }
                 try? await Task.sleep(for: .seconds(1))

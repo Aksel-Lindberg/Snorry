@@ -16,7 +16,7 @@ struct MonitorView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     statusBadge
-                    waveformCard
+                    spectrumCard
                     metricsRow
                     alertPhaseCard
                     timelineCard
@@ -80,22 +80,38 @@ struct MonitorView: View {
         }
     }
 
-    private var waveformCard: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Live Audio")
-                .font(.caption)
+    private var spectrumCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Live Power Spectrum")
+                .font(.caption.bold())
                 .foregroundStyle(Theme.labelSecondary)
 
-            HStack(spacing: 8) {
-                WaveformView(samples: vm.waveformBuffer, isSnoring: vm.isSnoring)
-                    .frame(height: 70)
+            Text("Estimated power by frequency — same microphone stream as recordings (16 kHz).")
+                .font(.caption2)
+                .foregroundStyle(Theme.labelTertiary)
+                .fixedSize(horizontal: false, vertical: true)
 
-                DBMeterView(dBFS: vm.currentDB, isSnoring: vm.isSnoring)
-                    .frame(width: 16, height: 70)
+            LivePowerSpectrumView(bands: vm.spectrumBands, isSnoring: vm.isSnoring)
+                .frame(height: 96)
+
+            HStack {
+                Text("0 Hz")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(Theme.labelTertiary)
+                Spacer()
+                Text("\(nyquistLabel) Hz")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(Theme.labelTertiary)
             }
         }
         .padding(16)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+    }
+
+    private var nyquistLabel: String {
+        let n = Int(AudioMonitorService.targetSampleRate / 2)
+        if n >= 1000 { return String(format: "%.0fk", Double(n) / 1000) }
+        return "\(n)"
     }
 
     private var metricsRow: some View {

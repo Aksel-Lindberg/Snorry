@@ -1,6 +1,20 @@
 import Foundation
 import AVFoundation
 import SwiftData
+import os.log
+
+// MARK: - AVAudioPlayerDelegate (reference held by view model)
+private final class SnorePlaybackDelegate: NSObject, AVAudioPlayerDelegate {
+    var onFinish: (() -> Void)?
+
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        onFinish?()
+    }
+
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        onFinish?()
+    }
+}
 
 @Observable
 @MainActor
@@ -14,7 +28,12 @@ final class SessionDetailViewModel {
 
     // Playback state
     var playingEventID: UUID?
+    /// Surface decode / session failures so Replay isn’t a silent no-op while debugging.
+    var playbackDiagnostic: String?
     private var player: AVAudioPlayer?
+    private var playbackDelegate: SnorePlaybackDelegate?
+
+    private let logger = Logger(subsystem: "app.Snorry", category: "SessionDetail")
 
     init(session: SnoreSession) {
         self.session = session
@@ -32,32 +51,78 @@ final class SessionDetailViewModel {
             stopPlayback()
             return
         }
-        guard let url = event.audioURL,
-              FileManager.default.fileExists(atPath: url.path) else { return }
+
+        guard let url = event.playbackURL else {
+            playbackDiagnostic = event.audioRelativePath != nil
+                ? "Recorded file missing on disk."
+                : "No audio path stored for this event."
+            logger.warning("Replay skipped — path=\(String(describing: event.audioRelativePath))")
+            return
+        }
+
+        stopPlaybackInternal(deactivateSession: false)
+
         do {
-            // Playback at unity gain; loudness follows the Recording + system volume.
-            try AVAudioSession.sharedInstance().setCategory(
+            // Tear down recording session cleanly before playback (.playAndRecord can block file playback otherwise).
+            let session = AVAudioSession.sharedInstance()
+            try session.setActive(false, options: .notifyOthersOnDeactivation)
+            try session.setCategory(
                 .playback,
                 mode: .default,
                 options: [.defaultToSpeaker]
             )
-            try AVAudioSession.sharedInstance().setActive(true)
-            player = try AVAudioPlayer(contentsOf: url)
-            player?.volume = 1.0 // normal AVAudioPlayer level (does not bypass system volume)
-            player?.numberOfLoops = 0
-            player?.prepareToPlay()
-            player?.play()
+            try session.setActive(true)
+
+            let p = try AVAudioPlayer(contentsOf: url)
+            player = p
+
+            let delegate = SnorePlaybackDelegate()
+            delegate.onFinish = { [weak self] in
+                Task { @MainActor in
+                    self?.playbackDidFinish()
+                }
+            }
+            playbackDelegate = delegate
+            p.delegate = delegate
+
+            p.volume = 1.0
+            p.prepareToPlay()
+            guard p.play() else {
+                playbackDiagnostic = "Audio engine did not start playback."
+                playbackDidFinish()
+                return
+            }
             playingEventID = event.id
+            playbackDiagnostic = nil
         } catch {
-            playingEventID = nil
+            logger.error("Replay failed: \(error.localizedDescription)")
+            playbackDiagnostic = error.localizedDescription
+            playbackDidFinish()
         }
     }
 
     func stopPlayback() {
+        stopPlaybackInternal(deactivateSession: true)
+    }
+
+    private func playbackDidFinish() {
         player?.stop()
+        player?.delegate = nil
         player = nil
+        playbackDelegate = nil
         playingEventID = nil
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    private func stopPlaybackInternal(deactivateSession: Bool) {
+        player?.stop()
+        player?.delegate = nil
+        player = nil
+        playbackDelegate = nil
+        playingEventID = nil
+        if deactivateSession {
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
     }
 
     // MARK: Summary helpers

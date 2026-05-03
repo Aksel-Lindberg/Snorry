@@ -94,8 +94,15 @@ struct SessionDetailView: View {
                     EventPlaybackRow(
                         event: event,
                         isPlaying: vm.playingEventID == event.id,
+                        canReplay: event.playbackURL != nil,
                         onTap: { vm.togglePlayback(of: event) }
                     )
+                }
+                if let msg = vm.playbackDiagnostic {
+                    Text(msg)
+                        .font(.caption)
+                        .foregroundStyle(Theme.snoring)
+                        .padding(.top, 4)
                 }
             }
         }
@@ -187,6 +194,8 @@ struct EventPlaybackRow: View {
 
     let event: SnoreEvent
     let isPlaying: Bool
+    /// False when no file exists — avoids a tappable UI that silently does nothing.
+    let canReplay: Bool
     let onTap: () -> Void
 
     private var timeString: String {
@@ -206,8 +215,8 @@ struct EventPlaybackRow: View {
                     .foregroundStyle(isPlaying ? Theme.snoring : Theme.accent)
                     .animation(.spring(duration: 0.3), value: isPlaying)
             }
-            .disabled(event.audioURL == nil)
-            .opacity(event.audioURL == nil ? 0.3 : 1.0)
+            .disabled(!canReplay)
+            .opacity(canReplay ? 1.0 : 0.3)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(timeString)

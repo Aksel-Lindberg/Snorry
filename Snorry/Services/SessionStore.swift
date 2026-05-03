@@ -75,8 +75,16 @@ final class SessionStore {
     }
 
     func updateEventAudioPath(_ path: String, eventID: UUID) {
-        guard let event = openEvents[eventID] else { return }
+        // Prefer the in-memory map, but fall back to the session relationship — the event
+        // may have left `openEvents` while clips are still attributed to its id.
+        let event = openEvents[eventID] ?? activeSession?.events.first { $0.id == eventID }
+        guard let event else {
+            logger.warning("updateEventAudioPath: no event \(eventID.uuidString)")
+            return
+        }
         event.audioRelativePath = path
+        saveContext()
+        logger.debug("Audio path set for event \(eventID.uuidString): \(path)")
     }
 
     // MARK: Waveform samples (buffered, flushed every 60 s)

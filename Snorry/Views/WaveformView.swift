@@ -58,3 +58,41 @@ struct DBMeterView: View {
         }
     }
 }
+
+// MARK: - Live FFT power spectrum (linear frequency, bar display)
+struct LivePowerSpectrumView: View {
+
+    let bands: [Float]
+    let isSnoring: Bool
+    var barSpacing: CGFloat = 1.5
+    var cornerRadius: CGFloat = 2
+
+    private var barColor: Color {
+        isSnoring ? Theme.waveformSnore : Theme.waveformBar
+    }
+
+    var body: some View {
+        GeometryReader { _ in
+            Canvas { ctx, csize in
+                let n = bands.count
+                guard n > 0 else { return }
+                let totalSpacing = barSpacing * CGFloat(max(0, n - 1))
+                let barW = max(1.5, (csize.width - totalSpacing) / CGFloat(n))
+
+                for i in 0 ..< n {
+                    let v = CGFloat(max(0, min(1, bands[i])))
+                    let h = max(2, v * csize.height * 0.94)
+                    let x = CGFloat(i) * (barW + barSpacing)
+                    let y = csize.height - h
+                    let rect = CGRect(x: x, y: y, width: barW, height: h)
+                    let alpha = 0.35 + 0.65 * Double(v)
+                    ctx.fill(
+                        Path(roundedRect: rect, cornerRadius: cornerRadius),
+                        with: .color(barColor.opacity(alpha))
+                    )
+                }
+            }
+        }
+        .drawingGroup()
+    }
+}

@@ -30,10 +30,18 @@ final class SnoreEvent {
         return end.timeIntervalSince(startDate)
     }
 
-    /// Resolved URL for the audio clip, if it exists.
+    /// Resolved URL for the audio clip, if a path was stored.
     var audioURL: URL? {
-        guard let rel = audioRelativePath else { return nil }
+        guard let rel = audioRelativePath?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !rel.isEmpty else { return nil }
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         return support.appendingPathComponent(rel)
+    }
+
+    /// URL only when the AAC file exists on disk (used for replay UI + playback).
+    var playbackURL: URL? {
+        guard let url = audioURL else { return nil }
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        return url.standardizedFileURL
     }
 }
