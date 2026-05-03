@@ -199,7 +199,7 @@ struct EventPlaybackRow: View {
     let onTap: () -> Void
 
     private var timeString: String {
-        event.startDate.formatted(date: .omitted, time: .shortened)
+        event.startDate.formatted(date: .omitted, time: .standard)
     }
 
     private var durationString: String {
