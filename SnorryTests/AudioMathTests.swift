@@ -76,11 +76,16 @@ struct AudioMathTests {
     }
 
     @Test func brpmFiltersImplausible() {
-        // Mix valid (3s) with implausibly short (0.1s) and long (10s)
+        // Mix valid (3 s → ~20 BRPM), too-fast (0.1 s), and too-slow (>6 s ⇒ <10 BRPM)
         let intervals = [0.1, 3.0, 3.0, 3.0, 10.0]
         let brpm = AudioMath.brpm(fromIntervals: intervals)
-        // Expect ~20 BRPM from valid 3s intervals only
         #expect(brpm != nil && abs(brpm! - 20) < 0.1)
+    }
+
+    @Test func brpmRejectsBelow10PerMinute() {
+        let intervals = [7.0, 7.0, 7.0] // ~8.57 BRPM
+        let brpm = AudioMath.brpm(fromIntervals: intervals)
+        #expect(brpm == nil)
     }
 
     @Test func brpmHarmonicMapsToAudibleBand() {

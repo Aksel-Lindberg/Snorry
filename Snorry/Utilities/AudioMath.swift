@@ -50,12 +50,26 @@ enum AudioMath {
     }
 
     // MARK: BRPM from onset intervals
-    /// Returns breaths-per-minute given a list of inter-onset intervals (seconds).
-    /// Filters physiologically implausible intervals [1.0, 8.0] s (4–60 BRPM).
+
+    /// Lower bound for registered breath rate (breaths per minute). Slower patterns are treated as non-snore tempo noise.
+    static let minRegisteredBRPM: Double = 10
+    /// Upper bound for registered breath rate from interval median.
+    static let maxRegisteredBRPM: Double = 60
+
+    /// Inter-onset spacing that maps to `[minRegisteredBRPM, maxRegisteredBRPM]`.
+    private static var minIntervalForRegisteredBRPM: Double { 60.0 / maxRegisteredBRPM }
+    private static var maxIntervalForRegisteredBRPM: Double { 60.0 / minRegisteredBRPM }
+
+    /// Returns breaths-per-minute from inter-onset intervals (seconds).
+    /// Only intervals implying **≥ `minRegisteredBRPM` BRPM** (≤ 6 s at 10 BRPM) and **≤ `maxRegisteredBRPM`** (≥ 1 s) contribute.
     static func brpm(fromIntervals intervals: [Double]) -> Double? {
-        let valid = intervals.filter { $0 >= 1.0 && $0 <= 8.0 }
+        let lo = minIntervalForRegisteredBRPM
+        let hi = maxIntervalForRegisteredBRPM
+        let valid = intervals.filter { $0 >= lo && $0 <= hi }
         guard let med = median(valid), med > 0 else { return nil }
-        return 60.0 / med
+        let raw = 60.0 / med
+        guard raw >= minRegisteredBRPM && raw <= maxRegisteredBRPM else { return nil }
+        return raw
     }
 
     // MARK: BRPM ↔ spectral marker (harmonic of breath tempo in audible band)
@@ -68,7 +82,7 @@ enum AudioMath {
     /// Lowest harmonic ≥ `minHz` of the respiratory rhythm — used to mark the spectrum bar
     /// that aligns with detected breath‑rate energy (typically 85–2800 Hz for snores).
     static func brpmHarmonicHighlightHz(brpm: Double, minHz: Double = 85, maxHz: Double = 2800) -> Double? {
-        guard brpm > 0.5, brpm <= 120 else { return nil }
+        guard brpm >= minRegisteredBRPM, brpm <= 120 else { return nil }
         let f0 = respiratoryRateHz(brpm: brpm)
         let kLow = Swift.max(2, Int(ceil(minHz / f0)))
         for k in kLow ..< 30_000 {
