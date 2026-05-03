@@ -57,4 +57,41 @@ enum AudioMath {
         guard let med = median(valid), med > 0 else { return nil }
         return 60.0 / med
     }
+
+    // MARK: BRPM ↔ spectral marker (harmonic of breath tempo in audible band)
+
+    /// Fundamental breath-cycle frequency in Hz = BRPM / 60 (sub-audio).
+    static func respiratoryRateHz(brpm: Double) -> Double {
+        max(1e-6, brpm / 60.0)
+    }
+
+    /// Lowest harmonic ≥ `minHz` of the respiratory rhythm — used to mark the spectrum bar
+    /// that aligns with detected breath‑rate energy (typically 85–2800 Hz for snores).
+    static func brpmHarmonicHighlightHz(brpm: Double, minHz: Double = 85, maxHz: Double = 2800) -> Double? {
+        guard brpm > 0.5, brpm <= 120 else { return nil }
+        let f0 = respiratoryRateHz(brpm: brpm)
+        let kLow = Swift.max(2, Int(ceil(minHz / f0)))
+        for k in kLow ..< 30_000 {
+            let f = f0 * Double(k)
+            if f > maxHz { return nil }
+            if f >= minHz { return f }
+        }
+        return nil
+    }
+
+    /// Band index for a log‑spaced spectrum from `displayMinHz` to Nyquist.
+    static func logSpectrumBandIndex(
+        freqHz: Double,
+        bandCount: Int,
+        sampleRate: Double,
+        displayMinHz: Double = 45
+    ) -> Int {
+        guard bandCount > 0 else { return 0 }
+        let nyquist = sampleRate / 2
+        guard freqHz > 0, freqHz <= nyquist else { return 0 }
+        let fClamp = Swift.max(displayMinHz, freqHz)
+        let t = (log(fClamp) - log(displayMinHz)) / (log(nyquist) - log(displayMinHz))
+        let b = Int(floor(t * Double(bandCount)))
+        return min(bandCount - 1, max(0, b))
+    }
 }

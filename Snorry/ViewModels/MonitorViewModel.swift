@@ -31,7 +31,23 @@ final class MonitorViewModel {
         return .quiet
     }
 
-    /// Normalised FFT power per linear frequency band (0…1), left = low Hz, right = Nyquist.
+    /// Lowest harmonic of the respiratory tempo that falls in the snore-heavy band (~85–2800 Hz).
+    var spectrumBRPMHighlightHz: Double? {
+        guard isEpisodeConfirmed, brpmAvailable, currentBRPM > 0 else { return nil }
+        return AudioMath.brpmHarmonicHighlightHz(brpm: currentBRPM)
+    }
+
+    /// Matching bar for the live log spectrum (aligned with `spectrumBandCount`).
+    var spectrumBRPMHighlightBandIndex: Int? {
+        guard let hz = spectrumBRPMHighlightHz else { return nil }
+        return AudioMath.logSpectrumBandIndex(
+            freqHz: hz,
+            bandCount: spectrumBandCount,
+            sampleRate: AudioMonitorService.targetSampleRate
+        )
+    }
+
+    /// Normalised FFT power per logarithmic frequency band (0…1), low Hz on the left.
     var spectrumBands: [Float] = []
 
     /// Live timeline (one point per second)
@@ -58,18 +74,18 @@ final class MonitorViewModel {
     private let alarmPlayer  = AlarmTonePlayer()
     private let clipRecorder = ClipRecorder()
     private let notifications = NotificationManager.shared
-    /// Hann-windowed FFT → linear spectral bands for the live spectrogram card.
-    private let spectrumAnalyzer = LiveSpectrumAnalyzer(bandCount: 52)
+    /// FFT bands — must stay in sync with `spectrumAnalyzer`.
+    private let spectrumBandCount = 52
+
+    /// Hann-windowed FFT → log-spaced spectrum for snore detail.
+    private let spectrumAnalyzer: LiveSpectrumAnalyzer
 
     private var sessionStore: SessionStore?
     private var activeSession: SnoreSession?
     private var activeEventID: UUID?
 
-    // Tracks whether a clip file is currently open.
-    // A single clip spans the entire snore episode (first onset → clearDelay elapsed).
+    // Tracks an open AAC file for exactly one detector `SnoreEvent` (opened on `.snoreStarted`, closed on `.snoreEnded`).
     private var clipOpen = false
-    // Relative path of the clip for the current episode, shared by all detector events within it.
-    private var episodeClipPath: String?
 
     private var monitorTask: Task<Void, Never>?
     private var classifierTask: Task<Void, Never>?
@@ -82,6 +98,7 @@ final class MonitorViewModel {
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
+        self.spectrumAnalyzer = LiveSpectrumAnalyzer(bandCount: spectrumBandCount)
         sessionStore = SessionStore(context: modelContext)
         checkPermissions()
     }
@@ -153,6 +170,10 @@ final class MonitorViewModel {
 
     func stopMonitoring() {
         guard isMonitoring else { return }
+
+        // Close any per-event AAC file and close the SwiftData row if monitoring stops mid-snore.
+        finalizeOpenClipAndEventIfInterrupted()
+
         cancelTasks()
         audioService.stop()
         classifier.stop()
@@ -160,9 +181,6 @@ final class MonitorViewModel {
         alertManager.stop()
         alarmPlayer.stop()
         notifications.cancelSnoringAlert()
-
-        // Close any clip that was still recording when the user tapped Stop.
-        closeEpisodeClip()
 
         sessionStore?.finalizeSession()
         recentSession = activeSession
@@ -173,6 +191,8 @@ final class MonitorViewModel {
         isSnoring          = false
         isEpisodeConfirmed = false
         alertPhase         = .idle
+        currentBRPM        = 0
+        brpmAvailable      = false
 
         UIApplication.shared.isIdleTimerDisabled = false
     }
@@ -191,8 +211,7 @@ final class MonitorViewModel {
                 classifier.analyze(buffer: tick.buffer, at: time)
                 detector.feed(tick: tick)
 
-                // Write every buffer to the clip while an episode is being recorded.
-                // The clip stays open through the full "Clear after silence" period.
+                // Write PCM to the clip for whichever snore-event file is currently open.
                 if clipOpen {
                     clipRecorder.write(buffer: tick.buffer)
                 }
@@ -294,23 +313,20 @@ final class MonitorViewModel {
             activeEventID      = id
             snoreEventCount   += 1
             isEpisodeConfirmed = true
+            // Fresh BRPM estimation for each new detector bout / event.
+            currentBRPM       = 0
+            brpmAvailable     = false
             sessionStore?.beginEvent(id: id, at: at)
 
-            // Open the clip starting from the first-onset timestamp so the recording
-            // includes only real snoring audio (not up to 36 s of leading silence).
-            if !clipOpen {
-                let path = clipRecorder.beginClip(
-                    sessionID:   activeSession?.id ?? UUID(),
-                    eventID:     id,
-                    preRoll:     audioService.preRoll,
-                    captureFrom: captureFrom
-                )
-                episodeClipPath = path
-                clipOpen = path != nil
-            }
-
-            // Link this event record to the episode's clip file.
-            if let p = episodeClipPath {
+            // One AAC file per SwiftData SnoreEvent: pre-roll → end of detector bout (silence gap).
+            let path = clipRecorder.beginClip(
+                sessionID:   activeSession?.id ?? UUID(),
+                eventID:     id,
+                preRoll:     audioService.preRoll,
+                captureFrom: captureFrom
+            )
+            clipOpen = path != nil
+            if let p = path {
                 sessionStore?.updateEventAudioPath(p, eventID: id)
             }
 
@@ -318,15 +334,20 @@ final class MonitorViewModel {
             break
 
         case .snoreEnded(let id, let at, let brpm, let peakDB):
-            // Finalise this detector event's metadata in the store but do NOT close
-            // the clip — recording continues through the "Clear after silence" period.
-            // The clip will be closed when the AlertManager transitions back to .idle.
+            if clipOpen {
+                let relativePath = clipRecorder.endClip()
+                clipOpen = false
+                if let p = relativePath {
+                    sessionStore?.updateEventAudioPath(p, eventID: id)
+                }
+            }
             sessionStore?.endEvent(id: id, at: at, brpm: brpm, peakDB: peakDB)
-            if brpm > 0 { currentBRPM = brpm; brpmAvailable = true }
+            currentBRPM   = brpm
+            brpmAvailable = brpm > 0
             activeEventID = nil
 
         case .brpmUpdated(let brpm):
-            currentBRPM = brpm
+            currentBRPM   = brpm
             brpmAvailable = true
         }
     }
@@ -348,20 +369,25 @@ final class MonitorViewModel {
         case .idle, .cleared:
             alarmPlayer.fadeOut()
             notifications.cancelSnoringAlert()
-            // Close the clip — the "Clear after silence" period has fully elapsed.
-            closeEpisodeClip()
-            // Reset the detector and confirmation flag so the next snore bout is
-            // treated as a completely fresh episode requiring new BRPM confirmation.
             isEpisodeConfirmed = false
+            currentBRPM       = 0
+            brpmAvailable     = false
             detector.resetForNewEpisode()
         }
     }
 
-    /// Closes the current episode clip and resets tracking state.
-    private func closeEpisodeClip() {
-        guard clipOpen else { return }
-        clipRecorder.endClip()
-        clipOpen = false
-        episodeClipPath = nil
+    /// Ends an in-flight AAC encode and persists the SwiftData row when stopping mid-snore bout.
+    private func finalizeOpenClipAndEventIfInterrupted() {
+        guard let id = activeEventID else { return }
+        if clipOpen {
+            let relativePath = clipRecorder.endClip()
+            clipOpen = false
+            if let p = relativePath {
+                sessionStore?.updateEventAudioPath(p, eventID: id)
+            }
+        }
+        let peak = min(Float(0), max(currentDB, -160))
+        sessionStore?.endEvent(id: id, at: Date(), brpm: max(0, currentBRPM), peakDB: peak)
+        activeEventID = nil
     }
 }

@@ -82,4 +82,17 @@ struct AudioMathTests {
         // Expect ~20 BRPM from valid 3s intervals only
         #expect(brpm != nil && abs(brpm! - 20) < 0.1)
     }
+
+    @Test func brpmHarmonicMapsToAudibleBand() {
+        // 20/min → ~0.33 Hz; harmonic near 165 Hz (~500×)
+        let h = AudioMath.brpmHarmonicHighlightHz(brpm: 20)
+        #expect(h != nil && h! >= 85 && h! <= 2800)
+    }
+
+    @Test func logSpectrumBandIndexMonotonic() {
+        let sr = AudioMonitorService.targetSampleRate
+        let hi = AudioMath.logSpectrumBandIndex(freqHz: 3800, bandCount: 52, sampleRate: sr)
+        let lo = AudioMath.logSpectrumBandIndex(freqHz: 100, bandCount: 52, sampleRate: sr)
+        #expect(hi >= lo && hi < 52)
+    }
 }

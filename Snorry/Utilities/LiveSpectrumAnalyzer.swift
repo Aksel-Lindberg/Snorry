@@ -2,15 +2,16 @@ import Accelerate
 import AVFoundation
 import Foundation
 
-// MARK: - Real-time FFT power spectrum
-/// 512-point packed real FFT (`vDSP_fft_zrip`), Hann window, linear frequency bands
-/// from near-DC to Nyquist, magnitudes normalised 0…1 for display.
+// MARK: - Real-time FFT power spectrum (log-spaced bands, improved contrast)
+/// 512‑point Hann real FFT (`vDSP_fft_zrip`). Bands are logarithmically spaced from
+/// `displayMinHz` to Nyquist so low‑frequency snore energy resolves better than uniform linear bins.
 final class LiveSpectrumAnalyzer {
 
     private let fftLength = 512
     private let log2n: vDSP_Length = 9
     private let bandCount: Int
     private let sampleRate: Double
+    private let displayMinHz: Float = 45
 
     private let fftSetup: FFTSetup?
 
@@ -20,7 +21,7 @@ final class LiveSpectrumAnalyzer {
     private var window: [Float]
     private var magnitudesSquared: [Float]
 
-    init(bandCount: Int = 56, sampleRate: Double = AudioMonitorService.targetSampleRate) {
+    init(bandCount: Int = 52, sampleRate: Double = AudioMonitorService.targetSampleRate) {
         self.bandCount = bandCount
         self.sampleRate = sampleRate
         self.windowed = [Float](repeating: 0, count: fftLength)
@@ -79,45 +80,67 @@ final class LiveSpectrumAnalyzer {
 
         let amps = magnitudesSquared.map { sqrt(max(0, $0)) }
 
-        return Self.mapToBands(
+        return Self.mapToLogBands(
             amps: amps,
             bandCount: bandCount,
             fftLength: fftLength,
-            sampleRate: sampleRate
+            sampleRate: sampleRate,
+            displayMinHz: displayMinHz
         )
     }
 
-    private static func mapToBands(
+    /// Log-frequency edges; RMS merge within each bin; perceptual gamma + noise floor lift.
+    private static func mapToLogBands(
         amps: [Float],
         bandCount: Int,
         fftLength: Int,
-        sampleRate: Double
+        sampleRate: Double,
+        displayMinHz: Float
     ) -> [Float] {
         let nyquist = Float(sampleRate / 2)
         let binHz = Float(sampleRate) / Float(fftLength)
-        guard binHz > 0 else {
+        guard binHz > 0, nyquist > displayMinHz else {
             return [Float](repeating: 0, count: bandCount)
         }
 
+        let logLo = log(displayMinHz)
+        let logHi = log(nyquist)
+        let invRange = 1 / (logHi - logLo)
+
         var bands = [Float](repeating: 0, count: bandCount)
         for b in 0 ..< bandCount {
-            let f0 = nyquist * (Float(b) / Float(bandCount))
-            let f1 = nyquist * (Float(b + 1) / Float(bandCount))
+            let u0 = Float(b) / Float(bandCount)
+            let u1 = Float(b + 1) / Float(bandCount)
+            let f0 = exp(logLo + u0 * (logHi - logLo))
+            let f1 = exp(logLo + u1 * (logHi - logLo))
+
             let iStart = max(1, Int(floor(f0 / binHz)))
-            let iEnd = min(amps.count - 1, Int(ceil(f1 / binHz)) - 1)
-            if iStart <= iEnd {
-                var peak: Float = 0
-                for i in iStart ... iEnd {
-                    peak = max(peak, amps[i])
-                }
-                bands[b] = peak
+            let iEnd = min(amps.count - 1, max(iStart, Int(ceil(f1 / binHz)) - 1))
+            guard iStart <= iEnd else { continue }
+
+            var sumSq: Float = 0
+            var cnt: Float = 0
+            for i in iStart ... iEnd {
+                let a = amps[i]
+                sumSq += a * a
+                cnt += 1
             }
+            bands[b] = cnt > 0 ? sqrt(sumSq / cnt) : 0 // RMS merge (smoother than raw max)
         }
 
-        guard let vmax = bands.max(), vmax > 1e-8 else {
-            return bands
+        guard let vmax = bands.max(), vmax > 1e-12 else {
+            return bands.map { _ in 0 }
         }
-        let scale = 1 / vmax
-        return bands.map { min(1, $0 * scale) }
+
+        let floorFrac: Float = 0.06
+        let floor = vmax * floorFrac
+        let inv = 1 / (vmax - floor)
+
+        let gamma: Float = 0.52
+        return bands.map {
+            let x = max(0, ($0 - floor) * inv)
+            let g = powf(min(1, x), gamma)
+            return min(1, g)
+        }
     }
 }

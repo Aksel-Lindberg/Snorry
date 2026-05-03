@@ -206,6 +206,7 @@ final class SnoreEventDetector: @unchecked Sendable {
     /// Emits `.snoreEnded` and fully resets per-event tracking variables.
     private func finishCurrentEvent(at date: Date) {
         guard let id = currentEventID else { return }
+        // Final BRPM from all onsets in this bout — independent of Live UI updates mid-event.
         let brpm = computeBRPM() ?? 0
         logger.debug("Snore event ended: \(id), BRPM=\(brpm, format: .fixed(precision: 1))")
         continuation?.yield(.snoreEnded(eventID: id, at: date, brpm: brpm, peakDB: eventPeakDB))
@@ -227,7 +228,8 @@ final class SnoreEventDetector: @unchecked Sendable {
     }
 
     private func computeBRPM() -> Double? {
-        guard onsetTimestamps.count >= 4 else { return nil }
+        // ≥2 breath peaks → ≥1 spacing; ≥3 peaks → smoother median filtering in AudioMath.
+        guard onsetTimestamps.count >= 2 else { return nil }
         let intervals = zip(onsetTimestamps, onsetTimestamps.dropFirst())
             .map { $1.timeIntervalSince($0) }
         return AudioMath.brpm(fromIntervals: intervals)

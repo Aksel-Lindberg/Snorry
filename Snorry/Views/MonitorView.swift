@@ -86,18 +86,30 @@ struct MonitorView: View {
                 .font(.caption.bold())
                 .foregroundStyle(Theme.labelSecondary)
 
-            Text("Estimated power by frequency — same microphone stream as recordings (16 kHz).")
+            Text("Log‑scaled power spectrum (45 Hz … Nyquist); red bars/rings = BRPM harmonic of breath tempo.")
                 .font(.caption2)
                 .foregroundStyle(Theme.labelTertiary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            LivePowerSpectrumView(bands: vm.spectrumBands, isSnoring: vm.isSnoring)
-                .frame(height: 96)
+            LivePowerSpectrumView(
+                bands: vm.spectrumBands,
+                isSnoring: vm.isSnoring,
+                brpmHighlightBandIndex: vm.spectrumBRPMHighlightBandIndex,
+                brpmHarmonicFrequencyHz: vm.spectrumBRPMHighlightHz,
+                emphasiseMarker: vm.isSnoring && vm.isEpisodeConfirmed
+            )
+            .frame(height: 104)
 
-            HStack {
-                Text("0 Hz")
+            HStack(alignment: .firstTextBaseline) {
+                Text("45 Hz")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(Theme.labelTertiary)
+                Spacer()
+                if let hz = vm.spectrumBRPMHighlightHz, vm.isEpisodeConfirmed, vm.brpmAvailable {
+                    Text(String(format: "~%.0f Hz harmonic", hz))
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(Color.red.opacity(vm.isSnoring ? 1 : 0.65))
+                }
                 Spacer()
                 Text("\(nyquistLabel) Hz")
                     .font(.caption2.monospacedDigit())
@@ -176,7 +188,7 @@ struct MonitorView: View {
                     .foregroundStyle(Theme.labelSecondary)
 
                 LiveTimelineChart(points: vm.timelinePoints)
-                    .frame(height: 120)
+                    .frame(height: 132)
             }
             .padding(16)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
@@ -316,7 +328,21 @@ private struct LiveTimelineChart: View {
                 }
             }
         }
-        .chartXAxis(.hidden)
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 5)) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                    .foregroundStyle(Theme.surfaceSecondary.opacity(0.9))
+                AxisValueLabel(centered: true) {
+                    if let t = value.as(Date.self) {
+                        Text(t, format: .dateTime.hour(.defaultDigits(amPM: .narrow))
+                            .minute(.twoDigits)
+                            .second(.twoDigits))
+                    }
+                }
+                .foregroundStyle(Theme.labelTertiary)
+                .font(.caption2)
+            }
+        }
         .chartYAxis(.hidden)
         .chartYScale(domain: 0...1)
     }
