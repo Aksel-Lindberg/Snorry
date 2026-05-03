@@ -7,7 +7,7 @@ import os.log
 enum DetectorEvent: Sendable {
     /// Classifier state changed (raw, before pattern confirmation).
     case snoringActive(Bool)
-    /// Emitted only after ≥4 onsets confirm a valid BRPM pattern.
+    /// Emitted only after enough onsets confirm a valid pattern.
     /// `at` = first onset timestamp; `captureFrom` = same (used to trim pre-roll).
     case snoreStarted(eventID: UUID, at: Date, captureFrom: Date)
     /// Individual breath peak within a confirmed event.
@@ -19,11 +19,15 @@ enum DetectorEvent: Sendable {
 
 // MARK: - Snore event detector with two-phase confirmation
 
-/// Phase 1 — PENDING: classifier is active but we don't yet have a confirmed pattern.
-/// Phase 2 — CONFIRMED: ≥4 onsets with valid BRPM have been detected; event is live.
+/// Phase 1 — PENDING: classifier is active but pattern not yet confirmed.
+/// Phase 2 — CONFIRMED: enough onsets confirmed; event is live.
 ///
-/// Call `resetForNewEpisode()` (from MonitorViewModel when the AlertManager goes idle)
-/// to end the current episode and start fresh detection.
+/// First episode of a monitoring session requires 4 onsets + valid BRPM.
+/// Every subsequent episode (after at least one `resetForNewEpisode()` call)
+/// requires only 2 onsets so the alarm re-arms within seconds after a clear.
+///
+/// Call `resetForNewEpisode()` when the AlertManager goes idle to end the
+/// current episode cleanly and prepare for the next snore bout.
 final class SnoreEventDetector: @unchecked Sendable {
 
     // MARK: Tunables
@@ -33,17 +37,23 @@ final class SnoreEventDetector: @unchecked Sendable {
     private let ambientAlpha: Float            = 0.02   // EMA weight for ambient baseline
     private let brpmWindowSize                 = 30     // max onsets used for BRPM
 
-    // MARK: State
-    private var pendingID: UUID?            // set when classifier first activates
-    private var firstOnsetDate: Date?       // timestamp of very first onset in episode
-    private var isConfirmed = false         // true once .snoreStarted has been emitted
+    // MARK: Session-level flag
+    /// True after the first confirmed episode this monitoring session.
+    /// Persists through `resetForNewEpisode()` so subsequent episodes confirm faster.
+    private var sessionHasConfirmedEpisode = false
 
-    private var currentEventID: UUID?       // same as pendingID after confirmation
+    private var confirmationThreshold: Int { sessionHasConfirmedEpisode ? 2 : 4 }
+
+    // MARK: Per-episode state
+    private var pendingID: UUID?
+    private var firstOnsetDate: Date?
+    private var isConfirmed = false
+
+    private var currentEventID: UUID?
     private var eventPeakDB: Float = -160
     private var lastOnsetDate: Date?
     private var silenceStart: Date?
     private var ambientBaseline: Float = -50
-    private var lastDB: Float = -160
     private var onsetTimestamps: [Date] = []
 
     private var classifierActive = false
@@ -59,7 +69,8 @@ final class SnoreEventDetector: @unchecked Sendable {
         let (s, c) = AsyncStream<DetectorEvent>.makeStream()
         stream = s
         continuation = c
-        resetState()
+        sessionHasConfirmedEpisode = false
+        resetEpisodeState()
     }
 
     func stop() {
@@ -70,16 +81,19 @@ final class SnoreEventDetector: @unchecked Sendable {
     }
 
     /// Called by MonitorViewModel when the AlertManager returns to idle.
-    /// Ends the current episode and puts the detector back into idle so
-    /// the next snore bout is treated as a brand-new event from scratch.
+    /// Ends the current episode (if any) and resets per-episode state so
+    /// the next snore bout is detected as a fresh event.
     func resetForNewEpisode() {
-        if isConfirmed {
-            finishCurrentEvent(at: Date())
-        }
-        resetState()
+        if isConfirmed { finishCurrentEvent(at: Date()) }
+        resetEpisodeState()
+        // sessionHasConfirmedEpisode intentionally NOT reset here —
+        // re-arms faster on the next episode.
     }
 
-    private func resetState() {
+    // MARK: Private reset helpers
+
+    /// Resets only per-episode tracking; preserves session-level flags and ambient baseline.
+    private func resetEpisodeState() {
         pendingID        = nil
         firstOnsetDate   = nil
         isConfirmed      = false
@@ -87,10 +101,8 @@ final class SnoreEventDetector: @unchecked Sendable {
         eventPeakDB      = -160
         lastOnsetDate    = nil
         silenceStart     = nil
-        lastDB           = -160
         onsetTimestamps  = []
         classifierActive = false
-        // Preserve ambientBaseline across episodes — it's a continuous measurement.
     }
 
     // MARK: Classifier feed
@@ -111,7 +123,6 @@ final class SnoreEventDetector: @unchecked Sendable {
     func feed(tick: MonitorTick) {
         let db  = tick.dBFS
         let now = tick.timestamp
-        lastDB  = db
 
         // Update ambient baseline only while classifier is quiet.
         if !classifierActive {
@@ -137,9 +148,10 @@ final class SnoreEventDetector: @unchecked Sendable {
             if gap >= gapTolerance {
                 if isConfirmed {
                     finishCurrentEvent(at: now)
+                    resetEpisodeState()
                 } else {
-                    logger.debug("Snore pending discarded — no pattern in time")
-                    resetState()
+                    logger.debug("Snore pending discarded — no pattern before gap")
+                    resetEpisodeState()
                 }
             }
         }
@@ -160,32 +172,53 @@ final class SnoreEventDetector: @unchecked Sendable {
             continuation?.yield(.snoreOnset(at: date))
             updateBRPM()
         } else {
-            // Try to confirm the episode with the accumulated onsets.
             tryConfirm(at: date)
         }
     }
 
-    /// Transitions from pending → confirmed once a valid BRPM pattern exists (≥4 onsets).
+    /// Transitions from pending → confirmed using `confirmationThreshold`.
+    ///
+    /// First episode: requires 4 onsets AND a valid BRPM (physiological sanity check).
+    /// Subsequent episodes: requires only 2 onsets (pattern already established).
     private func tryConfirm(at now: Date) {
-        guard let brpm = computeBRPM(),
+        guard onsetTimestamps.count >= confirmationThreshold,
               let id = pendingID,
               let captureFrom = firstOnsetDate else { return }
 
-        isConfirmed    = true
-        currentEventID = id
-        logger.info("Snore event confirmed: \(id), BRPM=\(brpm, format: .fixed(precision: 1))")
+        // For first episode, also validate a physiologically plausible breathing rate.
+        if !sessionHasConfirmedEpisode {
+            guard computeBRPM() != nil else { return }
+        }
+
+        isConfirmed                = true
+        currentEventID             = id
+        sessionHasConfirmedEpisode = true
+
+        let brpm = computeBRPM() ?? 0
+        logger.info("Snore event confirmed: \(id), BRPM=\(brpm, format: .fixed(precision: 1)), threshold=\(self.confirmationThreshold)")
 
         continuation?.yield(.snoreStarted(eventID: id, at: captureFrom, captureFrom: captureFrom))
-        continuation?.yield(.brpmUpdated(brpm))
+        if brpm > 0 {
+            continuation?.yield(.brpmUpdated(brpm))
+        }
     }
 
+    /// Emits `.snoreEnded` and fully resets per-event tracking variables.
     private func finishCurrentEvent(at date: Date) {
         guard let id = currentEventID else { return }
         let brpm = computeBRPM() ?? 0
         logger.debug("Snore event ended: \(id), BRPM=\(brpm, format: .fixed(precision: 1))")
         continuation?.yield(.snoreEnded(eventID: id, at: date, brpm: brpm, peakDB: eventPeakDB))
-        currentEventID = nil
-        isConfirmed    = false
+
+        // Clear all event-specific variables so a fresh pending phase can begin.
+        currentEventID  = nil
+        pendingID       = nil
+        isConfirmed     = false
+        firstOnsetDate  = nil
+        lastOnsetDate   = nil
+        onsetTimestamps = []
+        eventPeakDB     = -160
+        silenceStart    = nil
     }
 
     private func updateBRPM() {

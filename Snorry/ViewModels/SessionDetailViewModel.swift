@@ -35,9 +35,16 @@ final class SessionDetailViewModel {
         guard let url = event.audioURL,
               FileManager.default.fileExists(atPath: url.path) else { return }
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback)
+            // .defaultToSpeaker routes audio to the main speaker (louder than earpiece).
+            try AVAudioSession.sharedInstance().setCategory(
+                .playback,
+                options: [.defaultToSpeaker]
+            )
             try AVAudioSession.sharedInstance().setActive(true)
             player = try AVAudioPlayer(contentsOf: url)
+            // Explicitly maximise the software volume (default is already 1.0,
+            // but being explicit documents the intent and guards against future resets).
+            player?.volume = 1.0
             player?.play()
             playingEventID = event.id
         } catch {
