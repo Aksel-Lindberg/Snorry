@@ -11,39 +11,51 @@ struct MonitorTick: Sendable {
 }
 
 // MARK: - Pre-roll circular ring buffer (thread-safe)
-/// Stores the last `capacity` PCM buffers so ClipRecorder can prepend them.
+/// Stores the last `capacity` PCM buffers with timestamps so ClipRecorder can
+/// write only the audio that starts at (or just before) a given point in time.
 final class PreRollRingBuffer: @unchecked Sendable {
 
-    private var buffers: [AVAudioPCMBuffer]
+    struct Entry: Sendable {
+        let timestamp: Date
+        let buffer: AVAudioPCMBuffer
+    }
+
+    private var entries: [Entry]
     private var head = 0
     private let lock = NSLock()
     let capacity: Int
 
-    init(capacity: Int) {
+    /// 1800 buffers × 20 ms = 36 s — enough to cover the slowest BRPM confirmation
+    /// window (4 onsets × 8 s each = 32 s) with room to spare.
+    init(capacity: Int = 1800) {
         self.capacity = capacity
-        self.buffers = []
-        buffers.reserveCapacity(capacity)
+        self.entries = []
+        entries.reserveCapacity(capacity)
     }
 
-    func append(_ buffer: AVAudioPCMBuffer) {
+    func append(_ buffer: AVAudioPCMBuffer, at timestamp: Date) {
         lock.lock(); defer { lock.unlock() }
-        if buffers.count < capacity {
-            buffers.append(buffer)
+        let entry = Entry(timestamp: timestamp, buffer: buffer)
+        if entries.count < capacity {
+            entries.append(entry)
         } else {
-            buffers[head] = buffer
+            entries[head] = entry
             head = (head + 1) % capacity
         }
     }
 
-    /// Returns buffers in chronological order (oldest → newest).
-    func snapshot() -> [AVAudioPCMBuffer] {
+    /// Returns entries in chronological order (oldest → newest),
+    /// optionally filtered to those with timestamp ≥ `from`.
+    func snapshot(from startDate: Date? = nil) -> [Entry] {
         lock.lock(); defer { lock.unlock() }
-        if buffers.count < capacity {
-            return Array(buffers)
+        let ordered: [Entry]
+        if entries.count < capacity {
+            ordered = Array(entries)
+        } else {
+            ordered = Array(entries[head...]) + Array(entries[..<head])
         }
-        let tail = Array(buffers[head...])
-        let front = Array(buffers[..<head])
-        return tail + front
+        guard let from = startDate else { return ordered }
+        return ordered.filter { $0.timestamp >= from }
     }
 }
 
@@ -66,8 +78,8 @@ final class AudioMonitorService: @unchecked Sendable {
     private let engine = AVAudioEngine()
     private var converter: AVAudioConverter?
 
-    /// ~3 s pre-roll at 20 ms tap intervals → 150 buffers
-    let preRoll = PreRollRingBuffer(capacity: 150)
+    /// 36 s pre-roll (1800 buffers × 20 ms) — covers the full BRPM confirmation window.
+    let preRoll = PreRollRingBuffer()
 
     private var continuation: AsyncStream<MonitorTick>.Continuation?
     private(set) var stream: AsyncStream<MonitorTick>?
@@ -120,10 +132,11 @@ final class AudioMonitorService: @unchecked Sendable {
         guard let conv = converter,
               let converted = convert(buffer: buffer, using: conv) else { return }
 
-        preRoll.append(converted)
+        let now = Date()
+        preRoll.append(converted, at: now)
 
         let db = AudioMath.rmsDBFS(buffer: converted)
-        let tick = MonitorTick(dBFS: db, timestamp: Date(), buffer: converted)
+        let tick = MonitorTick(dBFS: db, timestamp: now, buffer: converted)
         continuation?.yield(tick)
     }
 

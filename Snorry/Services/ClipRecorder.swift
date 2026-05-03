@@ -29,9 +29,14 @@ final class ClipRecorder: @unchecked Sendable {
     // MARK: Lifecycle
 
     /// Begin a new clip for `eventID` within `sessionID`.
-    /// Immediately writes the pre-roll buffers from the ring buffer.
+    ///
+    /// - Parameters:
+    ///   - captureFrom: Only pre-roll entries at or after this timestamp are written.
+    ///     Pass the first-onset timestamp so the clip starts from the first real snore
+    ///     sound, with a 1-second lead-in for context — not from 36 s of silence.
     func beginClip(sessionID: UUID, eventID: UUID,
-                   preRoll: PreRollRingBuffer) -> String? {
+                   preRoll: PreRollRingBuffer,
+                   captureFrom: Date) -> String? {
         endClip()   // safety: close any open file
 
         let relativePath = "SnoreClips/\(sessionID.uuidString)/\(eventID.uuidString).m4a"
@@ -47,11 +52,12 @@ final class ClipRecorder: @unchecked Sendable {
                                         interleaved: false)
             currentRelativePath = relativePath
 
-            // Write pre-roll (oldest → newest)
-            for buffer in preRoll.snapshot() {
-                try audioFile?.write(from: buffer)
+            // Write pre-roll starting 1 s before the first onset for context.
+            let leadIn = captureFrom.addingTimeInterval(-1.0)
+            for entry in preRoll.snapshot(from: leadIn) {
+                try audioFile?.write(from: entry.buffer)
             }
-            logger.info("Clip started: \(relativePath)")
+            logger.info("Clip started: \(relativePath) (pre-roll from \(leadIn))")
         } catch {
             logger.error("Could not begin clip: \(error)")
             audioFile = nil

@@ -10,7 +10,11 @@ final class MonitorViewModel {
 
     // MARK: Published state
     var isMonitoring = false
+    /// Raw classifier state — true as soon as the model detects a snoring-like sound.
     var isSnoring = false
+    /// True only once a valid BRPM pattern (≥4 onsets) has been confirmed.
+    /// AlertManager is fed this flag so a single snore-like sound never triggers alerts.
+    var isEpisodeConfirmed = false
     var currentDB: Float = -160
     var currentBRPM: Double = 0
     var brpmAvailable = false
@@ -18,6 +22,14 @@ final class MonitorViewModel {
     var elapsedSeconds: Int = 0
     var snoreEventCount = 0
     var recentSession: SnoreSession?
+
+    /// Three-state detection status for the UI status badge.
+    enum DetectionPhase { case quiet, detecting, confirmed }
+    var detectionPhase: DetectionPhase {
+        if isEpisodeConfirmed { return .confirmed }
+        if isSnoring           { return .detecting }
+        return .quiet
+    }
 
     /// Rolling window of dBFS samples for live waveform (max 300 = ~6 s at 50 fps)
     var waveformBuffer: [Float] = []
@@ -51,7 +63,12 @@ final class MonitorViewModel {
     private var sessionStore: SessionStore?
     private var activeSession: SnoreSession?
     private var activeEventID: UUID?
-    private var currentRelativePath: String?
+
+    // Tracks whether a clip file is currently open.
+    // A single clip spans the entire snore episode (first onset → clearDelay elapsed).
+    private var clipOpen = false
+    // Relative path of the clip for the current episode, shared by all detector events within it.
+    private var episodeClipPath: String?
 
     private var monitorTask: Task<Void, Never>?
     private var classifierTask: Task<Void, Never>?
@@ -143,14 +160,18 @@ final class MonitorViewModel {
         alarmPlayer.stop()
         notifications.cancelSnoringAlert()
 
+        // Close any clip that was still recording when the user tapped Stop.
+        closeEpisodeClip()
+
         sessionStore?.finalizeSession()
         recentSession = activeSession
         activeSession = nil
         activeEventID = nil
 
-        isMonitoring = false
-        isSnoring = false
-        alertPhase = .idle
+        isMonitoring       = false
+        isSnoring          = false
+        isEpisodeConfirmed = false
+        alertPhase         = .idle
 
         UIApplication.shared.isIdleTimerDisabled = false
     }
@@ -158,7 +179,7 @@ final class MonitorViewModel {
     // MARK: Async pipelines
 
     private func startTasks() {
-        // 1. Consume AudioMonitorService ticks → feed classifier + detector
+        // 1. Consume AudioMonitorService ticks → feed classifier + detector + clip recorder
         monitorTask = Task { [weak self] in
             guard let self else { return }
             guard let stream = audioService.stream else { return }
@@ -168,6 +189,12 @@ final class MonitorViewModel {
                                       atRate: AudioMonitorService.targetSampleRate)
                 classifier.analyze(buffer: tick.buffer, at: time)
                 detector.feed(tick: tick)
+
+                // Write every buffer to the clip while an episode is being recorded.
+                // The clip stays open through the full "Clear after silence" period.
+                if clipOpen {
+                    clipRecorder.write(buffer: tick.buffer)
+                }
 
                 // Update live dB + waveform on main actor
                 currentDB = tick.dBFS
@@ -220,7 +247,8 @@ final class MonitorViewModel {
                 try? await Task.sleep(for: .seconds(1))
                 guard let self, isMonitoring else { break }
                 elapsedSeconds += 1
-                alertManager.update(isSnoring: isSnoring)
+                // Only escalate alerts once a real BRPM pattern is confirmed.
+                alertManager.update(isSnoring: isSnoring && isEpisodeConfirmed)
                 // Persist waveform sample every second
                 sessionStore?.addWaveformSample(
                     dBFS: currentDB,
@@ -255,25 +283,37 @@ final class MonitorViewModel {
         case .snoringActive(let active):
             isSnoring = active
 
-        case .snoreStarted(let id, let at):
-            activeEventID = id
-            snoreEventCount += 1
+        case .snoreStarted(let id, let at, let captureFrom):
+            activeEventID      = id
+            snoreEventCount   += 1
+            isEpisodeConfirmed = true
             sessionStore?.beginEvent(id: id, at: at)
-            let path = clipRecorder.beginClip(
-                sessionID: activeSession?.id ?? UUID(),
-                eventID: id,
-                preRoll: audioService.preRoll
-            )
-            if let p = path {
+
+            // Open the clip starting from the first-onset timestamp so the recording
+            // includes only real snoring audio (not up to 36 s of leading silence).
+            if !clipOpen {
+                let path = clipRecorder.beginClip(
+                    sessionID:   activeSession?.id ?? UUID(),
+                    eventID:     id,
+                    preRoll:     audioService.preRoll,
+                    captureFrom: captureFrom
+                )
+                episodeClipPath = path
+                clipOpen = path != nil
+            }
+
+            // Link this event record to the episode's clip file.
+            if let p = episodeClipPath {
                 sessionStore?.updateEventAudioPath(p, eventID: id)
             }
 
         case .snoreOnset:
-            // Write current buffer to clip
             break
 
         case .snoreEnded(let id, let at, let brpm, let peakDB):
-            clipRecorder.endClip()
+            // Finalise this detector event's metadata in the store but do NOT close
+            // the clip — recording continues through the "Clear after silence" period.
+            // The clip will be closed when the AlertManager transitions back to .idle.
             sessionStore?.endEvent(id: id, at: at, brpm: brpm, peakDB: peakDB)
             if brpm > 0 { currentBRPM = brpm; brpmAvailable = true }
             activeEventID = nil
@@ -301,7 +341,20 @@ final class MonitorViewModel {
         case .idle, .cleared:
             alarmPlayer.fadeOut()
             notifications.cancelSnoringAlert()
-
+            // Close the clip — the "Clear after silence" period has fully elapsed.
+            closeEpisodeClip()
+            // Reset the detector and confirmation flag so the next snore bout is
+            // treated as a completely fresh episode requiring new BRPM confirmation.
+            isEpisodeConfirmed = false
+            detector.resetForNewEpisode()
         }
+    }
+
+    /// Closes the current episode clip and resets tracking state.
+    private func closeEpisodeClip() {
+        guard clipOpen else { return }
+        clipRecorder.endClip()
+        clipOpen = false
+        episodeClipPath = nil
     }
 }

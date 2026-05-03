@@ -15,6 +15,7 @@ enum Theme {
     static let snoringGlow      = Color(red: 1.00, green: 0.45, blue: 0.35).opacity(0.30)
 
     static let good             = Color(red: 0.30, green: 0.85, blue: 0.60)   // mint green (quiet)
+    static let warning          = Color(red: 1.00, green: 0.80, blue: 0.20)   // amber (detecting pattern)
 
     static let labelPrimary     = Color.white
     static let labelSecondary   = Color.white.opacity(0.60)

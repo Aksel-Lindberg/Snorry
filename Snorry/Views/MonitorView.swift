@@ -42,15 +42,15 @@ struct MonitorView: View {
     private var statusBadge: some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(vm.isSnoring ? Theme.snoring : Theme.good)
+                .fill(badgeColor)
                 .frame(width: 10, height: 10)
-                .scaleEffect(pulseAnimation && vm.isSnoring ? 1.4 : 1.0)
+                .scaleEffect(pulseAnimation && vm.detectionPhase == .confirmed ? 1.4 : 1.0)
                 .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true),
                            value: pulseAnimation)
 
-            Text(vm.isSnoring ? "Snoring Detected" : "Quiet")
+            Text(badgeLabel)
                 .font(.headline)
-                .foregroundStyle(vm.isSnoring ? Theme.snoring : Theme.good)
+                .foregroundStyle(badgeColor)
 
             Spacer()
 
@@ -62,6 +62,22 @@ struct MonitorView: View {
         .padding(.vertical, 10)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
         .onAppear { pulseAnimation = true }
+    }
+
+    private var badgeLabel: String {
+        switch vm.detectionPhase {
+        case .quiet:     return "Quiet"
+        case .detecting: return "Detecting Pattern…"
+        case .confirmed: return "Snoring Detected"
+        }
+    }
+
+    private var badgeColor: Color {
+        switch vm.detectionPhase {
+        case .quiet:     return Theme.good
+        case .detecting: return Theme.warning
+        case .confirmed: return Theme.snoring
+        }
     }
 
     private var waveformCard: some View {
