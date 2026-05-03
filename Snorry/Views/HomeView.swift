@@ -9,8 +9,6 @@ struct HomeView: View {
     @State private var vm: MonitorViewModel?
     @State private var showMonitor = false
     @State private var showPermissions = false
-    @State private var pulseScale: CGFloat = 1.0
-    @State private var glowOpacity: Double = 0.3
 
     var body: some View {
         NavigationStack {
@@ -65,44 +63,32 @@ struct HomeView: View {
 
     private func startButtonSection(vm: MonitorViewModel) -> some View {
         VStack(spacing: 24) {
-            ZStack {
-                // Outer glow rings
-                ForEach(0..<3) { i in
+            // Fixed layout — no pulsing or looping animations so the button stays predictable.
+            Button {
+                handleStartTap(vm: vm)
+            } label: {
+                ZStack {
                     Circle()
-                        .stroke(Theme.accent.opacity(glowOpacity / Double(i + 1)), lineWidth: 1.5)
-                        .frame(width: 180 + CGFloat(i) * 30,
-                               height: 180 + CGFloat(i) * 30)
-                        .scaleEffect(pulseScale)
-                }
-
-                // Main button
-                Button {
-                    handleStartTap(vm: vm)
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(Theme.accentGradient)
-                            .frame(width: 160, height: 160)
-                            .shadow(color: Theme.accentGlow, radius: 30)
-
-                        VStack(spacing: 6) {
-                            Image(systemName: "mic.fill")
-                                .font(.system(size: 32, weight: .semibold))
-                            Text("START")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .tracking(3)
+                        .fill(Theme.accentGradient)
+                        .frame(width: 160, height: 160)
+                        .overlay {
+                            Circle()
+                                .strokeBorder(.white.opacity(0.28), lineWidth: 2)
                         }
-                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
+
+                    VStack(spacing: 6) {
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 32, weight: .semibold))
+                        Text("START")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .tracking(3)
                     }
+                    .foregroundStyle(.white)
                 }
-                .disabled(vm.microphonePermission == .denied)
-                .buttonStyle(.plain)
             }
-            .animation(
-                .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
-                value: pulseScale
-            )
-            .onAppear { pulseScale = 1.05; glowOpacity = 0.5 }
+            .disabled(vm.microphonePermission == .denied)
+            .buttonStyle(.plain)
 
             if vm.microphonePermission == .undetermined ||
                vm.microphonePermission == .denied {
