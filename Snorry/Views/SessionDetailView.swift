@@ -207,46 +207,131 @@ struct EventPlaybackRow: View {
         return String(format: "%.0fs", d)
     }
 
+    /// The harmonic frequency stored at event-end — identical to the red marker
+    /// shown on the Live Power Spectrum during monitoring. Nil when not captured.
+    private var rumbleHz: Double? {
+        event.rumbleFrequencyHz > 0 ? event.rumbleFrequencyHz : nil
+    }
+
     var body: some View {
-        HStack(spacing: 12) {
-            Button(action: onTap) {
-                Image(systemName: isPlaying ? "stop.circle.fill" : "play.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(isPlaying ? Theme.snoring : Theme.accent)
-                    .animation(.spring(duration: 0.3), value: isPlaying)
-            }
-            .disabled(!canReplay)
-            .opacity(canReplay ? 1.0 : 0.3)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Button(action: onTap) {
+                    Image(systemName: isPlaying ? "stop.circle.fill" : "play.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(isPlaying ? Theme.snoring : Theme.accent)
+                        .animation(.spring(duration: 0.3), value: isPlaying)
+                }
+                .disabled(!canReplay)
+                .opacity(canReplay ? 1.0 : 0.3)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(timeString)
-                    .font(.subheadline.bold())
-                    .foregroundStyle(Theme.labelPrimary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(timeString)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Theme.labelPrimary)
 
-                HStack(spacing: 10) {
-                    Label(durationString, systemImage: "clock.badge")
-                        .font(.caption)
-                        .foregroundStyle(Theme.labelSecondary)
-
-                    if event.brpm > 0 {
-                        Label(String(format: "%.0f BRPM", event.brpm), systemImage: "lungs")
+                    HStack(spacing: 10) {
+                        Label(durationString, systemImage: "clock.badge")
                             .font(.caption)
-                            .foregroundStyle(Theme.accent)
-                    }
+                            .foregroundStyle(Theme.labelSecondary)
 
-                    Label(String(format: "%.0f dB", event.peakDB), systemImage: "speaker.wave.2")
-                        .font(.caption)
-                        .foregroundStyle(Theme.labelSecondary)
+                        if event.brpm > 0 {
+                            Label(String(format: "%.0f BRPM", event.brpm), systemImage: "lungs")
+                                .font(.caption)
+                                .foregroundStyle(Theme.accent)
+                        }
+
+                        Label(String(format: "%.0f dB", event.peakDB), systemImage: "speaker.wave.2")
+                            .font(.caption)
+                            .foregroundStyle(Theme.labelSecondary)
+                    }
+                }
+
+                Spacer()
+
+                if isPlaying {
+                    PlayingIndicator()
                 }
             }
 
-            Spacer()
+            // Metric bars — shown when any meaningful data was captured for this event.
+            if event.brpm > 0 || event.avgDB > -160 {
+                VStack(spacing: 5) {
+                    // BRPM bar: normalised over the physiological 10–60 BRPM range.
+                    if event.brpm > 0 {
+                        EventMetricBar(
+                            label: "BRPM",
+                            value: String(format: "%.0f", event.brpm),
+                            fill: (event.brpm - 10) / 50,
+                            color: Theme.accent
+                        )
+                    }
 
-            if isPlaying {
-                PlayingIndicator()
+                    // Snore rumble: harmonic captured from the live spectrum during monitoring.
+                    // Log-scale bar centred at 80 Hz (range 20–320 Hz, 20×320 = 80²).
+                    if let rumbleFreq = rumbleHz {
+                        let logFill = log(rumbleFreq / 20) / log(320.0 / 20)
+                        EventMetricBar(
+                            label: "Rumble",
+                            value: String(format: "%.0f Hz", rumbleFreq),
+                            fill: logFill,
+                            color: Theme.snoring
+                        )
+                    }
+
+                    // Average snore volume: normalised −60 dBFS (quiet) → −10 dBFS (loud).
+                    if event.avgDB > -160 {
+                        EventMetricBar(
+                            label: "Avg Vol",
+                            value: String(format: "%.0f dB", event.avgDB),
+                            fill: Double((event.avgDB + 60) / 50),
+                            color: Theme.good
+                        )
+                    }
+                }
             }
         }
         .padding(.vertical, 6)
+    }
+}
+
+// MARK: - Metric bar indicator
+
+private struct EventMetricBar: View {
+    let label: String
+    let value: String
+    let fill: Double
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelTertiary)
+                Spacer()
+                Text(value)
+                    .font(Theme.monoDigit(size: 10))
+                    .foregroundStyle(color.opacity(0.85))
+            }
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(color.opacity(0.12))
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(
+                            LinearGradient(
+                                colors: [color.opacity(0.55), color],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: geo.size.width * CGFloat(max(0, min(1, fill))))
+                }
+            }
+            .frame(height: 4)
+        }
     }
 }
 

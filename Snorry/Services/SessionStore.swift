@@ -65,13 +65,16 @@ final class SessionStore {
         logger.debug("Event began: \(id)")
     }
 
-    func endEvent(id: UUID, at date: Date, brpm: Double, peakDB: Float) {
+    func endEvent(id: UUID, at date: Date, brpm: Double, peakDB: Float,
+                  avgDB: Float, rumbleFrequencyHz: Double) {
         guard let event = openEvents[id] else { return }
         event.endDate = date
         event.brpm = brpm
         event.peakDB = peakDB
+        event.avgDB = avgDB
+        event.rumbleFrequencyHz = rumbleFrequencyHz
         openEvents.removeValue(forKey: id)
-        logger.debug("Event ended: \(id)")
+        logger.debug("Event ended: \(id), rumble=\(rumbleFrequencyHz, format: .fixed(precision: 0)) Hz, avgDB=\(avgDB, format: .fixed(precision: 1))")
     }
 
     func updateEventAudioPath(_ path: String, eventID: UUID) {

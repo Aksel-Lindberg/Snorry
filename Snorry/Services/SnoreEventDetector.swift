@@ -13,7 +13,7 @@ enum DetectorEvent: Sendable {
     /// Individual breath peak within a confirmed event.
     case snoreOnset(at: Date)
     /// Emitted when the detector's gap tolerance expires (or on forced reset).
-    case snoreEnded(eventID: UUID, at: Date, brpm: Double, peakDB: Float)
+    case snoreEnded(eventID: UUID, at: Date, brpm: Double, peakDB: Float, avgDB: Float)
     case brpmUpdated(Double)
 }
 
@@ -55,6 +55,9 @@ final class SnoreEventDetector: @unchecked Sendable {
 
     private var currentEventID: UUID?
     private var eventPeakDB: Float = -160
+    /// Accumulates dBFS during classifier-active ticks for computing the event average.
+    private var eventSumDB: Double = 0
+    private var eventTickCount: Int = 0
     private var lastOnsetDate: Date?
     private var silenceStart: Date?
     private var ambientBaseline: Float = -50
@@ -103,6 +106,8 @@ final class SnoreEventDetector: @unchecked Sendable {
         isConfirmed      = false
         currentEventID   = nil
         eventPeakDB      = -160
+        eventSumDB       = 0
+        eventTickCount   = 0
         lastOnsetDate    = nil
         silenceStart     = nil
         onsetTimestamps  = []
@@ -142,10 +147,12 @@ final class SnoreEventDetector: @unchecked Sendable {
             }
         }
 
-        // Gap / silence tracking.
+        // Gap / silence tracking; accumulate level for average.
         if classifierActive {
             silenceStart = nil
             if db > eventPeakDB { eventPeakDB = db }
+            eventSumDB    += Double(db)
+            eventTickCount += 1
         } else if pendingID != nil {
             if silenceStart == nil { silenceStart = now }
             let gap = now.timeIntervalSince(silenceStart!)
@@ -210,10 +217,10 @@ final class SnoreEventDetector: @unchecked Sendable {
     /// Emits `.snoreEnded` and fully resets per-event tracking variables.
     private func finishCurrentEvent(at date: Date) {
         guard let id = currentEventID else { return }
-        // Final BRPM from all onsets in this bout — independent of Live UI updates mid-event.
-        let brpm = computeBRPM() ?? 0
-        logger.debug("Snore event ended: \(id), BRPM=\(brpm, format: .fixed(precision: 1))")
-        continuation?.yield(.snoreEnded(eventID: id, at: date, brpm: brpm, peakDB: eventPeakDB))
+        let brpm   = computeBRPM() ?? 0
+        let avgDB  = eventTickCount > 0 ? Float(eventSumDB / Double(eventTickCount)) : -160
+        logger.debug("Snore event ended: \(id), BRPM=\(brpm, format: .fixed(precision: 1)), avgDB=\(avgDB, format: .fixed(precision: 1))")
+        continuation?.yield(.snoreEnded(eventID: id, at: date, brpm: brpm, peakDB: eventPeakDB, avgDB: avgDB))
 
         // Clear all event-specific variables so a fresh pending phase can begin.
         currentEventID  = nil
@@ -223,6 +230,8 @@ final class SnoreEventDetector: @unchecked Sendable {
         lastOnsetDate   = nil
         onsetTimestamps = []
         eventPeakDB     = -160
+        eventSumDB      = 0
+        eventTickCount  = 0
         silenceStart    = nil
     }
 

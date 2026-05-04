@@ -12,6 +12,12 @@ final class SnoreEvent {
     var brpm: Double
     /// Peak dBFS during this event.
     var peakDB: Float
+    /// Arithmetic mean dBFS across all classifier-active ticks during this event.
+    var avgDB: Float
+    /// Lowest harmonic of the breath tempo that falls in the live-spectrum snore band
+    /// (same value shown as the red marker on the Live Power Spectrum during monitoring).
+    /// 0 when not available.
+    var rumbleFrequencyHz: Double
     /// Relative path to the AAC clip file under Application Support/SnoreClips/.
     var audioRelativePath: String?
 
@@ -23,6 +29,8 @@ final class SnoreEvent {
         self.startDate = startDate
         self.brpm = 0
         self.peakDB = -160
+        self.avgDB = -160
+        self.rumbleFrequencyHz = 0
     }
 
     var duration: TimeInterval? {

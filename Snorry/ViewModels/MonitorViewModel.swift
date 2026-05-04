@@ -351,7 +351,7 @@ final class MonitorViewModel {
         case .snoreOnset:
             break
 
-        case .snoreEnded(let id, let at, let brpm, let peakDB):
+        case .snoreEnded(let id, let at, let brpm, let peakDB, let avgDB):
             if clipOpen {
                 let relativePath = clipRecorder.endClip()
                 clipOpen = false
@@ -359,7 +359,10 @@ final class MonitorViewModel {
                     sessionStore?.updateEventAudioPath(p, eventID: id)
                 }
             }
-            sessionStore?.endEvent(id: id, at: at, brpm: brpm, peakDB: peakDB)
+            // Capture the same harmonic shown as the red marker on the live spectrum.
+            let rumbleHz = AudioMath.brpmHarmonicHighlightHz(brpm: brpm) ?? 0
+            sessionStore?.endEvent(id: id, at: at, brpm: brpm, peakDB: peakDB,
+                                   avgDB: avgDB, rumbleFrequencyHz: rumbleHz)
             currentBRPM   = brpm
             brpmAvailable = brpm > 0
             activeEventID = nil
@@ -405,7 +408,9 @@ final class MonitorViewModel {
             }
         }
         let peak = min(Float(0), max(currentDB, -160))
-        sessionStore?.endEvent(id: id, at: Date(), brpm: max(0, currentBRPM), peakDB: peak)
+        let rumbleHz = AudioMath.brpmHarmonicHighlightHz(brpm: currentBRPM) ?? 0
+        sessionStore?.endEvent(id: id, at: Date(), brpm: max(0, currentBRPM), peakDB: peak,
+                               avgDB: peak, rumbleFrequencyHz: rumbleHz)
         activeEventID = nil
     }
 }
