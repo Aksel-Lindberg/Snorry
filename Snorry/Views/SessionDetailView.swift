@@ -279,12 +279,12 @@ struct EventPlaybackRow: View {
                         )
                     }
 
-                    // Average snore volume: normalised −60 dBFS (quiet) → −10 dBFS (loud).
+                    // Average snore volume: −80 dBFS → 0%, −55 dBFS → 50%, −30 dBFS → 100%.
                     if event.avgDB > -160 {
                         EventMetricBar(
                             label: "Avg Vol",
                             value: String(format: "%.0f dB", event.avgDB),
-                            fill: Double((event.avgDB + 60) / 50),
+                            fill: Double((event.avgDB + 80) / 50),
                             color: Theme.good
                         )
                     }
@@ -305,32 +305,38 @@ private struct EventMetricBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(label)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelTertiary)
-                Spacer()
-                Text(value)
-                    .font(Theme.monoDigit(size: 10))
-                    .foregroundStyle(color.opacity(0.85))
-            }
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(Theme.labelTertiary)
 
             GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2)
+                ZStack {
+                    // Track
+                    RoundedRectangle(cornerRadius: 4)
                         .fill(color.opacity(0.12))
-                    RoundedRectangle(cornerRadius: 2)
+
+                    // Fill
+                    RoundedRectangle(cornerRadius: 4)
                         .fill(
                             LinearGradient(
-                                colors: [color.opacity(0.55), color],
+                                colors: [color.opacity(0.45), color.opacity(0.80)],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
-                        .frame(width: geo.size.width * CGFloat(max(0, min(1, fill))))
+                        .frame(width: geo.size.width * CGFloat(max(0, min(1, fill))),
+                               height: geo.size.height)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    // Value centred on the bar
+                    Text(value)
+                        .font(Theme.monoDigit(size: 10))
+                        .foregroundStyle(.white.opacity(0.90))
+                        .frame(maxWidth: .infinity)
                 }
             }
-            .frame(height: 4)
+            .frame(height: 16)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
         }
     }
 }
