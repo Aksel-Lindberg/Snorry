@@ -5,6 +5,7 @@ import SwiftData
 struct SettingsView: View {
 
     @Environment(\.modelContext) private var context
+    @Environment(\.dismiss)      private var dismiss
     @State private var vm: SettingsViewModel?
 
     var body: some View {
@@ -22,15 +23,35 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        vm?.cancel()
+                        dismiss()
+                    }
+                    .foregroundStyle(Theme.labelSecondary)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") {
+                        vm?.save()
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Theme.accent)
+                }
+            }
             .onAppear {
                 if vm == nil { vm = SettingsViewModel(context: context) }
             }
         }
     }
 
+    // MARK: Content
+
     private func settingsContent(vm: SettingsViewModel) -> some View {
         List {
             detectionSection(vm: vm)
+            alarmStyleSection(vm: vm)
             alertTimingsSection(vm: vm)
             volumeSection(vm: vm)
             actionsSection(vm: vm)
@@ -39,14 +60,14 @@ struct SettingsView: View {
         .listStyle(.insetGrouped)
     }
 
+    // MARK: Sections
+
     private func detectionSection(vm: SettingsViewModel) -> some View {
         Section {
-            SensitivityRow(
-                value: Binding(
-                    get: { vm.snoringDetectionSensitivity },
-                    set: { vm.snoringDetectionSensitivity = $0; vm.save() }
-                )
-            )
+            SensitivityRow(value: Binding(
+                get: { vm.snoringDetectionSensitivity },
+                set: { vm.snoringDetectionSensitivity = $0 }
+            ))
         } header: {
             Text("Snore Detection")
                 .foregroundStyle(Theme.labelSecondary)
@@ -58,61 +79,89 @@ struct SettingsView: View {
         .listRowBackground(Theme.surface)
     }
 
+    private func alarmStyleSection(vm: SettingsViewModel) -> some View {
+        Section {
+            ForEach(AlarmStyle.allCases, id: \.rawValue) { style in
+                Button {
+                    vm.alarmStyle = style
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: vm.alarmStyle == style
+                              ? "checkmark.circle.fill" : "circle")
+                            .font(.body)
+                            .foregroundStyle(vm.alarmStyle == style
+                                             ? Theme.accent : Theme.labelTertiary)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(style.displayName)
+                                .font(.subheadline)
+                                .foregroundStyle(Theme.labelPrimary)
+                            Text(style.subtitle)
+                                .font(.caption)
+                                .foregroundStyle(Theme.labelSecondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 2)
+                }
+                .buttonStyle(.plain)
+            }
+        } header: {
+            Text("Alarm Style")
+                .foregroundStyle(Theme.labelSecondary)
+        }
+        .listRowBackground(Theme.surface)
+    }
+
     private func alertTimingsSection(vm: SettingsViewModel) -> some View {
         Section {
             SliderRow(
                 label: "Notify after",
-                value: Binding(
-                    get: { vm.notifyDelay },
-                    set: { vm.notifyDelay = $0; vm.save() }
-                ),
+                value: Binding(get: { vm.notifyDelay },
+                               set: { vm.notifyDelay = $0 }),
                 range: 2...120,
                 unit: "s",
                 step: 1
             )
             SliderRow(
                 label: "Low alarm after",
-                value: Binding(
-                    get: { vm.audioLowDelay },
-                    set: { vm.audioLowDelay = $0; vm.save() }
-                ),
+                value: Binding(get: { vm.audioLowDelay },
+                               set: { vm.audioLowDelay = $0 }),
                 range: 5...180,
                 unit: "s",
                 step: 1
             )
             SliderRow(
                 label: "Medium alarm after",
-                value: Binding(
-                    get: { vm.audioMedDelay },
-                    set: { vm.audioMedDelay = $0; vm.save() }
-                ),
+                value: Binding(get: { vm.audioMedDelay },
+                               set: { vm.audioMedDelay = $0 }),
                 range: 10...240,
                 unit: "s",
                 step: 1
             )
             SliderRow(
                 label: "Full alarm after",
-                value: Binding(
-                    get: { vm.audioHighDelay },
-                    set: { vm.audioHighDelay = $0; vm.save() }
-                ),
+                value: Binding(get: { vm.audioHighDelay },
+                               set: { vm.audioHighDelay = $0 }),
                 range: 15...300,
                 unit: "s",
                 step: 1
             )
             SliderRow(
-                label: "Clear after silence",
-                value: Binding(
-                    get: { vm.clearDelay },
-                    set: { vm.clearDelay = $0; vm.save() }
-                ),
-                range: 2...20,
+                label: "Silence to end snore event",
+                value: Binding(get: { vm.clearDelay },
+                               set: { vm.clearDelay = $0 }),
+                range: 3...30,
                 unit: "s",
                 step: 1
             )
         } header: {
             Text("Alert Timings")
                 .foregroundStyle(Theme.labelSecondary)
+        } footer: {
+            Text("If no snoring is detected for this duration the current event is stored and the app waits for a new one.")
+                .foregroundStyle(Theme.labelSecondary)
+                .font(.caption)
         }
         .listRowBackground(Theme.surface)
     }
@@ -121,13 +170,13 @@ struct SettingsView: View {
         Section {
             VolumeRow(label: "Low volume",
                       value: Binding(get: { Double(vm.volumeLow) },
-                                     set: { vm.volumeLow = Float($0); vm.save() }))
+                                     set: { vm.volumeLow = Float($0) }))
             VolumeRow(label: "Medium volume",
                       value: Binding(get: { Double(vm.volumeMed) },
-                                     set: { vm.volumeMed = Float($0); vm.save() }))
+                                     set: { vm.volumeMed = Float($0) }))
             VolumeRow(label: "Full volume",
                       value: Binding(get: { Double(vm.volumeHigh) },
-                                     set: { vm.volumeHigh = Float($0); vm.save() }))
+                                     set: { vm.volumeHigh = Float($0) }))
         } header: {
             Text("Alarm Volumes")
                 .foregroundStyle(Theme.labelSecondary)
@@ -176,7 +225,6 @@ private struct SliderRow: View {
 private struct SensitivityRow: View {
     @Binding var value: Double
 
-    /// Maps the 1–5 integer level to a human-readable label.
     private var label: String {
         switch Int(value) {
         case 1: return "Very Low"
@@ -230,7 +278,7 @@ private struct VolumeRow: View {
                     .font(Theme.monoDigit(size: 13))
                     .foregroundStyle(Theme.accent)
             }
-            Slider(value: $value, in: 0.05...1.0, step: 0.05)
+            Slider(value: $value, in: 0.10...1.0, step: 0.05)
                 .tint(Theme.accent)
         }
         .padding(.vertical, 4)

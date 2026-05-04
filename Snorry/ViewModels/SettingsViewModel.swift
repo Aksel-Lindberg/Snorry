@@ -10,13 +10,16 @@ final class SettingsViewModel {
     var audioLowDelay: Double    = 5
     var audioMedDelay: Double    = 10
     var audioHighDelay: Double   = 15
-    var clearDelay: Double       = 5
-    var volumeLow: Float         = 0.20
-    var volumeMed: Float         = 0.60
+    var clearDelay: Double       = 8
+    var volumeLow: Float         = 0.50
+    var volumeMed: Float         = 0.80
     var volumeHigh: Float        = 1.00
 
     /// Snore detection sensitivity level (1–5). 3 = factory default.
     var snoringDetectionSensitivity: Double = 3
+
+    /// Selected alarm tone style.
+    var alarmStyle: AlarmStyle = .classic
 
     private let context: ModelContext
     private var settings: AlertSettings?
@@ -26,37 +29,51 @@ final class SettingsViewModel {
         load()
     }
 
+    // MARK: Persistence
+
     private func load() {
-        let s = AlertSettings.load(context: context)
-        settings = s
-        notifyDelay                 = s.notifyDelaySeconds
-        audioLowDelay               = s.audioLowDelaySeconds
-        audioMedDelay               = s.audioMedDelaySeconds
-        audioHighDelay              = s.audioHighDelaySeconds
-        clearDelay                  = s.clearDelaySeconds
-        volumeLow                   = s.volumeLow
-        volumeMed                   = s.volumeMed
-        volumeHigh                  = s.volumeHigh
-        snoringDetectionSensitivity = s.snoringDetectionSensitivity
+        let stored = AlertSettings.load(context: context)
+        settings = stored
+        notifyDelay                 = stored.notifyDelaySeconds
+        audioLowDelay               = stored.audioLowDelaySeconds
+        audioMedDelay               = stored.audioMedDelaySeconds
+        audioHighDelay              = stored.audioHighDelaySeconds
+        clearDelay                  = stored.clearDelaySeconds
+        volumeLow                   = stored.volumeLow
+        volumeMed                   = stored.volumeMed
+        volumeHigh                  = stored.volumeHigh
+        snoringDetectionSensitivity = stored.snoringDetectionSensitivity
+        alarmStyle                  = AlarmStyle(rawValue: stored.alarmStyleRaw) ?? .classic
     }
 
+    /// Persist current draft values to the SwiftData store.
     func save() {
-        guard let s = settings else { return }
-        s.notifyDelaySeconds              = notifyDelay
-        s.audioLowDelaySeconds            = audioLowDelay
-        s.audioMedDelaySeconds            = audioMedDelay
-        s.audioHighDelaySeconds           = audioHighDelay
-        s.clearDelaySeconds               = clearDelay
-        s.volumeLow                       = volumeLow
-        s.volumeMed                       = volumeMed
-        s.volumeHigh                      = volumeHigh
-        s.snoringDetectionSensitivity     = snoringDetectionSensitivity
+        guard let stored = settings else { return }
+        stored.notifyDelaySeconds              = notifyDelay
+        stored.audioLowDelaySeconds            = audioLowDelay
+        stored.audioMedDelaySeconds            = audioMedDelay
+        stored.audioHighDelaySeconds           = audioHighDelay
+        stored.clearDelaySeconds               = clearDelay
+        stored.volumeLow                       = volumeLow
+        stored.volumeMed                       = volumeMed
+        stored.volumeHigh                      = volumeHigh
+        stored.snoringDetectionSensitivity     = snoringDetectionSensitivity
+        stored.alarmStyleRaw                   = alarmStyle.rawValue
         try? context.save()
     }
 
+    /// Discard unsaved changes by reloading from the SwiftData store.
+    func cancel() {
+        load()
+    }
+
+    /// Reset everything to factory defaults.
     func reset() {
-        settings = AlertSettings()
-        if let s = settings { context.insert(s) }
+        // Replace with a fresh default object so next load() reads defaults.
+        if let old = settings { context.delete(old) }
+        let fresh = AlertSettings()
+        context.insert(fresh)
+        settings = fresh
         load()
     }
 }

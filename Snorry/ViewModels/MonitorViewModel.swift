@@ -165,6 +165,12 @@ final class MonitorViewModel {
         alertManager.config.volumeMed        = settings.volumeMed
         alertManager.config.volumeHigh       = settings.volumeHigh
 
+        // "Silence to end snore event" drives the detector gap tolerance directly.
+        detector.gapTolerance = settings.clearDelaySeconds
+
+        // Alarm tone style for this session.
+        alarmPlayer.setStyle(AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic)
+
         // Map sensitivity (1–5) to detection thresholds using a power curve so that
         // levels 4–5 produce noticeably larger jumps in sensitivity than levels 1–2.
         // blend=0 (low) → high thresholds; blend=1 (very high) → low thresholds.
@@ -388,7 +394,7 @@ final class MonitorViewModel {
             alarmPlayer.play(volume: alertManager.config.volumeHigh)
 
         case .idle, .cleared:
-            alarmPlayer.fadeOut()
+            alarmPlayer.stop()
             notifications.cancelSnoringAlert()
             isEpisodeConfirmed = false
             currentBRPM       = 0

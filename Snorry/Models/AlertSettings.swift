@@ -27,16 +27,20 @@ final class AlertSettings {
     /// threshold so quieter snores are registered.
     var snoringDetectionSensitivity: Double
 
+    /// Raw value of the selected `AlarmStyle` (stored as Int for SwiftData compatibility).
+    var alarmStyleRaw: Int
+
     init() {
         notifyDelaySeconds  = 2
         audioLowDelaySeconds  = 5
         audioMedDelaySeconds  = 10
         audioHighDelaySeconds = 15
-        clearDelaySeconds   = 5
-        volumeLow  = 0.20
-        volumeMed  = 0.60
+        clearDelaySeconds   = 8
+        volumeLow  = 0.50
+        volumeMed  = 0.80
         volumeHigh = 1.00
         snoringDetectionSensitivity = 3
+        alarmStyleRaw = AlarmStyle.classic.rawValue
     }
 
     /// Returns existing or creates default settings.

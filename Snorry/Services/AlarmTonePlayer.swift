@@ -1,34 +1,75 @@
 import AVFoundation
 import os.log
 
-// MARK: - Synthesises and plays a pulsing 2-tone alarm with smooth volume ramps
+// MARK: - Alarm tone styles
+
+enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
+    case gentle  = 0
+    case classic = 1
+    case alert   = 2
+    case urgent  = 3
+    case siren   = 4
+
+    var displayName: String {
+        switch self {
+        case .gentle:  return "Gentle"
+        case .classic: return "Classic"
+        case .alert:   return "Alert"
+        case .urgent:  return "Urgent"
+        case .siren:   return "Siren"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .gentle:  return "440 Hz · soft slow pulse"
+        case .classic: return "880 Hz · steady double-tone"
+        case .alert:   return "1 kHz · triple burst"
+        case .urgent:  return "1.2 kHz · rapid staccato"
+        case .siren:   return "800–1400 Hz · rising sweep"
+        }
+    }
+}
+
+// MARK: - Synthesises and plays a looping alarm tone
 /// No binary audio assets required — everything is generated in memory.
 final class AlarmTonePlayer: @unchecked Sendable {
 
-    private let engine = AVAudioEngine()
+    private let engine     = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
     private let mixerNode: AVAudioMixerNode
 
     private var toneBuffer: AVAudioPCMBuffer?
-    private var isRunning = false
+    private var isRunning  = false
+    private(set) var style: AlarmStyle = .classic
 
-    private var targetVolume: Float = 0
+    private var targetVolume: Float  = 0
     private var currentVolume: Float = 0
-    private let rampDuration: Float = 1.5   // seconds
+    private let rampDuration: Float  = 1.2   // seconds for volume ramp
     private var rampTimer: Timer?
 
     private let logger = Logger(subsystem: "app.Snorry", category: "AlarmTone")
 
     private static let sampleRate: Double = 44_100
-    private static let toneHz1: Double    = 880   // A5
-    private static let toneHz2: Double    = 660   // E5
-    private static let pulseDuration: Double = 1.0 // one on/off cycle
 
     init() {
         mixerNode = engine.mainMixerNode
         engine.attach(playerNode)
         engine.connect(playerNode, to: mixerNode, format: Self.makeFormat())
-        toneBuffer = Self.synthesizeTone()
+        toneBuffer = Self.synthesize(style: .classic)
+    }
+
+    // MARK: Style selection
+
+    /// Re-synthesises the internal buffer for the chosen style.
+    /// Safe to call before or after `play()`; a running engine is restarted.
+    func setStyle(_ newStyle: AlarmStyle) {
+        guard newStyle != style else { return }
+        style      = newStyle
+        let wasRunning = isRunning
+        if wasRunning { stop() }
+        toneBuffer = Self.synthesize(style: newStyle)
+        if wasRunning { startEngine() }
     }
 
     // MARK: Playback control
@@ -39,24 +80,24 @@ final class AlarmTonePlayer: @unchecked Sendable {
         startRamp()
     }
 
-    func fadeOut() {
-        targetVolume = 0
-        startRamp(completion: { [weak self] in
-            self?.stopEngine()
-        })
-    }
-
+    /// Hard-stop with no fade — use when snoring ends.
     func stop() {
         rampTimer?.invalidate()
         rampTimer = nil
         playerNode.stop()
         if engine.isRunning { engine.stop() }
-        isRunning = false
+        isRunning     = false
         currentVolume = 0
         mixerNode.outputVolume = 0
     }
 
-    // MARK: Private
+    /// Smooth fade-out — kept for optional use.
+    func fadeOut() {
+        targetVolume = 0
+        startRamp { [weak self] in self?.stopEngine() }
+    }
+
+    // MARK: Private engine helpers
 
     private func startEngine() {
         do {
@@ -71,7 +112,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
     private func stopEngine() {
         playerNode.stop()
         engine.stop()
-        isRunning = false
+        isRunning     = false
         currentVolume = 0
     }
 
@@ -91,9 +132,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
             let delta = (self.targetVolume - self.currentVolume) / totalSteps
             self.currentVolume = max(0, min(1, self.currentVolume + delta))
             DispatchQueue.main.async { self.mixerNode.outputVolume = self.currentVolume }
-
-            let done = abs(self.currentVolume - self.targetVolume) < 0.01
-            if done {
+            if abs(self.currentVolume - self.targetVolume) < 0.01 {
                 timer.invalidate()
                 self.rampTimer = nil
                 completion?()
@@ -101,46 +140,140 @@ final class AlarmTonePlayer: @unchecked Sendable {
         }
     }
 
-    // MARK: Tone synthesis
+    // MARK: Format
 
     private static func makeFormat() -> AVAudioFormat {
         AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
     }
 
-    /// Returns one full pulse cycle: 0.5 s tone + 0.5 s silence (loopable).
-    private static func synthesizeTone() -> AVAudioPCMBuffer? {
-        let format = makeFormat()
-        let totalFrames = AVAudioFrameCount(sampleRate * pulseDuration)
-        let toneFrames  = AVAudioFrameCount(sampleRate * 0.45)   // 45 % on
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: totalFrames) else { return nil }
-        buffer.frameLength = totalFrames
+    // MARK: Synthesis dispatcher
 
-        guard let data = buffer.floatChannelData?[0] else { return nil }
-        let freq1 = toneHz1
-        let freq2 = toneHz2
-        let sr = sampleRate
-
-        for i in 0..<Int(totalFrames) {
-            if i < Int(toneFrames) {
-                // Blend two sine waves, soft attack/release envelope
-                let t = Double(i) / sr
-                let env: Double
-                let attack = 0.05 * Double(toneFrames) / sr
-                let release = 0.05 * Double(toneFrames) / sr
-                let tNorm = t / (Double(toneFrames) / sr)
-                if tNorm < attack / (Double(toneFrames) / sr) {
-                    env = tNorm / (attack / (Double(toneFrames) / sr))
-                } else if tNorm > 1 - release / (Double(toneFrames) / sr) {
-                    env = (1 - tNorm) / (release / (Double(toneFrames) / sr))
-                } else {
-                    env = 1.0
-                }
-                let sine = (sin(2 * .pi * freq1 * t) + sin(2 * .pi * freq2 * t)) * 0.5
-                data[i] = Float(sine * env * 0.8)
-            } else {
-                data[i] = 0
-            }
+    private static func synthesize(style: AlarmStyle) -> AVAudioPCMBuffer? {
+        switch style {
+        case .gentle:  return synthesizeGentle()
+        case .classic: return synthesizeClassic()
+        case .alert:   return synthesizeAlert()
+        case .urgent:  return synthesizeUrgent()
+        case .siren:   return synthesizeSiren()
         }
-        return buffer
+    }
+
+    /// Cosine-shaped attack/release envelope; `pos` and `duration` in samples.
+    private static func cosEnv(pos: Int, duration: Int,
+                                attackFrac: Double = 0.08, releaseFrac: Double = 0.08) -> Double {
+        let atk = max(1, Int(Double(duration) * attackFrac))
+        let rel = max(1, Int(Double(duration) * releaseFrac))
+        if pos < atk { return 0.5 * (1 - cos(.pi * Double(pos) / Double(atk))) }
+        if pos > duration - rel { return 0.5 * (1 - cos(.pi * Double(duration - pos) / Double(rel))) }
+        return 1.0
+    }
+
+    // MARK: Gentle — 440/330 Hz, 1.5 s on / 0.5 s off
+
+    private static func synthesizeGentle() -> AVAudioPCMBuffer? {
+        let rate    = sampleRate
+        let onDur   = 1.5
+        let total   = AVAudioFrameCount(rate * 2.0)
+        let onCount = Int(rate * onDur)
+        guard let buf = AVAudioPCMBuffer(pcmFormat: makeFormat(), frameCapacity: total),
+              let data = buf.floatChannelData?[0] else { return nil }
+        buf.frameLength = total
+        for idx in 0..<Int(total) {
+            guard idx < onCount else { data[idx] = 0; continue }
+            let time = Double(idx) / rate
+            let wave = (sin(2 * .pi * 440 * time) + sin(2 * .pi * 330 * time)) * 0.5
+            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount) * 0.75)
+        }
+        return buf
+    }
+
+    // MARK: Classic — 880/660 Hz, 0.45 s on / 0.55 s off
+
+    private static func synthesizeClassic() -> AVAudioPCMBuffer? {
+        let rate    = sampleRate
+        let onDur   = 0.45
+        let total   = AVAudioFrameCount(rate * 1.0)
+        let onCount = Int(rate * onDur)
+        guard let buf = AVAudioPCMBuffer(pcmFormat: makeFormat(), frameCapacity: total),
+              let data = buf.floatChannelData?[0] else { return nil }
+        buf.frameLength = total
+        for idx in 0..<Int(total) {
+            guard idx < onCount else { data[idx] = 0; continue }
+            let time = Double(idx) / rate
+            let wave = (sin(2 * .pi * 880 * time) + sin(2 * .pi * 660 * time)) * 0.5
+            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount) * 0.80)
+        }
+        return buf
+    }
+
+    // MARK: Alert — 1000/750 Hz, three 0.18 s beeps + 0.56 s pause
+
+    private static func synthesizeAlert() -> AVAudioPCMBuffer? {
+        let rate     = sampleRate
+        let beepDur  = 0.18
+        let gapDur   = 0.10
+        let pauseDur = 0.56
+        let cycleDur = (beepDur + gapDur) * 3 + pauseDur  // ≈ 1.40 s
+        let total    = AVAudioFrameCount(rate * cycleDur)
+        let beepN    = Int(rate * beepDur)
+        let stepN    = Int(rate * (beepDur + gapDur))
+        guard let buf = AVAudioPCMBuffer(pcmFormat: makeFormat(), frameCapacity: total),
+              let data = buf.floatChannelData?[0] else { return nil }
+        buf.frameLength = total
+        for idx in 0..<Int(total) {
+            let burstIndex = idx / stepN
+            let posInStep  = idx % stepN
+            guard burstIndex < 3, posInStep < beepN else { data[idx] = 0; continue }
+            let time = Double(idx) / rate
+            let wave = (sin(2 * .pi * 1000 * time) + sin(2 * .pi * 750 * time)) * 0.5
+            data[idx] = Float(wave * cosEnv(pos: posInStep, duration: beepN,
+                                            attackFrac: 0.10, releaseFrac: 0.10) * 0.85)
+        }
+        return buf
+    }
+
+    // MARK: Urgent — 1200/900 Hz, rapid 0.15 s on / 0.10 s off
+
+    private static func synthesizeUrgent() -> AVAudioPCMBuffer? {
+        let rate    = sampleRate
+        let onDur   = 0.15
+        let total   = AVAudioFrameCount(rate * 0.25)
+        let onCount = Int(rate * onDur)
+        guard let buf = AVAudioPCMBuffer(pcmFormat: makeFormat(), frameCapacity: total),
+              let data = buf.floatChannelData?[0] else { return nil }
+        buf.frameLength = total
+        for idx in 0..<Int(total) {
+            guard idx < onCount else { data[idx] = 0; continue }
+            let time = Double(idx) / rate
+            let wave = (sin(2 * .pi * 1200 * time) + sin(2 * .pi * 900 * time)) * 0.5
+            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount,
+                                            attackFrac: 0.05, releaseFrac: 0.05) * 0.85)
+        }
+        return buf
+    }
+
+    // MARK: Siren — frequency sweep 800→1400 Hz over 1.0 s, then 0.3 s silence
+
+    private static func synthesizeSiren() -> AVAudioPCMBuffer? {
+        let rate     = sampleRate
+        let sweepDur = 1.0
+        let silDur   = 0.3
+        let total    = AVAudioFrameCount(rate * (sweepDur + silDur))
+        let sweepN   = Int(rate * sweepDur)
+        guard let buf = AVAudioPCMBuffer(pcmFormat: makeFormat(), frameCapacity: total),
+              let data = buf.floatChannelData?[0] else { return nil }
+        buf.frameLength = total
+        // Integrate instantaneous phase to avoid discontinuities at the start of silence.
+        var phase = 0.0
+        for idx in 0..<Int(total) {
+            guard idx < sweepN else { data[idx] = 0; continue }
+            let frac = Double(idx) / Double(sweepN)
+            let freq = 800.0 + 600.0 * frac
+            phase   += 2 * .pi * freq / rate
+            let wave = sin(phase)
+            data[idx] = Float(wave * cosEnv(pos: idx, duration: sweepN,
+                                            attackFrac: 0.04, releaseFrac: 0.08) * 0.80)
+        }
+        return buf
     }
 }

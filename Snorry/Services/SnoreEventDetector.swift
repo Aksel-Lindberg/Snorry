@@ -31,7 +31,9 @@ enum DetectorEvent: Sendable {
 final class SnoreEventDetector: @unchecked Sendable {
 
     // MARK: Tunables
-    private let gapTolerance: TimeInterval     = 8.0    // silence that ends a confirmed event
+    /// Seconds of silence (classifier off) that end a confirmed snore event.
+    /// Driven by the "Silence to end snore event" setting; default 8 s.
+    var gapTolerance: TimeInterval             = 8.0
     private let minOnsetInterval: TimeInterval = 0.5    // de-bounce between onsets
     private let ambientAlpha: Float            = 0.02   // EMA weight for ambient baseline
     private let brpmWindowSize                 = 30     // max onsets used for BRPM
