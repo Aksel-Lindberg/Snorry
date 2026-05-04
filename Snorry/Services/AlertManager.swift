@@ -4,7 +4,7 @@ import os.log
 // MARK: - Alert escalation phases
 enum AlertPhase: Sendable, Equatable {
     case idle
-    case notified                // push notification sent
+    case notified                // push notification(s) — only if push enabled
     case alarming                // sound alarm active (volume stepped externally)
     case cleared                 // snoring stopped, alert dismissed
 }
@@ -12,17 +12,20 @@ enum AlertPhase: Sendable, Equatable {
 // MARK: - Drives escalation from continuous-snoring duration
 /// Update via `update(isSnoring:, at:)` at a regular cadence (~1 Hz is sufficient).
 /// Observe `phaseStream` to react to transitions.
+///
+/// **Channels:** If only push is enabled, escalates to `.notified` and stays there.
+/// If only sound is enabled, goes from idle → `.alarming` after `soundAlarmAfter`.
+/// If both are enabled: idle → `.notified` after `notifyDelay` → `.alarming` after `soundAlarmAfter`.
 final class AlertManager: @unchecked Sendable {
 
     // MARK: Configuration (mirrored from AlertSettings)
     struct Config: Sendable {
         var notifyDelay: TimeInterval      = 2
-        /// Elapsed snoring time before sound alarm starts (seconds).
         var soundAlarmAfter: TimeInterval  = 15
-        /// Silence before clearing alert state (seconds).
         var clearDelay: TimeInterval       = 3
-        /// Peak alarm volume (0…1); stepped ramp applied in MonitorViewModel.
         var alarmVolume: Float             = 0.85
+        var pushEnabled: Bool              = true
+        var soundEnabled: Bool             = true
     }
 
     var config = Config()
@@ -42,9 +45,9 @@ final class AlertManager: @unchecked Sendable {
     // MARK: Lifecycle
 
     func start() {
-        let (s, c) = AsyncStream<AlertPhase>.makeStream()
-        phaseStream = s
-        continuation = c
+        let (stream, continuation) = AsyncStream<AlertPhase>.makeStream()
+        phaseStream = stream
+        self.continuation = continuation
         phase = .idle
         snoringStartDate = nil
         silenceStartDate = nil
@@ -84,16 +87,35 @@ final class AlertManager: @unchecked Sendable {
     // MARK: Private
 
     private func advance(elapsed: TimeInterval, at now: Date) {
+        let push = config.pushEnabled
+        let sound = config.soundEnabled
+
         switch phase {
         case .idle:
-            if elapsed >= config.notifyDelay {
+            // Neither channel — remain idle.
+            guard push || sound else { return }
+
+            // Sound only: go straight to alarming after soundAlarmAfter.
+            if !push, sound {
+                if elapsed >= config.soundAlarmAfter {
+                    transition(to: .alarming, at: now)
+                }
+                return
+            }
+
+            // Push (alone or with sound): enter notified after notifyDelay.
+            if push, elapsed >= config.notifyDelay {
                 transition(to: .notified, at: now)
                 advance(elapsed: elapsed, at: now)
             }
+
         case .notified:
+            // Push only: stay in notified until silence clears.
+            guard sound else { return }
             if elapsed >= config.soundAlarmAfter {
                 transition(to: .alarming, at: now)
             }
+
         case .alarming, .cleared:
             break
         }

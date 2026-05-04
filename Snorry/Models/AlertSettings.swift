@@ -24,6 +24,15 @@ final class AlertSettings {
     /// Raw value of the selected `AlarmStyle` (stored as Int for SwiftData compatibility).
     var alarmStyleRaw: Int
 
+    /// When false, no push notifications are sent (timing sliders for push are ignored).
+    var pushNotificationEnabled: Bool
+    /// When false, no in-app sound alarm (volume/style ignored for playback).
+    var soundAlarmEnabled: Bool
+    /// When true, additional push notifications fire while snoring continues after the first.
+    var pushRepeatEnabled: Bool
+    /// Seconds between repeated push notifications (only if `pushRepeatEnabled`).
+    var pushRepeatIntervalSeconds: Double
+
     init() {
         notifyDelaySeconds        = 2
         soundAlarmAfterSeconds    = 15
@@ -31,6 +40,10 @@ final class AlertSettings {
         alarmVolume               = 0.85
         snoringDetectionSensitivity = 3
         alarmStyleRaw             = AlarmStyle.classic.rawValue
+        pushNotificationEnabled   = true
+        soundAlarmEnabled         = true
+        pushRepeatEnabled         = false
+        pushRepeatIntervalSeconds = 60
     }
 
     /// Returns existing or creates default settings.

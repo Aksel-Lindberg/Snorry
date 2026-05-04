@@ -10,6 +10,11 @@ final class SettingsViewModel {
     var clearDelay: Double      = 8
     var alarmVolume: Float      = 0.85
 
+    var pushNotificationEnabled: Bool = true
+    var soundAlarmEnabled: Bool       = true
+    var pushRepeatEnabled: Bool       = false
+    var pushRepeatInterval: Double    = 60
+
     /// Snore detection sensitivity level (1–5). 3 = factory default.
     var snoringDetectionSensitivity: Double = 3
 
@@ -29,21 +34,28 @@ final class SettingsViewModel {
     private func load() {
         let stored = AlertSettings.load(context: context)
         settings = stored
-        notifyDelay                 = stored.notifyDelaySeconds
-        soundAlarmAfter             = stored.soundAlarmAfterSeconds
-        clearDelay                  = stored.clearDelaySeconds
-        alarmVolume                 = stored.alarmVolume
-        snoringDetectionSensitivity = stored.snoringDetectionSensitivity
-        alarmStyle                  = AlarmStyle(rawValue: stored.alarmStyleRaw) ?? .classic
+        notifyDelay                   = stored.notifyDelaySeconds
+        soundAlarmAfter               = stored.soundAlarmAfterSeconds
+        clearDelay                    = stored.clearDelaySeconds
+        alarmVolume                   = stored.alarmVolume
+        pushNotificationEnabled       = stored.pushNotificationEnabled
+        soundAlarmEnabled             = stored.soundAlarmEnabled
+        pushRepeatEnabled             = stored.pushRepeatEnabled
+        pushRepeatInterval            = stored.pushRepeatIntervalSeconds
+        snoringDetectionSensitivity   = stored.snoringDetectionSensitivity
+        alarmStyle                    = AlarmStyle(rawValue: stored.alarmStyleRaw) ?? .classic
     }
 
-    /// Persist current draft values to the SwiftData store.
     func save() {
         guard let stored = settings else { return }
         stored.notifyDelaySeconds              = notifyDelay
         stored.soundAlarmAfterSeconds          = soundAlarmAfter
         stored.clearDelaySeconds               = clearDelay
         stored.alarmVolume                     = alarmVolume
+        stored.pushNotificationEnabled         = pushNotificationEnabled
+        stored.soundAlarmEnabled               = soundAlarmEnabled
+        stored.pushRepeatEnabled               = pushRepeatEnabled
+        stored.pushRepeatIntervalSeconds       = pushRepeatInterval
         stored.snoringDetectionSensitivity     = snoringDetectionSensitivity
         stored.alarmStyleRaw                   = alarmStyle.rawValue
         try? context.save()

@@ -64,4 +64,26 @@ struct AlertManagerTests {
         #expect(abs(mgr.currentVolume - 0.75) < 0.001)
         mgr.stop()
     }
+
+    @Test func pushOnlyStaysNotified() {
+        let mgr = makeManager()
+        mgr.config.pushEnabled = true
+        mgr.config.soundEnabled = false
+        let start = Date()
+        mgr.update(isSnoring: true, at: start)
+        mgr.update(isSnoring: true, at: start.addingTimeInterval(10))
+        #expect(mgr.phase == .notified)
+        mgr.stop()
+    }
+
+    @Test func soundOnlySkipsNotified() {
+        let mgr = makeManager()
+        mgr.config.pushEnabled = false
+        mgr.config.soundEnabled = true
+        let start = Date()
+        mgr.update(isSnoring: true, at: start)
+        mgr.update(isSnoring: true, at: start.addingTimeInterval(5.5))
+        #expect(mgr.phase == .alarming)
+        mgr.stop()
+    }
 }

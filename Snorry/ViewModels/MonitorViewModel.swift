@@ -95,6 +95,14 @@ final class MonitorViewModel {
     private var timelineTimer: Task<Void, Never>?
     /// Steps alarm volume every 2 s while `.alarming`; cancelled when snoring stops.
     private var alarmRampTask: Task<Void, Never>?
+    /// Fires repeated push notifications while in `.notified`.
+    private var pushRepeatTask: Task<Void, Never>?
+
+    /// Copied from settings at session start (alert UI / playback).
+    private var sessionPushEnabled = true
+    private var sessionSoundEnabled = true
+    private var sessionPushRepeatEnabled = false
+    private var sessionPushRepeatInterval: TimeInterval = 60
 
     private let modelContext: ModelContext
 
@@ -163,10 +171,17 @@ final class MonitorViewModel {
 
         // Apply saved alert settings
         let settings = AlertSettings.load(context: modelContext)
+        sessionPushEnabled          = settings.pushNotificationEnabled
+        sessionSoundEnabled         = settings.soundAlarmEnabled
+        sessionPushRepeatEnabled    = settings.pushRepeatEnabled
+        sessionPushRepeatInterval   = settings.pushRepeatIntervalSeconds
+
         alertManager.config.notifyDelay       = settings.notifyDelaySeconds
         alertManager.config.soundAlarmAfter   = settings.soundAlarmAfterSeconds
         alertManager.config.clearDelay        = Self.alertSilenceBeforeClearSeconds
         alertManager.config.alarmVolume       = settings.alarmVolume
+        alertManager.config.pushEnabled       = settings.pushNotificationEnabled
+        alertManager.config.soundEnabled      = settings.soundAlarmEnabled
 
         // User slider: silence duration before ending/storing a snore bout (detector gap).
         detector.gapTolerance = settings.clearDelaySeconds
@@ -319,6 +334,7 @@ final class MonitorViewModel {
         elapsedTimer?.cancel();  elapsedTimer = nil
         timelineTimer?.cancel(); timelineTimer = nil
         alarmRampTask?.cancel(); alarmRampTask = nil
+        pushRepeatTask?.cancel(); pushRepeatTask = nil
     }
 
     // MARK: Event handling
@@ -386,12 +402,19 @@ final class MonitorViewModel {
     private func handleAlertPhase(_ phase: AlertPhase) {
         switch phase {
         case .notified:
+            guard sessionPushEnabled else { return }
             notifications.scheduleSnoringAlert()
+            startPushRepeatLoop()
 
         case .alarming:
+            pushRepeatTask?.cancel()
+            pushRepeatTask = nil
+            guard sessionSoundEnabled else { return }
             startAlarmVolumeRamp()
 
         case .idle, .cleared:
+            pushRepeatTask?.cancel()
+            pushRepeatTask = nil
             alarmRampTask?.cancel()
             alarmRampTask = nil
             alarmPlayer.stop()
@@ -400,6 +423,20 @@ final class MonitorViewModel {
             currentBRPM       = 0
             brpmAvailable     = false
             detector.resetForNewEpisode()
+        }
+    }
+
+    /// Re-sends push notifications on an interval while still in `.notified` (snoring continues).
+    private func startPushRepeatLoop() {
+        pushRepeatTask?.cancel()
+        guard sessionPushRepeatEnabled, sessionPushEnabled else { return }
+        let interval = max(2, sessionPushRepeatInterval)
+        pushRepeatTask = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(interval))
+                guard isMonitoring, alertPhase == .notified else { break }
+                notifications.scheduleSnoringAlertRepeat()
+            }
         }
     }
 

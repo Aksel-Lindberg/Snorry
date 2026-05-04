@@ -56,6 +56,7 @@ struct SettingsView: View {
     private func settingsContent(vm: SettingsViewModel) -> some View {
         List {
             detectionSection(vm: vm)
+            alertChannelsSection(vm: vm)
             alarmStyleSection(vm: vm)
             alertTimingsSection(vm: vm)
             volumeSection(vm: vm)
@@ -80,6 +81,78 @@ struct SettingsView: View {
             Text("Higher sensitivity catches quieter snores but may increase false positives.")
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    private func alertChannelsSection(vm: SettingsViewModel) -> some View {
+        Section {
+            Toggle(isOn: Binding(
+                get: { vm.pushNotificationEnabled },
+                set: { vm.pushNotificationEnabled = $0 }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Push notifications")
+                        .font(.subheadline)
+                    Text("Local alerts on this iPhone")
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelSecondary)
+                }
+            }
+            .tint(Theme.accent)
+
+            Toggle(isOn: Binding(
+                get: { vm.soundAlarmEnabled },
+                set: { vm.soundAlarmEnabled = $0 }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Sound alarm")
+                        .font(.subheadline)
+                    Text("In-app alarm tone while monitoring")
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelSecondary)
+                }
+            }
+            .tint(Theme.accent)
+
+            Toggle(isOn: Binding(
+                get: { vm.pushRepeatEnabled },
+                set: { vm.pushRepeatEnabled = $0 }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Repeat push notifications")
+                        .font(.subheadline)
+                    Text("While snoring continues after the first alert")
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelSecondary)
+                }
+            }
+            .disabled(!vm.pushNotificationEnabled)
+            .tint(Theme.accent)
+
+            SliderRow(
+                label: "Repeat push every",
+                value: Binding(get: { vm.pushRepeatInterval },
+                               set: { vm.pushRepeatInterval = $0 }),
+                range: 2...600,
+                unit: "s",
+                step: 1
+            )
+            .disabled(!vm.pushNotificationEnabled || !vm.pushRepeatEnabled)
+            .opacity(vm.pushNotificationEnabled && vm.pushRepeatEnabled ? 1 : 0.45)
+        } header: {
+            Text("Alert channels")
+                .foregroundStyle(Theme.labelSecondary)
+        } footer: {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Turn on one or both. With both on: push uses “Send push notification after”, then sound uses “Sound alarm after”. Sound-only skips push; push-only never plays sound.")
+                    .foregroundStyle(Theme.labelSecondary)
+                if !vm.pushNotificationEnabled && !vm.soundAlarmEnabled {
+                    Text("No alerts will fire until you enable push and/or sound.")
+                        .foregroundStyle(Theme.snoring)
+                }
+            }
+            .font(.caption)
         }
         .listRowBackground(Theme.surface)
     }
@@ -115,6 +188,8 @@ struct SettingsView: View {
             Text("Alarm Style")
                 .foregroundStyle(Theme.labelSecondary)
         }
+        .opacity(vm.soundAlarmEnabled ? 1 : 0.45)
+        .disabled(!vm.soundAlarmEnabled)
         .listRowBackground(Theme.surface)
     }
 
@@ -128,6 +203,8 @@ struct SettingsView: View {
                 unit: "s",
                 step: 1
             )
+            .disabled(!vm.pushNotificationEnabled)
+            .opacity(vm.pushNotificationEnabled ? 1 : 0.45)
             SliderRow(
                 label: "Sound alarm after",
                 value: Binding(get: { vm.soundAlarmAfter },
@@ -136,6 +213,8 @@ struct SettingsView: View {
                 unit: "s",
                 step: 1
             )
+            .disabled(!vm.soundAlarmEnabled)
+            .opacity(vm.soundAlarmEnabled ? 1 : 0.45)
             SliderRow(
                 label: "Silence to end snore event",
                 value: Binding(get: { vm.clearDelay },
@@ -148,7 +227,7 @@ struct SettingsView: View {
             Text("Alert Timings")
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
-            Text("Sound alarm after: continuous snoring time before the alarm starts (then volume rises every 2 s). Silence to end snore event: no snoring for this long ends the bout.")
+            Text("Timings apply only to enabled channels. Both on: notify first, then sound after the longer “Sound alarm after” threshold (from snoring start). Silence to end snore event ends the bout.")
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)
         }
@@ -168,6 +247,8 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)
         }
+        .opacity(vm.soundAlarmEnabled ? 1 : 0.45)
+        .disabled(!vm.soundAlarmEnabled)
         .listRowBackground(Theme.surface)
     }
 
