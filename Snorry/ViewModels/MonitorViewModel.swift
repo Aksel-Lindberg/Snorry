@@ -86,6 +86,8 @@ final class MonitorViewModel {
 
     // Tracks an open AAC file for exactly one detector `SnoreEvent` (opened on `.snoreStarted`, closed on `.snoreEnded`).
     private var clipOpen = false
+    /// True between detector `snoreStarted` and `snoreEnded` — keeps the sound alarm on during classifier-quiet gaps between breaths.
+    private var activeSnoreEpisode = false
 
     private var monitorTask: Task<Void, Never>?
     private var classifierTask: Task<Void, Never>?
@@ -106,8 +108,6 @@ final class MonitorViewModel {
 
     private let modelContext: ModelContext
 
-    /// Silence window before clearing alarms/notifications (seconds). Separate from snore-event gap.
-    private static let alertSilenceBeforeClearSeconds: TimeInterval = 3
     /// Seconds between alarm volume steps (20% of max per step until cap).
     private static let alarmVolumeStepInterval: TimeInterval = 2
 
@@ -150,6 +150,7 @@ final class MonitorViewModel {
 
         isMonitoring = true
         isSnoring = false
+        activeSnoreEpisode = false
         elapsedSeconds = 0
         snoreEventCount = 0
         spectrumBands = []
@@ -178,7 +179,8 @@ final class MonitorViewModel {
 
         alertManager.config.notifyDelay       = settings.notifyDelaySeconds
         alertManager.config.soundAlarmAfter   = settings.soundAlarmAfterSeconds
-        alertManager.config.clearDelay        = Self.alertSilenceBeforeClearSeconds
+        // Same window as snore-event end: alarm stops only after this much quiet (not after brief between-breath gaps).
+        alertManager.config.clearDelay        = settings.clearDelaySeconds
         alertManager.config.alarmVolume       = settings.alarmVolume
         alertManager.config.pushEnabled       = settings.pushNotificationEnabled
         alertManager.config.soundEnabled      = settings.soundAlarmEnabled
@@ -220,6 +222,7 @@ final class MonitorViewModel {
 
         isMonitoring       = false
         isSnoring          = false
+        activeSnoreEpisode = false
         isEpisodeConfirmed = false
         alertPhase         = .idle
         currentBRPM        = 0
@@ -306,8 +309,9 @@ final class MonitorViewModel {
                 try? await Task.sleep(for: .seconds(1))
                 guard let self, isMonitoring else { break }
                 elapsedSeconds += 1
-                // Only escalate alerts once a real BRPM pattern is confirmed.
-                alertManager.update(isSnoring: isSnoring && isEpisodeConfirmed)
+                // Episode flag keeps alerts active between breaths (classifier often goes quiet briefly).
+                let sustainedSnoring = isEpisodeConfirmed && (isSnoring || activeSnoreEpisode)
+                alertManager.update(isSnoring: sustainedSnoring)
                 // Persist waveform sample every second
                 sessionStore?.addWaveformSample(
                     dBFS: currentDB,
@@ -348,6 +352,7 @@ final class MonitorViewModel {
             activeEventID      = id
             snoreEventCount   += 1
             isEpisodeConfirmed = true
+            activeSnoreEpisode = true
             // Fresh BRPM estimation for each new detector bout / event.
             currentBRPM       = 0
             brpmAvailable     = false
@@ -378,6 +383,7 @@ final class MonitorViewModel {
             break
 
         case .snoreEnded(let id, let at, let brpm, let peakDB, let avgDB):
+            activeSnoreEpisode = false
             if clipOpen {
                 let relativePath = clipRecorder.endClip()
                 clipOpen = false
@@ -419,6 +425,7 @@ final class MonitorViewModel {
             alarmRampTask = nil
             alarmPlayer.stop()
             notifications.cancelSnoringAlert()
+            activeSnoreEpisode = false
             isEpisodeConfirmed = false
             currentBRPM       = 0
             brpmAvailable     = false
