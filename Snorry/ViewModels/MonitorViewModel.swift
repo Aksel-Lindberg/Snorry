@@ -96,6 +96,9 @@ final class MonitorViewModel {
 
     private let modelContext: ModelContext
 
+    /// Silence window before clearing alarms/notifications (seconds). Separate from snore-event gap.
+    private static let alertSilenceBeforeClearSeconds: TimeInterval = 3
+
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.spectrumAnalyzer = LiveSpectrumAnalyzer(bandCount: spectrumBandCount)
@@ -160,12 +163,12 @@ final class MonitorViewModel {
         alertManager.config.audioLowDelay    = settings.audioLowDelaySeconds
         alertManager.config.audioMedDelay    = settings.audioMedDelaySeconds
         alertManager.config.audioHighDelay   = settings.audioHighDelaySeconds
-        alertManager.config.clearDelay       = settings.clearDelaySeconds
+        alertManager.config.clearDelay       = Self.alertSilenceBeforeClearSeconds
         alertManager.config.volumeLow        = settings.volumeLow
         alertManager.config.volumeMed        = settings.volumeMed
         alertManager.config.volumeHigh       = settings.volumeHigh
 
-        // "Silence to end snore event" drives the detector gap tolerance directly.
+        // User slider: silence duration before ending/storing a snore bout (detector gap).
         detector.gapTolerance = settings.clearDelaySeconds
 
         // Alarm tone style for this session.
@@ -384,14 +387,8 @@ final class MonitorViewModel {
         case .notified:
             notifications.scheduleSnoringAlert()
 
-        case .audioLow:
-            alarmPlayer.play(volume: alertManager.config.volumeLow)
-
-        case .audioMedium:
-            alarmPlayer.play(volume: alertManager.config.volumeMed)
-
-        case .audioHigh:
-            alarmPlayer.play(volume: alertManager.config.volumeHigh)
+        case .audioLow, .audioMedium, .audioHigh:
+            alarmPlayer.play(volume: alertManager.currentVolume)
 
         case .idle, .cleared:
             alarmPlayer.stop()

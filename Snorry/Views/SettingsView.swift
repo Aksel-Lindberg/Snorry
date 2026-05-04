@@ -4,6 +4,9 @@ import SwiftData
 // MARK: - Alert threshold configuration
 struct SettingsView: View {
 
+    /// When embedded in a tab, `dismiss()` does nothing — call this to return to the Monitor tab.
+    var onDone: (() -> Void)? = nil
+
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss)      private var dismiss
     @State private var vm: SettingsViewModel?
@@ -28,6 +31,7 @@ struct SettingsView: View {
                     Button("Cancel") {
                         vm?.cancel()
                         dismiss()
+                        onDone?()
                     }
                     .foregroundStyle(Theme.labelSecondary)
                 }
@@ -35,6 +39,7 @@ struct SettingsView: View {
                     Button("Save") {
                         vm?.save()
                         dismiss()
+                        onDone?()
                     }
                     .fontWeight(.semibold)
                     .foregroundStyle(Theme.accent)
@@ -116,7 +121,7 @@ struct SettingsView: View {
     private func alertTimingsSection(vm: SettingsViewModel) -> some View {
         Section {
             SliderRow(
-                label: "Notify after",
+                label: "Send push notification after",
                 value: Binding(get: { vm.notifyDelay },
                                set: { vm.notifyDelay = $0 }),
                 range: 2...120,

@@ -22,7 +22,7 @@ struct RootView: View {
                 }
                 .tag(Tab.sessions)
 
-            SettingsView()
+            SettingsView(onDone: { selectedTab = .home })
                 .tabItem {
                     Label("Settings", systemImage: "gearshape")
                 }

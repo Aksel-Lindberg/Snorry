@@ -235,7 +235,7 @@ struct MonitorView: View {
 
     private var alertTitle: String {
         switch vm.alertPhase {
-        case .notified:   return "Notification Sent"
+        case .notified:   return "Push notification sent"
         case .audioLow:   return "Alarm: Low"
         case .audioMedium: return "Alarm: Medium"
         case .audioHigh:  return "Alarm: Loud"
@@ -246,7 +246,7 @@ struct MonitorView: View {
 
     private var alertSubtitle: String {
         switch vm.alertPhase {
-        case .notified:   return "Check your phone to acknowledge."
+        case .notified:   return "Check your iPhone notification."
         case .audioLow:   return "Increasing in 30 s if snoring continues."
         case .audioMedium: return "Increasing in 30 s if snoring continues."
         case .audioHigh:  return "Maximum volume. Wake up!"

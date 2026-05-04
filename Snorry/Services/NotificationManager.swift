@@ -31,24 +31,31 @@ final class NotificationManager: @unchecked Sendable {
     // MARK: Alert scheduling
 
     /// Deliver an immediate local notification indicating snoring is detected.
+    /// Re-checks authorization at delivery time (user may have changed Settings).
     func scheduleSnoringAlert() {
-        guard isAuthorized else { return }
+        center.getNotificationSettings { [weak self] settings in
+            guard let self else { return }
+            guard settings.authorizationStatus == .authorized else {
+                self.logger.warning("Skipping snoring alert — notifications not authorized")
+                return
+            }
 
-        let content = UNMutableNotificationContent()
-        content.title = "Snoring Detected"
-        content.body  = "Snorry has detected a snoring pattern. Tap to view details."
-        content.sound = .default
-        content.interruptionLevel = .timeSensitive
+            let content = UNMutableNotificationContent()
+            content.title = "Snoring Detected"
+            content.body  = "Snorry has detected a snoring pattern. Tap to view details."
+            content.sound = .default
+            content.interruptionLevel = .timeSensitive
 
-        let request = UNNotificationRequest(
-            identifier: "snorry.snoring.alert",
-            content: content,
-            trigger: nil   // deliver immediately
-        )
+            let request = UNNotificationRequest(
+                identifier: "snorry.snoring.alert",
+                content: content,
+                trigger: nil   // deliver immediately
+            )
 
-        center.add(request) { [weak self] error in
-            if let error {
-                self?.logger.error("Failed to schedule notification: \(error)")
+            self.center.add(request) { error in
+                if let error {
+                    self.logger.error("Failed to schedule notification: \(error)")
+                }
             }
         }
     }
