@@ -2,7 +2,8 @@ import UserNotifications
 import os.log
 
 // MARK: - Wraps UNUserNotificationCenter for snore alerts
-final class NotificationManager: @unchecked Sendable {
+/// Subclasses `NSObject` so it can be `UNUserNotificationCenter.delegate` (`NSObjectProtocol`).
+final class NotificationManager: NSObject, @unchecked Sendable {
 
     static let shared = NotificationManager()
     private let center = UNUserNotificationCenter.current()
@@ -15,7 +16,9 @@ final class NotificationManager: @unchecked Sendable {
 
     private(set) var isAuthorized = false
 
-    private init() {}
+    private override init() {
+        super.init()
+    }
 
     // MARK: Authorisation
 
@@ -83,5 +86,19 @@ final class NotificationManager: @unchecked Sendable {
         center.removePendingNotificationRequests(withIdentifiers: pendingIds)
         center.removeDeliveredNotifications(withIdentifiers: [primaryAlertIdentifier])
         trackedRepeatIdentifiers.removeAll()
+    }
+}
+
+// MARK: - Foreground presentation
+
+extension NotificationManager: UNUserNotificationCenterDelegate {
+
+    /// Without this, iOS suppresses banners while the app is open (e.g. during monitoring).
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .list])
     }
 }

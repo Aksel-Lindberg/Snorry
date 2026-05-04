@@ -1,10 +1,16 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 @main
 struct SnorryApp: App {
 
     @State private var appEnv = AppEnvironment()
+
+    init() {
+        // Required so snoring alerts show as system banners while Snorry is on-screen (foreground).
+        UNUserNotificationCenter.current().delegate = NotificationManager.shared
+    }
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
