@@ -165,6 +165,12 @@ final class MonitorViewModel {
         alertManager.config.volumeMed        = settings.volumeMed
         alertManager.config.volumeHigh       = settings.volumeHigh
 
+        // Map sensitivity (1–5) to detection thresholds.
+        // blend=0 (low sensitivity) → high thresholds; blend=1 (high) → low thresholds.
+        let blend = Float((settings.snoringDetectionSensitivity - 1) / 4)
+        detector.onsetThresholdDB        = (1 - blend) * 20.0 + blend * 4.0    // 20 dB → 4 dB
+        classifier.confidenceThreshold   = (1 - blend) * 0.75 + blend * 0.40   // 0.75 → 0.40
+
         startTasks()
     }
 

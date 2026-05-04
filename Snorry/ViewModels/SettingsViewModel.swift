@@ -15,6 +15,9 @@ final class SettingsViewModel {
     var volumeMed: Float         = 0.60
     var volumeHigh: Float        = 1.00
 
+    /// Snore detection sensitivity level (1–5). 3 = factory default.
+    var snoringDetectionSensitivity: Double = 3
+
     private let context: ModelContext
     private var settings: AlertSettings?
 
@@ -26,26 +29,28 @@ final class SettingsViewModel {
     private func load() {
         let s = AlertSettings.load(context: context)
         settings = s
-        notifyDelay    = s.notifyDelaySeconds
-        audioLowDelay  = s.audioLowDelaySeconds
-        audioMedDelay  = s.audioMedDelaySeconds
-        audioHighDelay = s.audioHighDelaySeconds
-        clearDelay     = s.clearDelaySeconds
-        volumeLow      = s.volumeLow
-        volumeMed      = s.volumeMed
-        volumeHigh     = s.volumeHigh
+        notifyDelay                 = s.notifyDelaySeconds
+        audioLowDelay               = s.audioLowDelaySeconds
+        audioMedDelay               = s.audioMedDelaySeconds
+        audioHighDelay              = s.audioHighDelaySeconds
+        clearDelay                  = s.clearDelaySeconds
+        volumeLow                   = s.volumeLow
+        volumeMed                   = s.volumeMed
+        volumeHigh                  = s.volumeHigh
+        snoringDetectionSensitivity = s.snoringDetectionSensitivity
     }
 
     func save() {
         guard let s = settings else { return }
-        s.notifyDelaySeconds    = notifyDelay
-        s.audioLowDelaySeconds  = audioLowDelay
-        s.audioMedDelaySeconds  = audioMedDelay
-        s.audioHighDelaySeconds = audioHighDelay
-        s.clearDelaySeconds     = clearDelay
-        s.volumeLow             = volumeLow
-        s.volumeMed             = volumeMed
-        s.volumeHigh            = volumeHigh
+        s.notifyDelaySeconds              = notifyDelay
+        s.audioLowDelaySeconds            = audioLowDelay
+        s.audioMedDelaySeconds            = audioMedDelay
+        s.audioHighDelaySeconds           = audioHighDelay
+        s.clearDelaySeconds               = clearDelay
+        s.volumeLow                       = volumeLow
+        s.volumeMed                       = volumeMed
+        s.volumeHigh                      = volumeHigh
+        s.snoringDetectionSensitivity     = snoringDetectionSensitivity
         try? context.save()
     }
 

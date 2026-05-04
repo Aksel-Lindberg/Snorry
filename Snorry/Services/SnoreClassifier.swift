@@ -21,6 +21,10 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     private let voteWindowSize = 5
     private let voteThreshold = 3   // at least 3 "snoring" votes to emit true
 
+    /// Minimum classifier confidence to count a frame as snoring.
+    /// Derived from the user-facing sensitivity setting (lower → more sensitive).
+    var confidenceThreshold: Float = 0.60
+
     private let logger = Logger(subsystem: "app.Snorry", category: "Classifier")
 
     // MARK: Init
@@ -109,7 +113,7 @@ extension SnoreClassifier: SNResultsObserving {
             .first(where: { $0.identifier.lowercased() == snoringLabel })
             .map { $0.confidence } ?? 0
 
-        let isSnoring = confidence >= 0.60
+        let isSnoring = Float(confidence) >= confidenceThreshold
 
         // Majority vote smoothing
         voteWindow.append(isSnoring)

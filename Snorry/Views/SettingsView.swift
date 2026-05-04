@@ -30,12 +30,32 @@ struct SettingsView: View {
 
     private func settingsContent(vm: SettingsViewModel) -> some View {
         List {
+            detectionSection(vm: vm)
             alertTimingsSection(vm: vm)
             volumeSection(vm: vm)
             actionsSection(vm: vm)
         }
         .scrollContentBackground(.hidden)
         .listStyle(.insetGrouped)
+    }
+
+    private func detectionSection(vm: SettingsViewModel) -> some View {
+        Section {
+            SensitivityRow(
+                value: Binding(
+                    get: { vm.snoringDetectionSensitivity },
+                    set: { vm.snoringDetectionSensitivity = $0; vm.save() }
+                )
+            )
+        } header: {
+            Text("Snore Detection")
+                .foregroundStyle(Theme.labelSecondary)
+        } footer: {
+            Text("Higher sensitivity catches quieter snores but may increase false positives.")
+                .foregroundStyle(Theme.labelSecondary)
+                .font(.caption)
+        }
+        .listRowBackground(Theme.surface)
     }
 
     private func alertTimingsSection(vm: SettingsViewModel) -> some View {
@@ -148,6 +168,48 @@ private struct SliderRow: View {
             }
             Slider(value: $value, in: range, step: step)
                 .tint(Theme.accent)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+private struct SensitivityRow: View {
+    @Binding var value: Double
+
+    /// Maps the 1–5 integer level to a human-readable label.
+    private var label: String {
+        switch Int(value) {
+        case 1: return "Very Low"
+        case 2: return "Low"
+        case 3: return "Medium"
+        case 4: return "High"
+        case 5: return "Very High"
+        default: return "Medium"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Sensitivity")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.labelPrimary)
+                Spacer()
+                Text(label)
+                    .font(Theme.monoDigit(size: 13))
+                    .foregroundStyle(Theme.accent)
+            }
+            Slider(value: $value, in: 1...5, step: 1)
+                .tint(Theme.accent)
+            HStack {
+                Text("Low")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelSecondary)
+                Spacer()
+                Text("High")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelSecondary)
+            }
         }
         .padding(.vertical, 4)
     }

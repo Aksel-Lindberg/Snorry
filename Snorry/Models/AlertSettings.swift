@@ -22,6 +22,11 @@ final class AlertSettings {
     var volumeMed: Float
     var volumeHigh: Float
 
+    /// Snore detection sensitivity (1 = low, 3 = medium default, 5 = high).
+    /// Higher values lower both the onset dB threshold and the classifier confidence
+    /// threshold so quieter snores are registered.
+    var snoringDetectionSensitivity: Double
+
     init() {
         notifyDelaySeconds  = 2
         audioLowDelaySeconds  = 5
@@ -31,6 +36,7 @@ final class AlertSettings {
         volumeLow  = 0.20
         volumeMed  = 0.60
         volumeHigh = 1.00
+        snoringDetectionSensitivity = 3
     }
 
     /// Returns existing or creates default settings.

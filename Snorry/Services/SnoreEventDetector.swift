@@ -33,9 +33,13 @@ final class SnoreEventDetector: @unchecked Sendable {
     // MARK: Tunables
     private let gapTolerance: TimeInterval     = 8.0    // silence that ends a confirmed event
     private let minOnsetInterval: TimeInterval = 0.5    // de-bounce between onsets
-    private let onsetThresholdDB: Float        = 12.0   // dB above ambient to register onset
     private let ambientAlpha: Float            = 0.02   // EMA weight for ambient baseline
     private let brpmWindowSize                 = 30     // max onsets used for BRPM
+
+    /// dB above the ambient baseline required to register a breath onset.
+    /// Lower values make the detector more sensitive to quieter snores.
+    /// Derived from the user-facing sensitivity setting.
+    var onsetThresholdDB: Float = 12.0
 
     // MARK: Session-level flag
     /// True after the first confirmed episode this monitoring session.

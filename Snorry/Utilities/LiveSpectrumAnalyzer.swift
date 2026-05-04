@@ -52,7 +52,7 @@ final class LiveSpectrumAnalyzer {
 
         let copyCount = min(Int(buffer.frameLength), fftLength)
         windowed = [Float](repeating: 0, count: fftLength)
-        windowed.withUnsafeMutableBufferPointer { wp in
+        _ = windowed.withUnsafeMutableBufferPointer { wp in
             memcpy(wp.baseAddress!, ptr[0], copyCount * MemoryLayout<Float>.size)
         }
         for i in 0 ..< fftLength {
@@ -105,8 +105,6 @@ final class LiveSpectrumAnalyzer {
 
         let logLo = log(displayMinHz)
         let logHi = log(nyquist)
-        let invRange = 1 / (logHi - logLo)
-
         var bands = [Float](repeating: 0, count: bandCount)
         for b in 0 ..< bandCount {
             let u0 = Float(b) / Float(bandCount)
