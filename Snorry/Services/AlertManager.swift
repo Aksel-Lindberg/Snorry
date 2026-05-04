@@ -5,27 +5,24 @@ import os.log
 enum AlertPhase: Sendable, Equatable {
     case idle
     case notified                // push notification sent
-    case audioLow                // alarm playing at low volume
-    case audioMedium             // alarm playing at medium volume
-    case audioHigh               // alarm playing at full volume
+    case alarming                // sound alarm active (volume stepped externally)
     case cleared                 // snoring stopped, alert dismissed
 }
 
-// MARK: - Drives the escalation state machine from continuous-snoring duration
+// MARK: - Drives escalation from continuous-snoring duration
 /// Update via `update(isSnoring:, at:)` at a regular cadence (~1 Hz is sufficient).
 /// Observe `phaseStream` to react to transitions.
 final class AlertManager: @unchecked Sendable {
 
     // MARK: Configuration (mirrored from AlertSettings)
     struct Config: Sendable {
-        var notifyDelay: TimeInterval      = 30
-        var audioLowDelay: TimeInterval    = 60
-        var audioMedDelay: TimeInterval    = 90
-        var audioHighDelay: TimeInterval   = 120
-        var clearDelay: TimeInterval       = 5
-        var volumeLow: Float               = 0.20
-        var volumeMed: Float               = 0.60
-        var volumeHigh: Float              = 1.00
+        var notifyDelay: TimeInterval      = 2
+        /// Elapsed snoring time before sound alarm starts (seconds).
+        var soundAlarmAfter: TimeInterval  = 15
+        /// Silence before clearing alert state (seconds).
+        var clearDelay: TimeInterval       = 3
+        /// Peak alarm volume (0…1); stepped ramp applied in MonitorViewModel.
+        var alarmVolume: Float             = 0.85
     }
 
     var config = Config()
@@ -91,20 +88,13 @@ final class AlertManager: @unchecked Sendable {
         case .idle:
             if elapsed >= config.notifyDelay {
                 transition(to: .notified, at: now)
+                advance(elapsed: elapsed, at: now)
             }
         case .notified:
-            if elapsed >= config.audioLowDelay {
-                transition(to: .audioLow, at: now)
+            if elapsed >= config.soundAlarmAfter {
+                transition(to: .alarming, at: now)
             }
-        case .audioLow:
-            if elapsed >= config.audioMedDelay {
-                transition(to: .audioMedium, at: now)
-            }
-        case .audioMedium:
-            if elapsed >= config.audioHighDelay {
-                transition(to: .audioHigh, at: now)
-            }
-        case .audioHigh, .cleared:
+        case .alarming, .cleared:
             break
         }
     }
@@ -121,21 +111,16 @@ final class AlertManager: @unchecked Sendable {
         phase = .idle
     }
 
-    // MARK: Volume for current phase
+    // MARK: Volume cap (ramp uses fractions of this in MonitorViewModel)
 
     var currentVolume: Float {
         switch phase {
-        case .audioLow:    return config.volumeLow
-        case .audioMedium: return config.volumeMed
-        case .audioHigh:   return config.volumeHigh
-        default:           return 0
+        case .alarming: return config.alarmVolume
+        default:        return 0
         }
     }
 
     var isAudioPlaying: Bool {
-        switch phase {
-        case .audioLow, .audioMedium, .audioHigh: return true
-        default: return false
-        }
+        phase == .alarming
     }
 }

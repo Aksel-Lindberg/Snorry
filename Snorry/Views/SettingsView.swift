@@ -129,26 +129,10 @@ struct SettingsView: View {
                 step: 1
             )
             SliderRow(
-                label: "Low alarm after",
-                value: Binding(get: { vm.audioLowDelay },
-                               set: { vm.audioLowDelay = $0 }),
-                range: 5...180,
-                unit: "s",
-                step: 1
-            )
-            SliderRow(
-                label: "Medium alarm after",
-                value: Binding(get: { vm.audioMedDelay },
-                               set: { vm.audioMedDelay = $0 }),
-                range: 10...240,
-                unit: "s",
-                step: 1
-            )
-            SliderRow(
-                label: "Full alarm after",
-                value: Binding(get: { vm.audioHighDelay },
-                               set: { vm.audioHighDelay = $0 }),
-                range: 15...300,
+                label: "Sound alarm after",
+                value: Binding(get: { vm.soundAlarmAfter },
+                               set: { vm.soundAlarmAfter = $0 }),
+                range: 5...300,
                 unit: "s",
                 step: 1
             )
@@ -164,7 +148,7 @@ struct SettingsView: View {
             Text("Alert Timings")
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
-            Text("If no snoring is detected for this duration the current event is stored and the app waits for a new one.")
+            Text("Sound alarm after: continuous snoring time before the alarm starts (then volume rises every 2 s). Silence to end snore event: no snoring for this long ends the bout.")
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)
         }
@@ -173,18 +157,16 @@ struct SettingsView: View {
 
     private func volumeSection(vm: SettingsViewModel) -> some View {
         Section {
-            VolumeRow(label: "Low volume",
-                      value: Binding(get: { Double(vm.volumeLow) },
-                                     set: { vm.volumeLow = Float($0) }))
-            VolumeRow(label: "Medium volume",
-                      value: Binding(get: { Double(vm.volumeMed) },
-                                     set: { vm.volumeMed = Float($0) }))
-            VolumeRow(label: "Full volume",
-                      value: Binding(get: { Double(vm.volumeHigh) },
-                                     set: { vm.volumeHigh = Float($0) }))
+            VolumeRow(label: "Volume",
+                      value: Binding(get: { Double(vm.alarmVolume) },
+                                     set: { vm.alarmVolume = Float($0) }))
         } header: {
-            Text("Alarm Volumes")
+            Text("Alarm")
                 .foregroundStyle(Theme.labelSecondary)
+        } footer: {
+            Text("Maximum loudness for the alarm. Playback starts low and steps up every 2 seconds toward this level.")
+                .foregroundStyle(Theme.labelSecondary)
+                .font(.caption)
         }
         .listRowBackground(Theme.surface)
     }

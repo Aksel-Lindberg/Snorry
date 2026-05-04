@@ -8,19 +8,13 @@ final class AlertSettings {
 
     /// Seconds of continuous snoring before first push notification is sent.
     var notifyDelaySeconds: Double
-    /// Seconds after notification before audio alarm begins (low volume).
-    var audioLowDelaySeconds: Double
-    /// Seconds at low volume before escalating to medium.
-    var audioMedDelaySeconds: Double
-    /// Seconds at medium volume before escalating to full volume.
-    var audioHighDelaySeconds: Double
-    /// Seconds of silence before alert is cancelled.
+    /// Seconds of continuous snoring before the sound alarm begins (stepped bursts).
+    var soundAlarmAfterSeconds: Double
+    /// Seconds of silence before a snore bout is ended/stored (detector gap).
     var clearDelaySeconds: Double
 
-    /// Alarm tone volume levels (0–1).
-    var volumeLow: Float
-    var volumeMed: Float
-    var volumeHigh: Float
+    /// Maximum alarm output level (0–1); playback ramps toward this in 20% steps every 2 s.
+    var alarmVolume: Float
 
     /// Snore detection sensitivity (1 = low, 3 = medium default, 5 = high).
     /// Higher values lower both the onset dB threshold and the classifier confidence
@@ -31,16 +25,12 @@ final class AlertSettings {
     var alarmStyleRaw: Int
 
     init() {
-        notifyDelaySeconds  = 2
-        audioLowDelaySeconds  = 5
-        audioMedDelaySeconds  = 10
-        audioHighDelaySeconds = 15
-        clearDelaySeconds   = 8
-        volumeLow  = 0.50
-        volumeMed  = 0.80
-        volumeHigh = 1.00
+        notifyDelaySeconds        = 2
+        soundAlarmAfterSeconds    = 15
+        clearDelaySeconds         = 8
+        alarmVolume               = 0.85
         snoringDetectionSensitivity = 3
-        alarmStyleRaw = AlarmStyle.classic.rawValue
+        alarmStyleRaw             = AlarmStyle.classic.rawValue
     }
 
     /// Returns existing or creates default settings.

@@ -93,11 +93,15 @@ final class MonitorViewModel {
     private var alertTask: Task<Void, Never>?
     private var elapsedTimer: Task<Void, Never>?
     private var timelineTimer: Task<Void, Never>?
+    /// Steps alarm volume every 2 s while `.alarming`; cancelled when snoring stops.
+    private var alarmRampTask: Task<Void, Never>?
 
     private let modelContext: ModelContext
 
     /// Silence window before clearing alarms/notifications (seconds). Separate from snore-event gap.
     private static let alertSilenceBeforeClearSeconds: TimeInterval = 3
+    /// Seconds between alarm volume steps (20% of max per step until cap).
+    private static let alarmVolumeStepInterval: TimeInterval = 2
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -159,14 +163,10 @@ final class MonitorViewModel {
 
         // Apply saved alert settings
         let settings = AlertSettings.load(context: modelContext)
-        alertManager.config.notifyDelay      = settings.notifyDelaySeconds
-        alertManager.config.audioLowDelay    = settings.audioLowDelaySeconds
-        alertManager.config.audioMedDelay    = settings.audioMedDelaySeconds
-        alertManager.config.audioHighDelay   = settings.audioHighDelaySeconds
-        alertManager.config.clearDelay       = Self.alertSilenceBeforeClearSeconds
-        alertManager.config.volumeLow        = settings.volumeLow
-        alertManager.config.volumeMed        = settings.volumeMed
-        alertManager.config.volumeHigh       = settings.volumeHigh
+        alertManager.config.notifyDelay       = settings.notifyDelaySeconds
+        alertManager.config.soundAlarmAfter   = settings.soundAlarmAfterSeconds
+        alertManager.config.clearDelay        = Self.alertSilenceBeforeClearSeconds
+        alertManager.config.alarmVolume       = settings.alarmVolume
 
         // User slider: silence duration before ending/storing a snore bout (detector gap).
         detector.gapTolerance = settings.clearDelaySeconds
@@ -318,6 +318,7 @@ final class MonitorViewModel {
         alertTask?.cancel();     alertTask = nil
         elapsedTimer?.cancel();  elapsedTimer = nil
         timelineTimer?.cancel(); timelineTimer = nil
+        alarmRampTask?.cancel(); alarmRampTask = nil
     }
 
     // MARK: Event handling
@@ -387,16 +388,36 @@ final class MonitorViewModel {
         case .notified:
             notifications.scheduleSnoringAlert()
 
-        case .audioLow, .audioMedium, .audioHigh:
-            alarmPlayer.play(volume: alertManager.currentVolume)
+        case .alarming:
+            startAlarmVolumeRamp()
 
         case .idle, .cleared:
+            alarmRampTask?.cancel()
+            alarmRampTask = nil
             alarmPlayer.stop()
             notifications.cancelSnoringAlert()
             isEpisodeConfirmed = false
             currentBRPM       = 0
             brpmAvailable     = false
             detector.resetForNewEpisode()
+        }
+    }
+
+    /// Every 2 s raise playback toward `alarmVolume` in 20% steps (burst cadence + escalation).
+    private func startAlarmVolumeRamp() {
+        alarmRampTask?.cancel()
+        let maxVol = alertManager.config.alarmVolume
+        alarmRampTask = Task { @MainActor in
+            var step = 0
+            while !Task.isCancelled {
+                guard isMonitoring else { break }
+                let fraction = min(1.0, 0.2 * Float(step + 1))
+                let vol = maxVol * fraction
+                alarmPlayer.play(volume: vol)
+                step += 1
+                try? await Task.sleep(for: .seconds(Self.alarmVolumeStepInterval))
+                guard alertPhase == .alarming else { break }
+            }
         }
     }
 

@@ -226,9 +226,7 @@ struct MonitorView: View {
     private var alertIcon: String {
         switch vm.alertPhase {
         case .notified:  return "bell.badge"
-        case .audioLow:  return "speaker.wave.1"
-        case .audioMedium: return "speaker.wave.2"
-        case .audioHigh: return "speaker.wave.3.fill"
+        case .alarming:  return "speaker.wave.3.fill"
         default:         return "bell"
         }
     }
@@ -236,9 +234,7 @@ struct MonitorView: View {
     private var alertTitle: String {
         switch vm.alertPhase {
         case .notified:   return "Push notification sent"
-        case .audioLow:   return "Alarm: Low"
-        case .audioMedium: return "Alarm: Medium"
-        case .audioHigh:  return "Alarm: Loud"
+        case .alarming:   return "Alarm active"
         case .cleared:    return "Alert Cleared"
         default:          return ""
         }
@@ -247,9 +243,7 @@ struct MonitorView: View {
     private var alertSubtitle: String {
         switch vm.alertPhase {
         case .notified:   return "Check your iPhone notification."
-        case .audioLow:   return "Increasing in 30 s if snoring continues."
-        case .audioMedium: return "Increasing in 30 s if snoring continues."
-        case .audioHigh:  return "Maximum volume. Wake up!"
+        case .alarming:   return "Volume rises every 2 s. Stops when snoring ends."
         case .cleared:    return "Snoring stopped."
         default:          return ""
         }
@@ -258,9 +252,7 @@ struct MonitorView: View {
     private var alertColor: Color {
         switch vm.alertPhase {
         case .notified:   return .yellow
-        case .audioLow:   return .orange
-        case .audioMedium: return .orange
-        case .audioHigh:  return Theme.snoring
+        case .alarming:   return Theme.snoring
         case .cleared:    return Theme.good
         default:          return .clear
         }
