@@ -165,6 +165,25 @@ private struct SessionTimelineChart: View {
                 .lineStyle(StrokeStyle(lineWidth: 1))
             }
 
+            // Inline label attached near the middle of the BRPM line, shown just below it.
+            let brpmSamples = samples.filter { $0.brpm > 0 }
+            if !brpmSamples.isEmpty {
+                let labelSample = brpmSamples[brpmSamples.count / 2]
+                PointMark(
+                    x: .value("Time", labelSample.timestamp),
+                    y: .value("BRPM", min(1.0, labelSample.brpm / 60.0))
+                )
+                .symbolSize(0)
+                .annotation(position: .bottom, spacing: 4) {
+                    Text("BRPM trend")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.accent.opacity(0.9))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Theme.surfaceSecondary.opacity(0.9), in: Capsule())
+                }
+            }
+
             // Vertical rule at each event start
             ForEach(events) { event in
                 RuleMark(x: .value("Event", event.startDate))
@@ -207,6 +226,14 @@ struct EventPlaybackRow: View {
         return String(format: "%.0fs", d)
     }
 
+    /// Duration normalised to a 5 s ... 10 min range for card bar visualisation.
+    private var durationFill: Double? {
+        guard let duration = event.duration else { return nil }
+        let minSeconds = 5.0
+        let maxSeconds = 600.0
+        return (duration - minSeconds) / (maxSeconds - minSeconds)
+    }
+
     /// The harmonic frequency stored at event-end — identical to the red marker
     /// shown on the Live Power Spectrum during monitoring. Nil when not captured.
     private var rumbleHz: Double? {
@@ -229,10 +256,6 @@ struct EventPlaybackRow: View {
                     Text(timeString)
                         .font(.subheadline.bold())
                         .foregroundStyle(Theme.labelPrimary)
-
-                    Label(durationString, systemImage: "clock.badge")
-                        .font(.caption)
-                        .foregroundStyle(Theme.labelSecondary)
                 }
 
                 Spacer()
@@ -242,16 +265,28 @@ struct EventPlaybackRow: View {
                 }
             }
 
-            // Metric bars — shown when any meaningful data was captured for this event.
-            if event.brpm > 0 || event.avgDB > -160 {
+            // Metric bars — shown when duration and/or other measurements were captured for this event.
+            if durationFill != nil || event.brpm > 0 || event.avgDB > -160 {
                 VStack(spacing: 5) {
+                    // Snore duration: mapped from 5 s (0%) to 10 min (100%).
+                    if let durationFill {
+                        EventMetricBar(
+                            label: "Duration",
+                            value: durationString,
+                            fill: durationFill,
+                            color: Theme.labelSecondary,
+                            systemImage: "clock.badge"
+                        )
+                    }
+
                     // BRPM bar: normalised over the physiological 10–60 BRPM range.
                     if event.brpm > 0 {
                         EventMetricBar(
                             label: "BRPM",
                             value: String(format: "%.0f", event.brpm),
                             fill: (event.brpm - 10) / 50,
-                            color: Theme.accent
+                            color: Theme.accent,
+                            systemImage: "lungs"
                         )
                     }
 
@@ -263,7 +298,8 @@ struct EventPlaybackRow: View {
                             label: "Rumble",
                             value: String(format: "%.0f Hz", rumbleFreq),
                             fill: logFill,
-                            color: Theme.snoring
+                            color: Theme.snoring,
+                            systemImage: "waveform.path.ecg"
                         )
                     }
 
@@ -273,7 +309,8 @@ struct EventPlaybackRow: View {
                             label: "Avg Vol",
                             value: String(format: "%.0f dB", event.avgDB),
                             fill: Double((event.avgDB + 80) / 50),
-                            color: Theme.good
+                            color: Theme.good,
+                            systemImage: "speaker.wave.2"
                         )
                     }
                 }
@@ -290,12 +327,19 @@ private struct EventMetricBar: View {
     let value: String
     let fill: Double
     let color: Color
+    var systemImage: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(Theme.labelTertiary)
+            if let systemImage {
+                Label(label, systemImage: systemImage)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelTertiary)
+            } else {
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelTertiary)
+            }
 
             GeometryReader { geo in
                 ZStack {

@@ -72,6 +72,7 @@ struct SessionsListView: View {
 private struct SessionRowView: View {
 
     let session: SnoreSession
+    private let miniBarWidth: CGFloat = 116
 
     private var dateString: String {
         session.startDate.formatted(date: .abbreviated, time: .shortened)
@@ -82,6 +83,11 @@ private struct SessionRowView: View {
         let h = Int(dur) / 3600
         let m = Int(dur) % 3600 / 60
         return h > 0 ? "\(h)h \(m)m" : "\(m)m"
+    }
+
+    private var snoringPercentString: String {
+        let percent = Int((session.snoreFraction * 100).rounded())
+        return "\(percent)%"
     }
 
     var body: some View {
@@ -96,34 +102,47 @@ private struct SessionRowView: View {
                     .foregroundStyle(Theme.labelSecondary)
             }
 
-            HStack(spacing: 20) {
-                Label("\(session.eventCount) events", systemImage: "waveform")
-                    .font(.caption)
-                    .foregroundStyle(Theme.snoring)
-
-                if session.avgBRPM > 0 {
-                    Label(String(format: "%.0f BRPM", session.avgBRPM), systemImage: "lungs")
-                        .font(.caption)
-                        .foregroundStyle(Theme.accent)
+            HStack(spacing: 27) {
+                HStack(spacing: 4) {
+                    Image(systemName: "waveform")
+                    Text("\(session.eventCount)")
+                        .fontWeight(.bold)
+                        .frame(width: 24, alignment: .trailing)
+                    Text("events")
                 }
+                .font(.caption)
+                .foregroundStyle(Theme.snoring)
 
-                snoreFractionBar
+                HStack(spacing: 0) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "zzz")
+                        Text(snoringPercentString)
+                            .font(Theme.monoDigit(size: 12))
+                            .fontWeight(.bold)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(Theme.accent)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+
+                    snoreFractionBar
+                        .padding(.leading, 10)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Snoring \(snoringPercentString)")
             }
         }
         .padding(.vertical, 4)
     }
 
     private var snoreFractionBar: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(Theme.surfaceSecondary)
-                    .frame(height: 6)
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(Theme.snoringGradient)
-                    .frame(width: geo.size.width * CGFloat(session.snoreFraction), height: 6)
-            }
+        ZStack(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Theme.surfaceSecondary)
+                .frame(width: miniBarWidth, height: 6)
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Theme.snoringGradient)
+                .frame(width: miniBarWidth * CGFloat(session.snoreFraction), height: 6)
         }
-        .frame(height: 6)
     }
 }
