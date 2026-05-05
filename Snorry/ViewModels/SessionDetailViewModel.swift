@@ -3,19 +3,6 @@ import AVFoundation
 import SwiftData
 import os.log
 
-// MARK: - AVAudioPlayerDelegate (reference held by view model)
-private final class SnorePlaybackDelegate: NSObject, AVAudioPlayerDelegate {
-    var onFinish: (() -> Void)?
-
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        onFinish?()
-    }
-
-    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        onFinish?()
-    }
-}
-
 @Observable
 @MainActor
 final class SessionDetailViewModel {
@@ -28,12 +15,12 @@ final class SessionDetailViewModel {
 
     // Playback state
     var playingEventID: UUID?
-    /// Surface decode / session failures so Replay isn’t a silent no-op while debugging.
+    /// Surfaces decode / session errors in the UI so replay failures are never silent.
     var playbackDiagnostic: String?
-    private var player: AVAudioPlayer?
-    private var playbackDelegate: SnorePlaybackDelegate?
 
-    private let logger = Logger(subsystem: "app.Snorry", category: "SessionDetail")
+    /// Peak-normalising player: decodes AAC → Float32, boosts gain, plays via AVAudioEngine.
+    private let clipPlayer = NormalizingClipPlayer()
+    private let logger     = Logger(subsystem: "app.Snorry", category: "SessionDetail")
 
     init(session: SnoreSession) {
         self.session = session
@@ -62,34 +49,16 @@ final class SessionDetailViewModel {
 
         stopPlaybackInternal(deactivateSession: false)
 
+        // Wire finish callback before play() so it's set even if play() throws.
+        clipPlayer.onFinish = { [weak self] in
+            Task { @MainActor in self?.playbackDidFinish() }
+        }
+
         do {
-            // Tear down recording session cleanly before playback (.playAndRecord can block file playback otherwise).
-            let session = AVAudioSession.sharedInstance()
-            try session.setActive(false, options: .notifyOthersOnDeactivation)
-            // .defaultToSpeaker is only valid for .playAndRecord; .playback routes
-            // to the loudspeaker automatically when no headphones are connected.
-            try session.setCategory(.playback, mode: .default)
-            try session.setActive(true)
-
-            let audioPlayer = try AVAudioPlayer(contentsOf: url)
-            player = audioPlayer
-
-            let delegate = SnorePlaybackDelegate()
-            delegate.onFinish = { [weak self] in
-                Task { @MainActor in
-                    self?.playbackDidFinish()
-                }
-            }
-            playbackDelegate = delegate
-            audioPlayer.delegate = delegate
-
-            audioPlayer.volume = 1.0
-            audioPlayer.prepareToPlay()
-            guard audioPlayer.play() else {
-                playbackDiagnostic = "Audio engine did not start playback."
-                playbackDidFinish()
-                return
-            }
+            // Force loudspeaker and reset monitoring's 16 kHz preferred sample rate.
+            try AudioSessionManager.shared.configureForClipReplay()
+            // Decode, peak-normalise (up to +18 dB), then start AVAudioEngine playback.
+            try clipPlayer.play(url: url)
             playingEventID = event.id
             playbackDiagnostic = nil
         } catch {
@@ -104,22 +73,17 @@ final class SessionDetailViewModel {
     }
 
     private func playbackDidFinish() {
-        player?.stop()
-        player?.delegate = nil
-        player = nil
-        playbackDelegate = nil
+        clipPlayer.stop()
         playingEventID = nil
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        // Restore automatic output routing and deactivate the replay session.
+        AudioSessionManager.shared.resetReplayOverrides()
     }
 
     private func stopPlaybackInternal(deactivateSession: Bool) {
-        player?.stop()
-        player?.delegate = nil
-        player = nil
-        playbackDelegate = nil
+        clipPlayer.stop()
         playingEventID = nil
         if deactivateSession {
-            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+            AudioSessionManager.shared.resetReplayOverrides()
         }
     }
 
@@ -127,7 +91,7 @@ final class SessionDetailViewModel {
 
     var durationString: String {
         guard let dur = session.duration else { return "—" }
-        let hours = Int(dur) / 3600
+        let hours   = Int(dur) / 3600
         let minutes = Int(dur) % 3600 / 60
         return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
     }
