@@ -86,13 +86,15 @@ final class MonitorViewModel {
 
     // Tracks an open AAC file for exactly one detector `SnoreEvent` (opened on `.snoreStarted`, closed on `.snoreEnded`).
     private var clipOpen = false
-    /// True between detector `snoreStarted` and `snoreEnded` — keeps the sound alarm on during classifier-quiet gaps between breaths.
-    private var activeSnoreEpisode = false
+    /// Last time classifier reported active snoring; used for a fixed alert-stop grace window.
+    private var lastSnoringActiveAt: Date?
 
     private var monitorTask: Task<Void, Never>?
     private var classifierTask: Task<Void, Never>?
     private var detectorTask: Task<Void, Never>?
     private var alertTask: Task<Void, Never>?
+    /// Independent 2 s quiet timeout for alert ending (not tied to 1 Hz elapsed timer).
+    private var snoringQuietTimeoutTask: Task<Void, Never>?
     private var elapsedTimer: Task<Void, Never>?
     private var timelineTimer: Task<Void, Never>?
     /// Steps alarm volume every 2 s while `.alarming`; cancelled when snoring stops.
@@ -108,6 +110,8 @@ final class MonitorViewModel {
 
     private let modelContext: ModelContext
 
+    /// Alert stop debounce is always 2 s and intentionally independent of the snore-event gap setting.
+    private static let alertSilenceBeforeClearSeconds: TimeInterval = 2
     /// Seconds between alarm volume steps (20% of max per step until cap).
     private static let alarmVolumeStepInterval: TimeInterval = 2
 
@@ -150,7 +154,7 @@ final class MonitorViewModel {
 
         isMonitoring = true
         isSnoring = false
-        activeSnoreEpisode = false
+        lastSnoringActiveAt = nil
         elapsedSeconds = 0
         snoreEventCount = 0
         spectrumBands = []
@@ -179,8 +183,8 @@ final class MonitorViewModel {
 
         alertManager.config.notifyDelay       = settings.notifyDelaySeconds
         alertManager.config.soundAlarmAfter   = settings.soundAlarmAfterSeconds
-        // Same window as snore-event end: alarm stops only after this much quiet (not after brief between-breath gaps).
-        alertManager.config.clearDelay        = settings.clearDelaySeconds
+        // Alert ending is separate from event-storage ending; always stop alerts after 3 s of quiet.
+        alertManager.config.clearDelay        = Self.alertSilenceBeforeClearSeconds
         alertManager.config.alarmVolume       = settings.alarmVolume
         alertManager.config.pushEnabled       = settings.pushNotificationEnabled
         alertManager.config.soundEnabled      = settings.soundAlarmEnabled
@@ -222,7 +226,7 @@ final class MonitorViewModel {
 
         isMonitoring       = false
         isSnoring          = false
-        activeSnoreEpisode = false
+        lastSnoringActiveAt = nil
         isEpisodeConfirmed = false
         alertPhase         = .idle
         currentBRPM        = 0
@@ -309,9 +313,8 @@ final class MonitorViewModel {
                 try? await Task.sleep(for: .seconds(1))
                 guard let self, isMonitoring else { break }
                 elapsedSeconds += 1
-                // Episode flag keeps alerts active between breaths (classifier often goes quiet briefly).
-                let sustainedSnoring = isEpisodeConfirmed && (isSnoring || activeSnoreEpisode)
-                alertManager.update(isSnoring: sustainedSnoring)
+                // Keep alerts alive briefly between breaths, then end within 2 s of quiet.
+                updateAlertSnoringState()
                 // Persist waveform sample every second
                 sessionStore?.addWaveformSample(
                     dBFS: currentDB,
@@ -335,6 +338,7 @@ final class MonitorViewModel {
         classifierTask?.cancel(); classifierTask = nil
         detectorTask?.cancel();  detectorTask = nil
         alertTask?.cancel();     alertTask = nil
+        snoringQuietTimeoutTask?.cancel(); snoringQuietTimeoutTask = nil
         elapsedTimer?.cancel();  elapsedTimer = nil
         timelineTimer?.cancel(); timelineTimer = nil
         alarmRampTask?.cancel(); alarmRampTask = nil
@@ -347,12 +351,20 @@ final class MonitorViewModel {
         switch event {
         case .snoringActive(let active):
             isSnoring = active
+            if active {
+                lastSnoringActiveAt = Date()
+                snoringQuietTimeoutTask?.cancel()
+                snoringQuietTimeoutTask = nil
+            } else {
+                scheduleSnoringQuietTimeout()
+            }
+            updateAlertSnoringState()
 
         case .snoreStarted(let id, let at, let captureFrom):
             activeEventID      = id
             snoreEventCount   += 1
             isEpisodeConfirmed = true
-            activeSnoreEpisode = true
+            lastSnoringActiveAt = Date()
             // Fresh BRPM estimation for each new detector bout / event.
             currentBRPM       = 0
             brpmAvailable     = false
@@ -383,9 +395,6 @@ final class MonitorViewModel {
             break
 
         case .snoreEnded(let id, let at, let brpm, let peakDB, let avgDB):
-            activeSnoreEpisode = false
-            // Bout ended at gap expiry — stop alarm/notifications now (do not debounce with clearDelay).
-            alertManager.clearAfterSnoreBoutEnded()
             if clipOpen {
                 let relativePath = clipRecorder.endClip()
                 clipOpen = false
@@ -404,6 +413,25 @@ final class MonitorViewModel {
         case .brpmUpdated(let brpm):
             currentBRPM   = brpm
             brpmAvailable = true
+        }
+    }
+
+    /// Runs the alert state machine from current classifier + grace-window state.
+    private func updateAlertSnoringState(now: Date = Date()) {
+        let inGraceWindow = lastSnoringActiveAt.map {
+            now.timeIntervalSince($0) < Self.alertSilenceBeforeClearSeconds
+        } ?? false
+        let sustainedSnoring = isEpisodeConfirmed && (isSnoring || inGraceWindow)
+        alertManager.update(isSnoring: sustainedSnoring, at: now)
+    }
+
+    /// Ensures alarm ends within 2 s after snoring activity goes quiet.
+    private func scheduleSnoringQuietTimeout() {
+        snoringQuietTimeoutTask?.cancel()
+        snoringQuietTimeoutTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(Self.alertSilenceBeforeClearSeconds))
+            guard let self, isMonitoring, !Task.isCancelled else { return }
+            updateAlertSnoringState()
         }
     }
 
@@ -427,7 +455,7 @@ final class MonitorViewModel {
             alarmRampTask = nil
             alarmPlayer.stop()
             notifications.cancelSnoringAlert()
-            activeSnoreEpisode = false
+            lastSnoringActiveAt = nil
             isEpisodeConfirmed = false
             currentBRPM       = 0
             brpmAvailable     = false

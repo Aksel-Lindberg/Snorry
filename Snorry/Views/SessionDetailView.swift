@@ -225,26 +225,14 @@ struct EventPlaybackRow: View {
                 .disabled(!canReplay)
                 .opacity(canReplay ? 1.0 : 0.3)
 
-                VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 10) {
                     Text(timeString)
                         .font(.subheadline.bold())
                         .foregroundStyle(Theme.labelPrimary)
 
-                    HStack(spacing: 10) {
-                        Label(durationString, systemImage: "clock.badge")
-                            .font(.caption)
-                            .foregroundStyle(Theme.labelSecondary)
-
-                        if event.brpm > 0 {
-                            Label(String(format: "%.0f BRPM", event.brpm), systemImage: "lungs")
-                                .font(.caption)
-                                .foregroundStyle(Theme.accent)
-                        }
-
-                        Label(String(format: "%.0f dB", event.peakDB), systemImage: "speaker.wave.2")
-                            .font(.caption)
-                            .foregroundStyle(Theme.labelSecondary)
-                    }
+                    Label(durationString, systemImage: "clock.badge")
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelSecondary)
                 }
 
                 Spacer()
