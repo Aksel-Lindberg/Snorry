@@ -11,6 +11,7 @@ final class NotificationManager: NSObject, @unchecked Sendable {
 
     private let primaryAlertIdentifier = "snorry.snoring.alert"
     private let repeatIdentifierPrefix   = "snorry.snoring.repeat."
+    private let defaultPushSoundName = "default"
     /// Pending repeat deliveries — cleared when alerts cancel.
     private var trackedRepeatIdentifiers: [String] = []
 
@@ -61,11 +62,7 @@ final class NotificationManager: NSObject, @unchecked Sendable {
                 return
             }
 
-            let content = UNMutableNotificationContent()
-            content.title = "Snoring Detected"
-            content.body  = "Snorry has detected a snoring pattern. Tap to view details."
-            content.sound = .default
-            content.interruptionLevel = .timeSensitive
+            let content = self.makeSnoringAlertContent()
 
             let request = UNNotificationRequest(
                 identifier: identifier,
@@ -79,6 +76,22 @@ final class NotificationManager: NSObject, @unchecked Sendable {
                 }
             }
         }
+    }
+
+    /// Builds a local-notification payload that mirrors APNs fields, including `aps.sound`.
+    private func makeSnoringAlertContent() -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        content.title = "Snoring Detected"
+        content.body = "Snorry has detected a snoring pattern. Tap to view details."
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        content.userInfo = [
+            "aps": [
+                "sound": defaultPushSoundName,
+                "interruption-level": "time-sensitive"
+            ]
+        ]
+        return content
     }
 
     func cancelSnoringAlert() {
