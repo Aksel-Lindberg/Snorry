@@ -48,6 +48,15 @@ enum Theme {
         )
     }
 
+    /// Darker, deeper red-maroon gradient for destructive/stop buttons.
+    static var stopGradient: LinearGradient {
+        LinearGradient(
+            colors: [Color(red: 0.72, green: 0.10, blue: 0.12),
+                     Color(red: 0.55, green: 0.08, blue: 0.18)],
+            startPoint: .topLeading, endPoint: .bottomTrailing
+        )
+    }
+
     // MARK: Typography helpers
     static func monoDigit(size: CGFloat, weight: Font.Weight = .semibold) -> Font {
         .system(size: size, weight: weight, design: .monospaced)

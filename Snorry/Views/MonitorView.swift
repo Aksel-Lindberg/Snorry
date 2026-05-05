@@ -209,7 +209,7 @@ struct MonitorView: View {
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
-            .background(Theme.snoringGradient, in: RoundedRectangle(cornerRadius: Theme.radiusButton))
+            .background(Theme.stopGradient, in: RoundedRectangle(cornerRadius: Theme.radiusButton))
         }
     }
 

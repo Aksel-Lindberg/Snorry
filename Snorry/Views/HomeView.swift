@@ -35,6 +35,8 @@ struct HomeView: View {
     private func mainContent(vm: MonitorViewModel) -> some View {
         VStack(spacing: 0) {
             headerSection
+            gifSection
+                .padding(.top, 20)
             Spacer()
             startButtonSection(vm: vm)
             Spacer()
@@ -55,10 +57,29 @@ struct HomeView: View {
                 .font(.system(size: 38, weight: .bold, design: .rounded))
                 .foregroundStyle(Theme.labelPrimary)
 
-            Text("Sleep Snore Tracker")
+            Text("Sleep Snore Alert & Tracking")
                 .font(.subheadline)
                 .foregroundStyle(Theme.labelSecondary)
+
+            Text("Connect your favorite smart watch to get Snore alerts on your watch")
+                .font(.caption)
+                .foregroundStyle(Theme.labelTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .padding(.top, 2)
         }
+    }
+
+    private var gifSection: some View {
+        GIFView(base64: SnoreGIFData.base64,
+                accessibilityLabel: "Animated sleeping emoji snoring")
+            .frame(width: 140, height: 140)
+            .clipShape(RoundedRectangle(cornerRadius: 28))
+            .overlay(
+                RoundedRectangle(cornerRadius: 28)
+                    .strokeBorder(Theme.accent.opacity(0.25), lineWidth: 1)
+            )
+            .shadow(color: Theme.accent.opacity(0.18), radius: 16, y: 6)
     }
 
     private func startButtonSection(vm: MonitorViewModel) -> some View {
