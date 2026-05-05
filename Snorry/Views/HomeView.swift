@@ -35,51 +35,47 @@ struct HomeView: View {
     private func mainContent(vm: MonitorViewModel) -> some View {
         VStack(spacing: 0) {
             headerSection
-            gifSection
-                .padding(.top, 20)
-            Spacer()
+                .padding(.top, 36)
+
+            SleepAnimationView()
+                .padding(.top, 12)
+
+            Spacer(minLength: 16)
+
             startButtonSection(vm: vm)
-            Spacer()
+
+            Spacer(minLength: 16)
+
             recentSessionCard(vm: vm)
                 .padding(.bottom, 32)
         }
         .padding(.horizontal, 24)
     }
 
-    private var headerSection: some View {
-        VStack(spacing: 6) {
-            Image(systemName: "zzz")
-                .font(.system(size: 36, weight: .thin))
-                .foregroundStyle(Theme.accent)
-                .padding(.top, 40)
+    // MARK: Header
 
+    private var headerSection: some View {
+        VStack(spacing: 0) {
+            // App wordmark
             Text("Snorry")
-                .font(.system(size: 38, weight: .bold, design: .rounded))
+                .font(.system(size: 40, weight: .bold, design: .rounded))
                 .foregroundStyle(Theme.labelPrimary)
 
+            // Handwritten tagline with gradient shimmer
             Text("Sleep Snore Alert & Tracking")
-                .font(.subheadline)
-                .foregroundStyle(Theme.labelSecondary)
+                .font(Theme.handwritten(size: 19))
+                .foregroundStyle(Theme.handwrittenGradient)
+                .padding(.top, 5)
 
-            Text("Connect your favorite smart watch to get Snore alerts on your watch")
-                .font(.caption)
+            // Watch hint — lighter handwritten italic
+            Text("Connect your watch · get Snore alerts on your wrist")
+                .font(Theme.handwritten(size: 13, bold: false))
+                .italic()
                 .foregroundStyle(Theme.labelTertiary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-                .padding(.top, 2)
+                .padding(.horizontal, 24)
+                .padding(.top, 6)
         }
-    }
-
-    private var gifSection: some View {
-        GIFView(base64: SnoreGIFData.base64,
-                accessibilityLabel: "Animated sleeping emoji snoring")
-            .frame(width: 140, height: 140)
-            .clipShape(RoundedRectangle(cornerRadius: 28))
-            .overlay(
-                RoundedRectangle(cornerRadius: 28)
-                    .strokeBorder(Theme.accent.opacity(0.25), lineWidth: 1)
-            )
-            .shadow(color: Theme.accent.opacity(0.18), radius: 16, y: 6)
     }
 
     private func startButtonSection(vm: MonitorViewModel) -> some View {

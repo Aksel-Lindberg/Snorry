@@ -62,6 +62,19 @@ enum Theme {
         .system(size: size, weight: weight, design: .monospaced)
     }
 
+    /// Noteworthy — iOS built-in handwritten font, readable on dark backgrounds.
+    static func handwritten(size: CGFloat, bold: Bool = true) -> Font {
+        .custom(bold ? "Noteworthy-Bold" : "Noteworthy-Light", size: size)
+    }
+
+    /// Gradient used for handwritten accent text (left: sky blue → right: soft white).
+    static var handwrittenGradient: LinearGradient {
+        LinearGradient(
+            colors: [accent, Color.white.opacity(0.88)],
+            startPoint: .leading, endPoint: .trailing
+        )
+    }
+
     // MARK: Corner radii
     static let radiusCard: CGFloat    = 20
     static let radiusButton: CGFloat  = 50
