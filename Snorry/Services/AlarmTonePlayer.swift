@@ -51,6 +51,9 @@ final class AlarmTonePlayer: @unchecked Sendable {
     private let logger = Logger(subsystem: "app.Snorry", category: "AlarmTone")
 
     private static let sampleRate: Double = 44_100
+    /// Global loudness boost for synthesized alarms.
+    /// Values > 1 increase perceived loudness before soft-clipping.
+    private static let outputDrive: Double = 1.8
 
     init() {
         mixerNode = engine.mainMixerNode
@@ -172,6 +175,13 @@ final class AlarmTonePlayer: @unchecked Sendable {
         return 1.0
     }
 
+    /// Applies a loudness drive with soft clipping to keep samples in [-1, 1].
+    private static func driven(_ sample: Double) -> Float {
+        let boosted = sample * outputDrive
+        let clipped = tanh(boosted)
+        return Float(max(-1.0, min(1.0, clipped)))
+    }
+
     // MARK: Gentle — 440/330 Hz, 1.5 s on / 0.5 s off
 
     private static func synthesizeGentle() -> AVAudioPCMBuffer? {
@@ -186,7 +196,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
             guard idx < onCount else { data[idx] = 0; continue }
             let time = Double(idx) / rate
             let wave = (sin(2 * .pi * 440 * time) + sin(2 * .pi * 330 * time)) * 0.5
-            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount))
+            data[idx] = driven(wave * cosEnv(pos: idx, duration: onCount))
         }
         return buf
     }
@@ -205,7 +215,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
             guard idx < onCount else { data[idx] = 0; continue }
             let time = Double(idx) / rate
             let wave = (sin(2 * .pi * 880 * time) + sin(2 * .pi * 660 * time)) * 0.5
-            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount))
+            data[idx] = driven(wave * cosEnv(pos: idx, duration: onCount))
         }
         return buf
     }
@@ -230,8 +240,14 @@ final class AlarmTonePlayer: @unchecked Sendable {
             guard burstIndex < 3, posInStep < beepN else { data[idx] = 0; continue }
             let time = Double(idx) / rate
             let wave = (sin(2 * .pi * 1000 * time) + sin(2 * .pi * 750 * time)) * 0.5
-            data[idx] = Float(wave * cosEnv(pos: posInStep, duration: beepN,
-                                            attackFrac: 0.10, releaseFrac: 0.10))
+            data[idx] = driven(
+                wave * cosEnv(
+                    pos: posInStep,
+                    duration: beepN,
+                    attackFrac: 0.10,
+                    releaseFrac: 0.10
+                )
+            )
         }
         return buf
     }
@@ -250,8 +266,14 @@ final class AlarmTonePlayer: @unchecked Sendable {
             guard idx < onCount else { data[idx] = 0; continue }
             let time = Double(idx) / rate
             let wave = (sin(2 * .pi * 1200 * time) + sin(2 * .pi * 900 * time)) * 0.5
-            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount,
-                                            attackFrac: 0.05, releaseFrac: 0.05))
+            data[idx] = driven(
+                wave * cosEnv(
+                    pos: idx,
+                    duration: onCount,
+                    attackFrac: 0.05,
+                    releaseFrac: 0.05
+                )
+            )
         }
         return buf
     }
@@ -275,8 +297,14 @@ final class AlarmTonePlayer: @unchecked Sendable {
             let freq = 800.0 + 600.0 * frac
             phase   += 2 * .pi * freq / rate
             let wave = sin(phase)
-            data[idx] = Float(wave * cosEnv(pos: idx, duration: sweepN,
-                                            attackFrac: 0.04, releaseFrac: 0.08))
+            data[idx] = driven(
+                wave * cosEnv(
+                    pos: idx,
+                    duration: sweepN,
+                    attackFrac: 0.04,
+                    releaseFrac: 0.08
+                )
+            )
         }
         return buf
     }
