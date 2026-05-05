@@ -228,7 +228,11 @@ struct SettingsView: View {
             Text("Alert Timings")
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
-            Text("Timings apply only to enabled channels. Both on: notify first, then sound after the longer “Sound alarm after” threshold (from snoring start). Silence to end snore event ends the bout.")
+            Text(
+                "Timings apply only to enabled channels. Both on: notify first, then sound after " +
+                "the longer “Sound alarm after” threshold (from snoring start). Silence to end " +
+                "snore event ends the bout."
+            )
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)
         }
@@ -237,14 +241,17 @@ struct SettingsView: View {
 
     private func volumeSection(vm: SettingsViewModel) -> some View {
         Section {
-            VolumeRow(label: "Volume",
+            VolumeRow(label: "Start volume",
                       value: Binding(get: { Double(vm.alarmVolume) },
                                      set: { vm.alarmVolume = Float($0) }))
         } header: {
             Text("Alarm")
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
-            Text("Maximum loudness for the alarm. Playback starts low and steps up every 2 seconds toward this level.")
+            Text(
+                "Alarm starts at this level, then increases by 10% every 2 seconds until it reaches " +
+                "100% (maximum iPhone speaker output)."
+            )
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)
         }

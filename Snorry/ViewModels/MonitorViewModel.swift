@@ -114,8 +114,6 @@ final class MonitorViewModel {
     private static let alertSilenceBeforeClearSeconds: TimeInterval = 2
     /// Seconds between alarm volume updates while alarm is active.
     private static let alarmVolumeStepInterval: TimeInterval = 2
-    /// Number of 2-second steps used to reach full configured alarm volume.
-    private static let alarmVolumeRampStepCount = 8
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -479,31 +477,19 @@ final class MonitorViewModel {
         }
     }
 
-    /// Every 2 s raise playback toward `alarmVolume` using progressive steps.
+    /// Start at the configured volume, then raise playback by 10% every 2 s up to 100%.
     private func startAlarmVolumeRamp() {
         alarmRampTask?.cancel()
-        let maxVol = alertManager.config.alarmVolume
         alarmRampTask = Task { @MainActor in
-            var step = 0
+            var currentVolume = max(0.1, min(1.0, alertManager.config.alarmVolume))
             while !Task.isCancelled {
                 guard isMonitoring else { break }
-                let fraction = Self.progressiveAlarmRampFraction(for: step)
-                let vol = maxVol * fraction
-                alarmPlayer.play(volume: vol)
-                step += 1
+                alarmPlayer.play(volume: currentVolume)
+                currentVolume = min(1.0, currentVolume + 0.1)
                 try? await Task.sleep(for: .seconds(Self.alarmVolumeStepInterval))
                 guard alertPhase == .alarming else { break }
             }
         }
-    }
-
-    /// Perceptual easing: gentle start, then stronger increases every 2 seconds.
-    private static func progressiveAlarmRampFraction(for step: Int) -> Float {
-        let clampedStep = min(max(0, step + 1), alarmVolumeRampStepCount)
-        let progress = Float(clampedStep) / Float(alarmVolumeRampStepCount)
-        let curved = pow(progress, 1.6)
-        // Keep first burst audible while preserving progressively larger jumps.
-        return max(0.12, min(1.0, curved))
     }
 
     /// Ends an in-flight AAC encode and persists the SwiftData row when stopping mid-snore bout.

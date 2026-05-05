@@ -159,8 +159,12 @@ final class AlarmTonePlayer: @unchecked Sendable {
     }
 
     /// Cosine-shaped attack/release envelope; `pos` and `duration` in samples.
-    private static func cosEnv(pos: Int, duration: Int,
-                                attackFrac: Double = 0.08, releaseFrac: Double = 0.08) -> Double {
+    private static func cosEnv(
+        pos: Int,
+        duration: Int,
+        attackFrac: Double = 0.08,
+        releaseFrac: Double = 0.08
+    ) -> Double {
         let atk = max(1, Int(Double(duration) * attackFrac))
         let rel = max(1, Int(Double(duration) * releaseFrac))
         if pos < atk { return 0.5 * (1 - cos(.pi * Double(pos) / Double(atk))) }
@@ -182,7 +186,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
             guard idx < onCount else { data[idx] = 0; continue }
             let time = Double(idx) / rate
             let wave = (sin(2 * .pi * 440 * time) + sin(2 * .pi * 330 * time)) * 0.5
-            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount) * 0.75)
+            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount))
         }
         return buf
     }
@@ -201,7 +205,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
             guard idx < onCount else { data[idx] = 0; continue }
             let time = Double(idx) / rate
             let wave = (sin(2 * .pi * 880 * time) + sin(2 * .pi * 660 * time)) * 0.5
-            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount) * 0.80)
+            data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount))
         }
         return buf
     }
@@ -227,7 +231,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
             let time = Double(idx) / rate
             let wave = (sin(2 * .pi * 1000 * time) + sin(2 * .pi * 750 * time)) * 0.5
             data[idx] = Float(wave * cosEnv(pos: posInStep, duration: beepN,
-                                            attackFrac: 0.10, releaseFrac: 0.10) * 0.85)
+                                            attackFrac: 0.10, releaseFrac: 0.10))
         }
         return buf
     }
@@ -247,7 +251,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
             let time = Double(idx) / rate
             let wave = (sin(2 * .pi * 1200 * time) + sin(2 * .pi * 900 * time)) * 0.5
             data[idx] = Float(wave * cosEnv(pos: idx, duration: onCount,
-                                            attackFrac: 0.05, releaseFrac: 0.05) * 0.85)
+                                            attackFrac: 0.05, releaseFrac: 0.05))
         }
         return buf
     }
@@ -272,7 +276,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
             phase   += 2 * .pi * freq / rate
             let wave = sin(phase)
             data[idx] = Float(wave * cosEnv(pos: idx, duration: sweepN,
-                                            attackFrac: 0.04, releaseFrac: 0.08) * 0.80)
+                                            attackFrac: 0.04, releaseFrac: 0.08))
         }
         return buf
     }

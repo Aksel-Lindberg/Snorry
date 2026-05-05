@@ -13,7 +13,7 @@ final class AlertSettings {
     /// Seconds of silence before a snore bout is ended/stored (detector gap).
     var clearDelaySeconds: Double
 
-    /// Maximum alarm output level (0–1); playback ramps toward this in 20% steps every 2 s.
+    /// Alarm starting output level (0–1); playback ramps +10% every 2 s until full volume.
     var alarmVolume: Float
 
     /// Snore detection sensitivity (1 = low, 3 = medium default, 5 = high).
