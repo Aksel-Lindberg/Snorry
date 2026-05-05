@@ -16,6 +16,7 @@ struct SessionDetailView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         statsCards(vm: vm)
+                        watchSnoreCard(vm: vm)
                         timelineChart(vm: vm)
                         eventsList(vm: vm)
                     }
@@ -50,6 +51,36 @@ struct SessionDetailView: View {
                          icon: "lungs")
             }
         }
+    }
+
+    // MARK: Watch snore card
+
+    private func watchSnoreCard(vm: SessionDetailViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Snore Clock")
+                    .font(.caption.bold())
+                    .foregroundStyle(Theme.labelSecondary)
+                Spacer()
+                Text("Arc position = time  ·  length = duration")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelTertiary)
+            }
+            .padding(.horizontal, 4)
+
+            SnoreWatchFace(events: vm.snoreEvents)
+                .frame(height: 220)
+
+            if vm.snoreEvents.isEmpty {
+                Text("No snore events recorded this session")
+                    .font(.caption)
+                    .foregroundStyle(Theme.labelTertiary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, 4)
+            }
+        }
+        .padding(16)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
     }
 
     // MARK: Timeline chart
@@ -108,6 +139,122 @@ struct SessionDetailView: View {
         }
         .padding(16)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+    }
+}
+
+// MARK: - Snore watch face
+
+/// Draws a 12-hour clock face with red arc segments on the bezel for each snore event.
+/// Arc *position* encodes the real wall-clock start time; arc *length* encodes event duration.
+private struct SnoreWatchFace: View {
+
+    let events: [SnoreEvent]
+
+    /// Seconds in a full 12-hour dial rotation.
+    private static let dialSeconds: Double = 12 * 3600
+    /// Minimum visible sweep so very short events still appear as small arcs.
+    private static let minSweepDeg: Double = 4.0
+
+    var body: some View {
+        // Pre-compute arc geometry outside the Canvas closure so we only
+        // capture plain value types (avoids Sendable issues with SwiftData models).
+        let arcData: [(startDeg: Double, sweepDeg: Double)] = events.compactMap { event in
+            guard let duration = event.duration, duration > 0 else { return nil }
+            let comps = Calendar.current.dateComponents([.hour, .minute, .second],
+                                                        from: event.startDate)
+            // Map real clock time onto 12-hour dial (0° = top, clockwise)
+            let totalSec = Double((comps.hour ?? 0) % 12) * 3600
+                         + Double(comps.minute ?? 0) * 60
+                         + Double(comps.second ?? 0)
+            let startDeg = (totalSec / Self.dialSeconds) * 360.0
+            let sweepDeg = max(Self.minSweepDeg, (duration / Self.dialSeconds) * 360.0)
+            return (startDeg, sweepDeg)
+        }
+
+        let snoringColor = Theme.snoring   // capture before entering @Sendable closure
+
+        Canvas { ctx, size in
+            let dim    = min(size.width, size.height)
+            let cx     = size.width  / 2
+            let cy     = size.height / 2
+
+            // — Radii —
+            let outerR = dim * 0.46    // decorative outer ring
+            let arcR   = dim * 0.42    // centre-line of the snore-arc track
+            let arcW   = dim * 0.055   // stroke width of each snore arc
+            let faceR  = dim * 0.365   // inner face boundary
+
+            // — Outer bezel ring —
+            var bezel = Path()
+            bezel.addEllipse(in: CGRect(x: cx - outerR, y: cy - outerR,
+                                        width: outerR * 2, height: outerR * 2))
+            ctx.stroke(bezel, with: .color(.white.opacity(0.22)), lineWidth: 2)
+
+            // — Subtle arc-track guide (thin ring where arcs will appear) —
+            var track = Path()
+            track.addEllipse(in: CGRect(x: cx - arcR, y: cy - arcR,
+                                        width: arcR * 2, height: arcR * 2))
+            ctx.stroke(track, with: .color(.white.opacity(0.06)), lineWidth: arcW)
+
+            // — Watch face background —
+            var face = Path()
+            face.addEllipse(in: CGRect(x: cx - faceR, y: cy - faceR,
+                                       width: faceR * 2, height: faceR * 2))
+            ctx.fill(face, with: .color(.white.opacity(0.04)))
+            ctx.stroke(face, with: .color(.white.opacity(0.15)), lineWidth: 1.5)
+
+            // — Tick marks: 12 major (hourly) + 48 minor (every 5 min) —
+            for tick in 0..<60 {
+                let isMajor = tick % 5 == 0
+                let rad = (Double(tick) * 6.0 - 90.0) * .pi / 180.0
+                let innerR = isMajor ? faceR * 0.81 : faceR * 0.91
+                var t = Path()
+                t.move(to: CGPoint(x: cx + cos(rad) * faceR * 0.97,
+                                   y: cy + sin(rad) * faceR * 0.97))
+                t.addLine(to: CGPoint(x: cx + cos(rad) * innerR,
+                                      y: cy + sin(rad) * innerR))
+                ctx.stroke(t,
+                           with: .color(.white.opacity(isMajor ? 0.55 : 0.18)),
+                           lineWidth: isMajor ? 1.5 : 0.8)
+            }
+
+            // — Hour labels at 12, 3, 6, 9 —
+            let labelR = faceR * 0.62
+            let hourLabels: [(hour: Int, label: String)] = [
+                (0, "12"), (3, "3"), (6, "6"), (9, "9")
+            ]
+            for entry in hourLabels {
+                let rad = (Double(entry.hour) * 30.0 - 90.0) * .pi / 180.0
+                ctx.draw(
+                    Text(entry.label)
+                        .font(.system(size: dim * 0.055, weight: .medium, design: .rounded))
+                        .foregroundStyle(Color.white.opacity(0.45)),
+                    at: CGPoint(x: cx + cos(rad) * labelR,
+                                y: cy + sin(rad) * labelR)
+                )
+            }
+
+            // — Centre dot —
+            var dot = Path()
+            dot.addEllipse(in: CGRect(x: cx - 3, y: cy - 3, width: 6, height: 6))
+            ctx.fill(dot, with: .color(.white.opacity(0.40)))
+
+            // — Snore event arcs —
+            // Each arc starts at the event's real clock position and sweeps clockwise
+            // proportional to the event's duration. Wrap-around near 12/0° is handled
+            // automatically because Path.addArc accepts angles beyond 360°.
+            for arc in arcData {
+                var p = Path()
+                p.addArc(center: CGPoint(x: cx, y: cy),
+                         radius: arcR,
+                         startAngle: .degrees(arc.startDeg - 90.0),
+                         endAngle:   .degrees(arc.startDeg - 90.0 + arc.sweepDeg),
+                         clockwise: false)
+                ctx.stroke(p,
+                           with: .color(snoringColor.opacity(0.88)),
+                           style: StrokeStyle(lineWidth: arcW, lineCap: .round))
+            }
+        }
     }
 }
 
