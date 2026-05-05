@@ -51,8 +51,8 @@ enum Theme {
     /// Darker, deeper red-maroon gradient for destructive/stop buttons.
     static var stopGradient: LinearGradient {
         LinearGradient(
-            colors: [Color(red: 0.72, green: 0.10, blue: 0.12),
-                     Color(red: 0.55, green: 0.08, blue: 0.18)],
+            colors: [Color(red: 0.42, green: 0.05, blue: 0.08),
+                     Color(red: 0.28, green: 0.04, blue: 0.12)],
             startPoint: .topLeading, endPoint: .bottomTrailing
         )
     }

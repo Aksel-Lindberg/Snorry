@@ -86,15 +86,10 @@ final class MonitorViewModel {
 
     // Tracks an open AAC file for exactly one detector `SnoreEvent` (opened on `.snoreStarted`, closed on `.snoreEnded`).
     private var clipOpen = false
-    /// Last time classifier reported active snoring; used for a fixed alert-stop grace window.
-    private var lastSnoringActiveAt: Date?
-
     private var monitorTask: Task<Void, Never>?
     private var classifierTask: Task<Void, Never>?
     private var detectorTask: Task<Void, Never>?
     private var alertTask: Task<Void, Never>?
-    /// Independent 2 s quiet timeout for alert ending (not tied to 1 Hz elapsed timer).
-    private var snoringQuietTimeoutTask: Task<Void, Never>?
     private var elapsedTimer: Task<Void, Never>?
     private var timelineTimer: Task<Void, Never>?
     /// Steps alarm volume every 2 s while `.alarming`; cancelled when snoring stops.
@@ -110,8 +105,6 @@ final class MonitorViewModel {
 
     private let modelContext: ModelContext
 
-    /// Alert stop debounce is always 2 s and intentionally independent of the snore-event gap setting.
-    private static let alertSilenceBeforeClearSeconds: TimeInterval = 2
     /// Seconds between alarm volume updates while alarm is active.
     private static let alarmVolumeStepInterval: TimeInterval = 2
 
@@ -154,7 +147,6 @@ final class MonitorViewModel {
 
         isMonitoring = true
         isSnoring = false
-        lastSnoringActiveAt = nil
         elapsedSeconds = 0
         snoreEventCount = 0
         spectrumBands = []
@@ -183,8 +175,9 @@ final class MonitorViewModel {
 
         alertManager.config.notifyDelay       = settings.notifyDelaySeconds
         alertManager.config.soundAlarmAfter   = settings.soundAlarmAfterSeconds
-        // Alert ending is separate from event-storage ending; always stop alerts after 3 s of quiet.
-        alertManager.config.clearDelay        = Self.alertSilenceBeforeClearSeconds
+        // Keep alarm active through an ongoing snore event and clear only on event end.
+        // Retain detector silence gap here to align with "snore has ended".
+        alertManager.config.clearDelay        = settings.clearDelaySeconds
         alertManager.config.alarmVolume       = settings.alarmVolume
         alertManager.config.pushEnabled       = settings.pushNotificationEnabled
         alertManager.config.soundEnabled      = settings.soundAlarmEnabled
@@ -226,7 +219,6 @@ final class MonitorViewModel {
 
         isMonitoring       = false
         isSnoring          = false
-        lastSnoringActiveAt = nil
         isEpisodeConfirmed = false
         alertPhase         = .idle
         currentBRPM        = 0
@@ -338,7 +330,6 @@ final class MonitorViewModel {
         classifierTask?.cancel(); classifierTask = nil
         detectorTask?.cancel();  detectorTask = nil
         alertTask?.cancel();     alertTask = nil
-        snoringQuietTimeoutTask?.cancel(); snoringQuietTimeoutTask = nil
         elapsedTimer?.cancel();  elapsedTimer = nil
         timelineTimer?.cancel(); timelineTimer = nil
         alarmRampTask?.cancel(); alarmRampTask = nil
@@ -351,20 +342,12 @@ final class MonitorViewModel {
         switch event {
         case .snoringActive(let active):
             isSnoring = active
-            if active {
-                lastSnoringActiveAt = Date()
-                snoringQuietTimeoutTask?.cancel()
-                snoringQuietTimeoutTask = nil
-            } else {
-                scheduleSnoringQuietTimeout()
-            }
             updateAlertSnoringState()
 
         case .snoreStarted(let id, let at, let captureFrom):
             activeEventID      = id
             snoreEventCount   += 1
             isEpisodeConfirmed = true
-            lastSnoringActiveAt = Date()
             // Fresh BRPM estimation for each new detector bout / event.
             currentBRPM       = 0
             brpmAvailable     = false
@@ -380,15 +363,15 @@ final class MonitorViewModel {
                 interleaved: false
             )!
             let path = clipRecorder.beginClip(
-                sessionID:    activeSession?.id ?? UUID(),
-                eventID:      id,
+                sessionID: activeSession?.id ?? UUID(),
+                eventID: id,
                 nativePreRoll: audioService.nativePreRoll,
-                inputFormat:  fmt,
-                captureFrom:  captureFrom
+                inputFormat: fmt,
+                captureFrom: captureFrom
             )
             clipOpen = path != nil
-            if let p = path {
-                sessionStore?.updateEventAudioPath(p, eventID: id)
+            if let clipPath = path {
+                sessionStore?.updateEventAudioPath(clipPath, eventID: id)
             }
 
         case .snoreOnset:
@@ -398,8 +381,8 @@ final class MonitorViewModel {
             if clipOpen {
                 let relativePath = clipRecorder.endClip()
                 clipOpen = false
-                if let p = relativePath {
-                    sessionStore?.updateEventAudioPath(p, eventID: id)
+                if let clipPath = relativePath {
+                    sessionStore?.updateEventAudioPath(clipPath, eventID: id)
                 }
             }
             // Capture the same harmonic shown as the red marker on the live spectrum.
@@ -409,6 +392,8 @@ final class MonitorViewModel {
             currentBRPM   = brpm
             brpmAvailable = brpm > 0
             activeEventID = nil
+            // Stop alarm/push exactly when this confirmed snore event ends.
+            alertManager.clearAfterSnoreBoutEnded()
 
         case .brpmUpdated(let brpm):
             currentBRPM   = brpm
@@ -416,23 +401,11 @@ final class MonitorViewModel {
         }
     }
 
-    /// Runs the alert state machine from current classifier + grace-window state.
-    private func updateAlertSnoringState(now: Date = Date()) {
-        let inGraceWindow = lastSnoringActiveAt.map {
-            now.timeIntervalSince($0) < Self.alertSilenceBeforeClearSeconds
-        } ?? false
-        let sustainedSnoring = isEpisodeConfirmed && (isSnoring || inGraceWindow)
-        alertManager.update(isSnoring: sustainedSnoring, at: now)
-    }
-
-    /// Ensures alarm ends within 2 s after snoring activity goes quiet.
-    private func scheduleSnoringQuietTimeout() {
-        snoringQuietTimeoutTask?.cancel()
-        snoringQuietTimeoutTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(Self.alertSilenceBeforeClearSeconds))
-            guard let self, isMonitoring, !Task.isCancelled else { return }
-            updateAlertSnoringState()
-        }
+    /// Runs the alert state machine from confirmed episode state.
+    /// While an episode is confirmed, treat it as sustained snoring until `.snoreEnded`.
+    private func updateAlertSnoringState() {
+        let sustainedSnoring = isEpisodeConfirmed
+        alertManager.update(isSnoring: sustainedSnoring, at: Date())
     }
 
     private func handleAlertPhase(_ phase: AlertPhase) {
@@ -455,7 +428,6 @@ final class MonitorViewModel {
             alarmRampTask = nil
             alarmPlayer.stop()
             notifications.cancelSnoringAlert()
-            lastSnoringActiveAt = nil
             isEpisodeConfirmed = false
             currentBRPM       = 0
             brpmAvailable     = false
@@ -498,8 +470,8 @@ final class MonitorViewModel {
         if clipOpen {
             let relativePath = clipRecorder.endClip()
             clipOpen = false
-            if let p = relativePath {
-                sessionStore?.updateEventAudioPath(p, eventID: id)
+            if let clipPath = relativePath {
+                sessionStore?.updateEventAudioPath(clipPath, eventID: id)
             }
         }
         let peak = min(Float(0), max(currentDB, -160))

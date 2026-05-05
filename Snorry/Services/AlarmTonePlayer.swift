@@ -9,6 +9,7 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
     case alert   = 2
     case urgent  = 3
     case siren   = 4
+    case extreme = 5
 
     var displayName: String {
         switch self {
@@ -17,6 +18,7 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .alert:   return "Alert"
         case .urgent:  return "Urgent"
         case .siren:   return "Siren"
+        case .extreme: return "Extreme"
         }
     }
 
@@ -27,6 +29,7 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .alert:   return "1 kHz · triple burst"
         case .urgent:  return "1.2 kHz · rapid staccato"
         case .siren:   return "800–1400 Hz · rising sweep"
+        case .extreme: return "1.6 kHz · max-intensity rapid burst"
         }
     }
 }
@@ -158,6 +161,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
         case .alert:   return synthesizeAlert()
         case .urgent:  return synthesizeUrgent()
         case .siren:   return synthesizeSiren()
+        case .extreme: return synthesizeExtreme()
         }
     }
 
@@ -175,9 +179,9 @@ final class AlarmTonePlayer: @unchecked Sendable {
         return 1.0
     }
 
-    /// Applies a loudness drive with soft clipping to keep samples in [-1, 1].
-    private static func driven(_ sample: Double) -> Float {
-        let boosted = sample * outputDrive
+    /// Applies loudness drive with soft clipping to keep samples in [-1, 1].
+    private static func driven(_ sample: Double, extraDrive: Double = 1.0) -> Float {
+        let boosted = sample * outputDrive * extraDrive
         let clipped = tanh(boosted)
         return Float(max(-1.0, min(1.0, clipped)))
     }
@@ -304,6 +308,44 @@ final class AlarmTonePlayer: @unchecked Sendable {
                     attackFrac: 0.04,
                     releaseFrac: 0.08
                 )
+            )
+        }
+        return buf
+    }
+
+    // MARK: Extreme — 1600/1200 Hz + harmonic, rapid 0.14 s bursts for maximum urgency
+
+    private static func synthesizeExtreme() -> AVAudioPCMBuffer? {
+        let rate     = sampleRate
+        let beepDur  = 0.14
+        let gapDur   = 0.06
+        let pauseDur = 0.20
+        let cycleDur = (beepDur + gapDur) * 4 + pauseDur
+        let total    = AVAudioFrameCount(rate * cycleDur)
+        let beepN    = Int(rate * beepDur)
+        let stepN    = Int(rate * (beepDur + gapDur))
+
+        guard let buf = AVAudioPCMBuffer(pcmFormat: makeFormat(), frameCapacity: total),
+              let data = buf.floatChannelData?[0] else { return nil }
+        buf.frameLength = total
+
+        for idx in 0..<Int(total) {
+            let burstIndex = idx / stepN
+            let posInStep  = idx % stepN
+            guard burstIndex < 4, posInStep < beepN else { data[idx] = 0; continue }
+            let time = Double(idx) / rate
+            // Add a light third harmonic for stronger speaker presence.
+            let wave = (sin(2 * .pi * 1600 * time)
+                        + sin(2 * .pi * 1200 * time)
+                        + 0.35 * sin(2 * .pi * 2400 * time)) / 2.35
+            data[idx] = driven(
+                wave * cosEnv(
+                    pos: posInStep,
+                    duration: beepN,
+                    attackFrac: 0.03,
+                    releaseFrac: 0.04
+                ),
+                extraDrive: 1.35
             )
         }
         return buf
