@@ -134,7 +134,7 @@ struct SettingsView: View {
                 label: "Repeat push every",
                 value: Binding(get: { vm.pushRepeatInterval },
                                set: { vm.pushRepeatInterval = $0 }),
-                range: 2...600,
+                range: 1...10,
                 unit: "s",
                 step: 1
             )
@@ -199,7 +199,7 @@ struct SettingsView: View {
                 label: "Send push notification after",
                 value: Binding(get: { vm.notifyDelay },
                                set: { vm.notifyDelay = $0 }),
-                range: 2...120,
+                range: 1...10,
                 unit: "s",
                 step: 1
             )
@@ -209,7 +209,7 @@ struct SettingsView: View {
                 label: "Sound alarm after",
                 value: Binding(get: { vm.soundAlarmAfter },
                                set: { vm.soundAlarmAfter = $0 }),
-                range: 5...300,
+                range: 1...10,
                 unit: "s",
                 step: 1
             )
@@ -219,7 +219,7 @@ struct SettingsView: View {
                 label: "Silence to end snore event",
                 value: Binding(get: { vm.clearDelay },
                                set: { vm.clearDelay = $0 }),
-                range: 3...30,
+                range: 1...10,
                 unit: "s",
                 step: 1
             )

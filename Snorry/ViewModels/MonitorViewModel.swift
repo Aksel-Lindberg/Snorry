@@ -467,7 +467,7 @@ final class MonitorViewModel {
     private func startPushRepeatLoop() {
         pushRepeatTask?.cancel()
         guard sessionPushRepeatEnabled, sessionPushEnabled else { return }
-        let interval = max(2, sessionPushRepeatInterval)
+        let interval = max(1, sessionPushRepeatInterval)
         pushRepeatTask = Task { @MainActor in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(interval))

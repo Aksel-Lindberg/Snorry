@@ -35,7 +35,7 @@ final class AlertSettings {
 
     init() {
         notifyDelaySeconds        = 2
-        soundAlarmAfterSeconds    = 15
+        soundAlarmAfterSeconds    = 10
         clearDelaySeconds         = 8
         alarmVolume               = 0.85
         snoringDetectionSensitivity = 3
@@ -43,7 +43,7 @@ final class AlertSettings {
         pushNotificationEnabled   = true
         soundAlarmEnabled         = true
         pushRepeatEnabled         = false
-        pushRepeatIntervalSeconds = 60
+        pushRepeatIntervalSeconds = 10
     }
 
     /// Returns existing or creates default settings.
