@@ -18,6 +18,7 @@ struct SnorryApp: App {
             SnoreEvent.self,
             WaveformSample.self,
             AlertSettings.self,
+            AlertSettingsChange.self
         ])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

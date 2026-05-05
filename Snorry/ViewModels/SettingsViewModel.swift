@@ -48,6 +48,16 @@ final class SettingsViewModel {
 
     func save() {
         guard let stored = settings else { return }
+
+        // Record a change snapshot before writing if any tracked push/alarm field changed.
+        let hasChanged = stored.pushNotificationEnabled    != pushNotificationEnabled
+            || stored.soundAlarmEnabled                    != soundAlarmEnabled
+            || stored.pushRepeatEnabled                    != pushRepeatEnabled
+            || stored.notifyDelaySeconds                   != notifyDelay
+            || stored.soundAlarmAfterSeconds               != soundAlarmAfter
+            || stored.pushRepeatIntervalSeconds            != pushRepeatInterval
+            || stored.alarmStyleRaw                        != alarmStyle.rawValue
+
         stored.notifyDelaySeconds              = notifyDelay
         stored.soundAlarmAfterSeconds          = soundAlarmAfter
         stored.clearDelaySeconds               = clearDelay
@@ -58,6 +68,20 @@ final class SettingsViewModel {
         stored.pushRepeatIntervalSeconds       = pushRepeatInterval
         stored.snoringDetectionSensitivity     = snoringDetectionSensitivity
         stored.alarmStyleRaw                   = alarmStyle.rawValue
+
+        if hasChanged {
+            let change = AlertSettingsChange(
+                pushNotificationEnabled: pushNotificationEnabled,
+                notifyDelaySeconds: notifyDelay,
+                pushRepeatEnabled: pushRepeatEnabled,
+                pushRepeatIntervalSeconds: pushRepeatInterval,
+                soundAlarmEnabled: soundAlarmEnabled,
+                soundAlarmAfterSeconds: soundAlarmAfter,
+                alarmStyleRaw: alarmStyle.rawValue
+            )
+            context.insert(change)
+        }
+
         try? context.save()
     }
 
