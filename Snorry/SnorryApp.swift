@@ -51,8 +51,6 @@ struct SnorryApp: App {
                     // Recover any session interrupted by a prior process kill
                     let store = SessionStore(context: sharedModelContainer.mainContext)
                     store.recoverOrphanedSession()
-                    // Pre-warm notification authorization state
-                    await appEnv.notifications.requestAuthorization()
                 }
         }
         .modelContainer(sharedModelContainer)

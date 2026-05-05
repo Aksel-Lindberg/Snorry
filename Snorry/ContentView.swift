@@ -2,6 +2,8 @@ import SwiftUI
 
 // MARK: - App root: tab bar with Monitor / History / Analytics / Settings
 struct RootView: View {
+
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab: Tab = .home
 
     enum Tab: String {
@@ -9,6 +11,14 @@ struct RootView: View {
     }
 
     var body: some View {
+        if !hasCompletedOnboarding {
+            OnboardingView { hasCompletedOnboarding = true }
+        } else {
+            mainTabView
+        }
+    }
+
+    private var mainTabView: some View {
         TabView(selection: $selectedTab) {
             HomeView()
                 .tabItem {

@@ -272,13 +272,10 @@ struct SettingsView: View {
 
     private func legalSection() -> some View {
         Section {
-            Link("Terms of Use (EULA)",
-                 destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-            .foregroundStyle(Theme.accent)
-
-            Link("Privacy Policy",
-                 destination: URL(string: "https://snorry.lintech.no")!)
-            .foregroundStyle(Theme.accent)
+            Link("Terms of Use (EULA)", destination: LegalLinks.termsOfUse)
+                .foregroundStyle(Theme.accent)
+            Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
+                .foregroundStyle(Theme.accent)
         } header: {
             Text("Legal")
                 .foregroundStyle(Theme.labelSecondary)
