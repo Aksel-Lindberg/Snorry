@@ -384,6 +384,8 @@ final class MonitorViewModel {
 
         case .snoreEnded(let id, let at, let brpm, let peakDB, let avgDB):
             activeSnoreEpisode = false
+            // Bout ended at gap expiry — stop alarm/notifications now (do not debounce with clearDelay).
+            alertManager.clearAfterSnoreBoutEnded()
             if clipOpen {
                 let relativePath = clipRecorder.endClip()
                 clipOpen = false

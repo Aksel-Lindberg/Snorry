@@ -84,6 +84,12 @@ final class AlertManager: @unchecked Sendable {
         }
     }
 
+    /// Call when `SnoreEventDetector` emits `.snoreEnded` — stops alarm/pushes immediately instead of waiting for `clearDelay`.
+    func clearAfterSnoreBoutEnded() {
+        guard phase != .idle else { return }
+        clear()
+    }
+
     // MARK: Private
 
     private func advance(elapsed: TimeInterval, at now: Date) {

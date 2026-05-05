@@ -86,4 +86,16 @@ struct AlertManagerTests {
         #expect(mgr.phase == .alarming)
         mgr.stop()
     }
+
+    @Test func clearsImmediatelyAfterSnoreBoutEnds() {
+        let mgr = makeManager()
+        mgr.config.clearDelay = 99  // would block silence-based clear for a long time
+        let start = Date()
+        mgr.update(isSnoring: true, at: start)
+        mgr.update(isSnoring: true, at: start.addingTimeInterval(5.5))
+        #expect(mgr.phase == .alarming)
+        mgr.clearAfterSnoreBoutEnded()
+        #expect(mgr.phase == .idle)
+        mgr.stop()
+    }
 }
