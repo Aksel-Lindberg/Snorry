@@ -61,6 +61,7 @@ struct SettingsView: View {
             alertTimingsSection(vm: vm)
             volumeSection(vm: vm)
             actionsSection(vm: vm)
+            legalSection()
         }
         .scrollContentBackground(.hidden)
         .listStyle(.insetGrouped)
@@ -258,6 +259,22 @@ struct SettingsView: View {
                 vm.reset()
             }
             .foregroundStyle(Theme.snoring)
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    private func legalSection() -> some View {
+        Section {
+            Link("Terms of Use (EULA)",
+                 destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+            .foregroundStyle(Theme.accent)
+
+            Link("Privacy Policy",
+                 destination: URL(string: "https://snorry.lintech.no")!)
+            .foregroundStyle(Theme.accent)
+        } header: {
+            Text("Legal")
+                .foregroundStyle(Theme.labelSecondary)
         }
         .listRowBackground(Theme.surface)
     }

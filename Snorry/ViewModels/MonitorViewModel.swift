@@ -112,8 +112,10 @@ final class MonitorViewModel {
 
     /// Alert stop debounce is always 2 s and intentionally independent of the snore-event gap setting.
     private static let alertSilenceBeforeClearSeconds: TimeInterval = 2
-    /// Seconds between alarm volume steps (20% of max per step until cap).
+    /// Seconds between alarm volume updates while alarm is active.
     private static let alarmVolumeStepInterval: TimeInterval = 2
+    /// Number of 2-second steps used to reach full configured alarm volume.
+    private static let alarmVolumeRampStepCount = 8
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -477,7 +479,7 @@ final class MonitorViewModel {
         }
     }
 
-    /// Every 2 s raise playback toward `alarmVolume` in 20% steps (burst cadence + escalation).
+    /// Every 2 s raise playback toward `alarmVolume` using progressive steps.
     private func startAlarmVolumeRamp() {
         alarmRampTask?.cancel()
         let maxVol = alertManager.config.alarmVolume
@@ -485,7 +487,7 @@ final class MonitorViewModel {
             var step = 0
             while !Task.isCancelled {
                 guard isMonitoring else { break }
-                let fraction = min(1.0, 0.2 * Float(step + 1))
+                let fraction = Self.progressiveAlarmRampFraction(for: step)
                 let vol = maxVol * fraction
                 alarmPlayer.play(volume: vol)
                 step += 1
@@ -493,6 +495,15 @@ final class MonitorViewModel {
                 guard alertPhase == .alarming else { break }
             }
         }
+    }
+
+    /// Perceptual easing: gentle start, then stronger increases every 2 seconds.
+    private static func progressiveAlarmRampFraction(for step: Int) -> Float {
+        let clampedStep = min(max(0, step + 1), alarmVolumeRampStepCount)
+        let progress = Float(clampedStep) / Float(alarmVolumeRampStepCount)
+        let curved = pow(progress, 1.6)
+        // Keep first burst audible while preserving progressively larger jumps.
+        return max(0.12, min(1.0, curved))
     }
 
     /// Ends an in-flight AAC encode and persists the SwiftData row when stopping mid-snore bout.
