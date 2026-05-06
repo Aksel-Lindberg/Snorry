@@ -7,12 +7,50 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
     case gentle  = 0
     case classic = 1
     case alert   = 2
+    // Bundled MP3 clips (filenames under Resources, without extension)
+    case bell = 3
+    case birds = 4
+    case birds2 = 5
+    case birds3 = 6
+    case blades = 7
+    case clock = 8
+    case cracks = 9
+    case doubleTones = 10
+    case harpstrok = 11
+    case icecracks = 12
+    case marimba = 13
+    /// Matches asset `Marimba intrumental.mp3` (filename spelling).
+    case marimbaIntrumental = 14
+    case piano = 15
+    case pianoArpeggio = 16
+    case raindrop = 17
+    case singball = 18
+    case tornado = 19
+    case windplay = 20
 
     var displayName: String {
         switch self {
         case .gentle:  return "Gentle"
         case .classic: return "Classic"
         case .alert:   return "Alert"
+        case .bell: return "Bell"
+        case .birds: return "Birds"
+        case .birds2: return "Birds 2"
+        case .birds3: return "Birds 3"
+        case .blades: return "Blades"
+        case .clock: return "Clock"
+        case .cracks: return "Cracks"
+        case .doubleTones: return "Double Tones"
+        case .harpstrok: return "Harp Stroke"
+        case .icecracks: return "Ice Cracks"
+        case .marimba: return "Marimba"
+        case .marimbaIntrumental: return "Marimba Instrumental"
+        case .piano: return "Piano"
+        case .pianoArpeggio: return "Piano Arpeggio"
+        case .raindrop: return "Raindrop"
+        case .singball: return "Singball"
+        case .tornado: return "Tornado"
+        case .windplay: return "Windplay"
         }
     }
 
@@ -21,12 +59,56 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .gentle:  return "440 Hz · soft slow pulse"
         case .classic: return "880 Hz · steady double-tone"
         case .alert:   return "1 kHz · triple burst"
+        case .bell,
+                .birds,
+                .birds2,
+                .birds3,
+                .blades,
+                .clock,
+                .cracks,
+                .doubleTones,
+                .harpstrok,
+                .icecracks,
+                .marimba,
+                .marimbaIntrumental,
+                .piano,
+                .pianoArpeggio,
+                .raindrop,
+                .singball,
+                .tornado,
+                .windplay:
+            return "Recorded clip"
+        }
+    }
+
+    /// Resource name in the app bundle (without `.mp3`), if this style uses a file from `Resources`.
+    var bundledClipName: String? {
+        switch self {
+        case .gentle, .classic, .alert: return nil
+        case .bell: return "Bell"
+        case .birds: return "Birds"
+        case .birds2: return "Birds 2"
+        case .birds3: return "Birds 3"
+        case .blades: return "Blades"
+        case .clock: return "Clock"
+        case .cracks: return "Cracks"
+        case .doubleTones: return "Double tones"
+        case .harpstrok: return "Harpstrok"
+        case .icecracks: return "Icecracks"
+        case .marimba: return "Marimba"
+        case .marimbaIntrumental: return "Marimba intrumental"
+        case .piano: return "Piano"
+        case .pianoArpeggio: return "Pianoarpeggio"
+        case .raindrop: return "Raindrop"
+        case .singball: return "Singball"
+        case .tornado: return "Tornado"
+        case .windplay: return "Windplay"
         }
     }
 }
 
 // MARK: - Synthesises and plays a looping alarm tone
-/// No binary audio assets required — everything is generated in memory.
+/// Built-in styles use in-memory synthesis; additional styles load bundled MP3 clips from `Resources`.
 final class AlarmTonePlayer: @unchecked Sendable {
 
     private let engine     = AVAudioEngine()
@@ -48,6 +130,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
     /// Global loudness boost for synthesized alarms.
     /// Values > 1 increase perceived loudness before soft-clipping.
     private static let outputDrive: Double = 1.8
+    private static let bundledClipExtension = "mp3"
 
     init() {
         mixerNode = engine.mainMixerNode
@@ -167,6 +250,47 @@ final class AlarmTonePlayer: @unchecked Sendable {
         case .gentle:  return synthesizeGentle()
         case .classic: return synthesizeClassic()
         case .alert:   return synthesizeAlert()
+        case .bell,
+                .birds,
+                .birds2,
+                .birds3,
+                .blades,
+                .clock,
+                .cracks,
+                .doubleTones,
+                .harpstrok,
+                .icecracks,
+                .marimba,
+                .marimbaIntrumental,
+                .piano,
+                .pianoArpeggio,
+                .raindrop,
+                .singball,
+                .tornado,
+                .windplay:
+            guard let name = style.bundledClipName else { return nil }
+            return loadBundledClip(named: name)
+        }
+    }
+
+    private static func loadBundledClip(named name: String) -> AVAudioPCMBuffer? {
+        guard let fileURL = Bundle.main.url(forResource: name, withExtension: bundledClipExtension) else {
+            return nil
+        }
+        do {
+            let audioFile = try AVAudioFile(forReading: fileURL)
+            let frameCount = AVAudioFrameCount(audioFile.length)
+            guard frameCount > 0,
+                  let buffer = AVAudioPCMBuffer(
+                    pcmFormat: audioFile.processingFormat,
+                    frameCapacity: frameCount
+                  ) else {
+                return nil
+            }
+            try audioFile.read(into: buffer)
+            return buffer
+        } catch {
+            return nil
         }
     }
 
