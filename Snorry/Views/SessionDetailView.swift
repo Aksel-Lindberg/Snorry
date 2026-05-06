@@ -1,12 +1,17 @@
 import SwiftUI
+import SwiftData
 import Charts
 import AVFoundation
+import UserNotifications
 
 // MARK: - Detailed session replay screen
 struct SessionDetailView: View {
 
     let session: SnoreSession
+    @Environment(\.modelContext) private var modelContext
+    @Query private var alertSettingsRows: [AlertSettings]
     @State private var vm: SessionDetailViewModel?
+    @State private var notificationsAuthorized = false
 
     var body: some View {
         ZStack {
@@ -17,6 +22,13 @@ struct SessionDetailView: View {
                     VStack(spacing: 20) {
                         statsCards(vm: vm)
                         watchSnoreCard(vm: vm)
+                        if let settings = alertSettingsRows.first {
+                            AlertSetupSummaryCard(
+                                settings: settings,
+                                notificationsAuthorized: notificationsAuthorized,
+                                caption: "Current preferences · same as Monitor tab"
+                            )
+                        }
                         timelineChart(vm: vm)
                         eventsList(vm: vm)
                     }
@@ -34,8 +46,18 @@ struct SessionDetailView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
             if vm == nil { vm = SessionDetailViewModel(session: session) }
+            ensureAlertSettingsRowExists()
+        }
+        .task {
+            let status = await NotificationManager.shared.checkAuthorisationStatus()
+            notificationsAuthorized = (status == .authorized)
         }
         .onDisappear { vm?.stopPlayback() }
+    }
+
+    private func ensureAlertSettingsRowExists() {
+        guard alertSettingsRows.isEmpty else { return }
+        _ = AlertSettings.load(context: modelContext)
     }
 
     // MARK: Stats row
