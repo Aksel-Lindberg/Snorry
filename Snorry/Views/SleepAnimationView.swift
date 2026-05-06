@@ -4,20 +4,27 @@ import SwiftUI
 // Entirely SwiftUI — zero external assets, perfectly adapted to the dark night theme.
 struct SleepAnimationView: View {
 
+    /// Hero decorative card vs. single morph with the home START control.
+    enum Presentation: Equatable {
+        case standalone
+        case startButton
+    }
+
+    var presentation: Presentation = .standalone
+
     @State private var glowPulse  = false
     @State private var moonFloat  = false
     @State private var barPhase   = false
 
+    private let diameter: CGFloat = 200
+
     var body: some View {
-        ZStack {
-            outerGlow
-            surfaceCircle
-            moonIcon
-            floatingZs
-            audioWaveBars
-                .offset(y: 62)
+        Group {
+            switch presentation {
+            case .standalone: standaloneBody
+            case .startButton: startButtonBody
+            }
         }
-        .frame(width: 200, height: 200)
         .onAppear {
             withAnimation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true)) {
                 glowPulse = true
@@ -31,9 +38,60 @@ struct SleepAnimationView: View {
         }
     }
 
+    // MARK: Standalone (decorative card on home background)
+
+    private var standaloneBody: some View {
+        ZStack {
+            outerGlowAccent
+            surfaceCircle
+            moonIconStandalone
+            floatingZsAccent
+            audioWaveBarsAccent
+                .offset(y: 62)
+        }
+        .frame(width: diameter, height: diameter)
+    }
+
+    // MARK: Start button (accent disk + animation + START label)
+
+    private var startButtonBody: some View {
+        ZStack {
+            outerGlowStartButton
+            Circle()
+                .fill(Theme.accentGradient)
+                .frame(width: diameter, height: diameter)
+                .overlay(
+                    Circle()
+                        .strokeBorder(Color.white.opacity(0.28), lineWidth: 2)
+                )
+                .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
+
+            VStack(spacing: 0) {
+                Spacer(minLength: 22)
+                moonIconStartButton
+                Spacer(minLength: 4)
+                audioWaveBarsLight
+                    .padding(.bottom, 8)
+                HStack(spacing: 8) {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 19, weight: .semibold))
+                    Text("START")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .tracking(3)
+                }
+                .foregroundStyle(.white)
+                Spacer(minLength: 22)
+            }
+            .frame(width: diameter, height: diameter)
+
+            floatingZsLight
+        }
+        .frame(width: diameter, height: diameter)
+    }
+
     // MARK: Outer pulsing glow ring
 
-    private var outerGlow: some View {
+    private var outerGlowAccent: some View {
         Circle()
             .fill(
                 RadialGradient(
@@ -45,7 +103,19 @@ struct SleepAnimationView: View {
             .scaleEffect(glowPulse ? 1.20 : 0.90)
     }
 
-    // MARK: Main surface circle
+    private var outerGlowStartButton: some View {
+        Circle()
+            .fill(
+                RadialGradient(
+                    colors: [Color.white.opacity(0.22), Color.clear],
+                    center: .center,
+                    startRadius: 70, endRadius: 118
+                )
+            )
+            .scaleEffect(glowPulse ? 1.14 : 0.94)
+    }
+
+    // MARK: Main surface circle (standalone only)
 
     private var surfaceCircle: some View {
         Circle()
@@ -70,9 +140,9 @@ struct SleepAnimationView: View {
             .padding(14)
     }
 
-    // MARK: Sleeping moon icon
+    // MARK: Moon — standalone vs on accent fill
 
-    private var moonIcon: some View {
+    private var moonIconStandalone: some View {
         Image(systemName: "moon.zzz.fill")
             .font(.system(size: 62, weight: .ultraLight))
             .foregroundStyle(
@@ -86,64 +156,127 @@ struct SleepAnimationView: View {
             .shadow(color: Theme.accent.opacity(0.45), radius: 12)
     }
 
-    // MARK: Continuously floating Z particles (TimelineView keeps them phase-shifted)
+    private var moonIconStartButton: some View {
+        Image(systemName: "moon.zzz.fill")
+            .font(.system(size: 54, weight: .ultraLight))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [Color.white.opacity(0.98),
+                             Color.white.opacity(0.72)],
+                    startPoint: .top, endPoint: .bottom
+                )
+            )
+            .offset(y: moonFloat ? -5 : 3)
+            .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
+    }
 
-    private var floatingZs: some View {
+    // MARK: Floating Z particles
+
+    private var floatingZsAccent: some View {
         TimelineView(.animation) { context in
             let elapsed = context.date.timeIntervalSinceReferenceDate
-
             ZStack {
-                // Three Z's at different horizontal offsets and staggered phase
                 zParticle(elapsed: elapsed, phaseOffset: 0.00,
-                          xOffset: 36, fontSize: 13, letter: "z")
+                          xOffset: 36, fontSize: 13, letter: "z", style: .accent)
                 zParticle(elapsed: elapsed, phaseOffset: 0.38,
-                          xOffset: 54, fontSize: 18, letter: "Z")
+                          xOffset: 54, fontSize: 18, letter: "Z", style: .accent)
                 zParticle(elapsed: elapsed, phaseOffset: 0.70,
-                          xOffset: 24, fontSize: 10, letter: "z")
+                          xOffset: 24, fontSize: 10, letter: "z", style: .accent)
             }
         }
     }
+
+    private var floatingZsLight: some View {
+        TimelineView(.animation) { context in
+            let elapsed = context.date.timeIntervalSinceReferenceDate
+            ZStack {
+                zParticle(elapsed: elapsed, phaseOffset: 0.00,
+                          xOffset: 36, fontSize: 13, letter: "z", style: .light)
+                zParticle(elapsed: elapsed, phaseOffset: 0.38,
+                          xOffset: 54, fontSize: 18, letter: "Z", style: .light)
+                zParticle(elapsed: elapsed, phaseOffset: 0.70,
+                          xOffset: 24, fontSize: 10, letter: "z", style: .light)
+            }
+        }
+    }
+
+    private enum ZStyle { case accent, light }
 
     private func zParticle(
         elapsed: Double,
         phaseOffset: Double,
         xOffset: CGFloat,
         fontSize: CGFloat,
-        letter: String
+        letter: String,
+        style: ZStyle
     ) -> some View {
         let cycle = 2.6
-        // phase goes 0→1 continuously
         let raw   = (elapsed / cycle + phaseOffset).truncatingRemainder(dividingBy: 1.0)
         let yDrop: CGFloat = 50
 
+        let opacity: Double = {
+            switch style {
+            case .accent:
+                return Double(1 - Float(raw)) * 0.90
+            case .light:
+                return Double(1 - Float(raw)) * 0.85
+            }
+        }()
+
+        let colour: Color = {
+            switch style {
+            case .accent: return Theme.accent.opacity(opacity)
+            case .light:  return Color.white.opacity(opacity * 0.95)
+            }
+        }()
+
         return Text(letter)
             .font(Theme.handwritten(size: fontSize))
-            .foregroundStyle(
-                Theme.accent
-                    .opacity(Double(1 - Float(raw)) * 0.90)      // fade out as it rises
-            )
-            .offset(x: xOffset, y: -CGFloat(raw) * yDrop + 18)  // rises from y=18 to y=-32
+            .foregroundStyle(colour)
+            .offset(x: xOffset, y: -CGFloat(raw) * yDrop + 18)
     }
 
-    // MARK: Mini audio-wave bars (suggest snore detection, bottom of circle)
+    // MARK: Audio-wave bars
 
-    private var audioWaveBars: some View {
-        HStack(spacing: 4) {
-            ForEach([0.55, 1.0, 0.70, 1.0, 0.55], id: \.self) { relHeight in
-                audioBar(relativeHeight: relHeight)
+    private var audioWaveBarsAccent: some View {
+        audioWaveBars(
+            gradientTop: Theme.accent.opacity(0.6),
+            gradientBottom: Theme.accent.opacity(0.25)
+        )
+    }
+
+    private var audioWaveBarsLight: some View {
+        audioWaveBars(
+            gradientTop: Color.white.opacity(0.95),
+            gradientBottom: Color.white.opacity(0.35)
+        )
+    }
+
+    private func audioWaveBars(gradientTop: Color, gradientBottom: Color) -> some View {
+        let heights: [Double] = [0.55, 1.0, 0.70, 1.0, 0.55]
+        return HStack(spacing: 4) {
+            ForEach(heights.indices, id: \.self) { index in
+                audioBar(
+                    relativeHeight: heights[index],
+                    gradientTop: gradientTop,
+                    gradientBottom: gradientBottom
+                )
             }
         }
     }
 
-    private func audioBar(relativeHeight: Double) -> some View {
-        let maxH: CGFloat = 16
-        // Each bar uses a slightly different delay via a hash of relativeHeight
+    private func audioBar(
+        relativeHeight: Double,
+        gradientTop: Color,
+        gradientBottom: Color
+    ) -> some View {
+        let maxH: CGFloat = presentation == .startButton ? 14 : 16
         let delay = relativeHeight * 0.3
 
         return Capsule()
             .fill(
                 LinearGradient(
-                    colors: [Theme.accent.opacity(0.6), Theme.accent.opacity(0.25)],
+                    colors: [gradientTop, gradientBottom],
                     startPoint: .top, endPoint: .bottom
                 )
             )

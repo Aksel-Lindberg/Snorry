@@ -41,12 +41,8 @@ struct HomeView: View {
             headerSection
                 .padding(.top, 36)
 
-            SleepAnimationView()
-                .padding(.top, 12)
-
-            Spacer(minLength: 16)
-
             startButtonSection(vm: vm)
+                .padding(.top, 20)
 
             if let settings = alertSettingsRows.first {
                 sessionSetupCard(settings: settings, vm: vm)
@@ -89,32 +85,16 @@ struct HomeView: View {
 
     private func startButtonSection(vm: MonitorViewModel) -> some View {
         VStack(spacing: 24) {
-            // Fixed layout — no pulsing or looping animations so the button stays predictable.
             Button {
                 handleStartTap(vm: vm)
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(Theme.accentGradient)
-                        .frame(width: 160, height: 160)
-                        .overlay {
-                            Circle()
-                                .strokeBorder(.white.opacity(0.28), lineWidth: 2)
-                        }
-                        .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
-
-                    VStack(spacing: 6) {
-                        Image(systemName: "mic.fill")
-                            .font(.system(size: 32, weight: .semibold))
-                        Text("START")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .tracking(3)
-                    }
-                    .foregroundStyle(.white)
-                }
+                SleepAnimationView(presentation: .startButton)
+                    .accessibilityLabel("Start monitoring")
+                    .accessibilityHint("Begins snore detection using the microphone")
             }
             .disabled(vm.microphonePermission == .denied)
             .buttonStyle(.plain)
+            .opacity(vm.microphonePermission == .denied ? 0.42 : 1)
 
             if vm.microphonePermission == .undetermined ||
                vm.microphonePermission == .denied {
