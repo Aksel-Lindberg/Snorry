@@ -21,9 +21,16 @@ final class SettingsViewModel {
 
     /// Selected alarm tone style.
     var alarmStyle: AlarmStyle = .classic
+    /// Alarm style currently being previewed in Settings.
+    private(set) var previewingAlarmStyle: AlarmStyle?
 
     private let context: ModelContext
     private var settings: AlertSettings?
+    private let alarmPreviewPlayer = AlarmTonePlayer()
+    private var alarmPreviewTask: Task<Void, Never>?
+
+    /// Seconds between preview volume increases.
+    private static let previewStepInterval: TimeInterval = 2
 
     init(context: ModelContext) {
         self.context = context
@@ -48,6 +55,7 @@ final class SettingsViewModel {
     }
 
     func save() {
+        stopAlarmStylePreview()
         guard let stored = settings else { return }
 
         // Enforce supported timing slider range even for legacy persisted values.
@@ -91,15 +99,59 @@ final class SettingsViewModel {
     }
 
     func cancel() {
+        stopAlarmStylePreview()
         load()
     }
 
     func reset() {
+        stopAlarmStylePreview()
         if let old = settings { context.delete(old) }
         let fresh = AlertSettings()
         context.insert(fresh)
         settings = fresh
         load()
+    }
+
+    // MARK: Alarm style preview
+
+    func isPreviewing(style: AlarmStyle) -> Bool {
+        previewingAlarmStyle == style
+    }
+
+    func toggleAlarmStylePreview(for style: AlarmStyle) {
+        if isPreviewing(style: style) {
+            stopAlarmStylePreview()
+        } else {
+            startAlarmStylePreview(for: style)
+        }
+    }
+
+    func stopAlarmStylePreview() {
+        alarmPreviewTask?.cancel()
+        alarmPreviewTask = nil
+        previewingAlarmStyle = nil
+        alarmPreviewPlayer.stop()
+        AudioSessionManager.shared.resetReplayOverrides()
+    }
+
+    private func startAlarmStylePreview(for style: AlarmStyle) {
+        stopAlarmStylePreview()
+        do {
+            try AudioSessionManager.shared.configureForClipReplay()
+        } catch {
+            return
+        }
+        previewingAlarmStyle = style
+        alarmPreviewPlayer.setStyle(style)
+        alarmPreviewTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            var currentVolume = max(0.1, min(1.0, self.alarmVolume))
+            while !Task.isCancelled {
+                self.alarmPreviewPlayer.play(volume: currentVolume)
+                currentVolume = min(1.0, currentVolume + 0.1)
+                try? await Task.sleep(for: .seconds(Self.previewStepInterval))
+            }
+        }
     }
 
     private static func clampTiming(_ value: Double) -> Double {

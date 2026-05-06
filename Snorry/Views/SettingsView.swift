@@ -48,6 +48,9 @@ struct SettingsView: View {
             .onAppear {
                 if vm == nil { vm = SettingsViewModel(context: context) }
             }
+            .onDisappear {
+                vm?.stopAlarmStylePreview()
+            }
         }
     }
 
@@ -86,7 +89,10 @@ struct SettingsView: View {
 
             Toggle(isOn: Binding(
                 get: { vm.soundAlarmEnabled },
-                set: { vm.soundAlarmEnabled = $0 }
+                set: {
+                    vm.soundAlarmEnabled = $0
+                    if !$0 { vm.stopAlarmStylePreview() }
+                }
             )) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sound alarm")
@@ -128,29 +134,44 @@ struct SettingsView: View {
     private func alarmStyleSection(vm: SettingsViewModel) -> some View {
         Section {
             ForEach(AlarmStyle.allCases, id: \.rawValue) { style in
-                Button {
-                    vm.alarmStyle = style
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: vm.alarmStyle == style
-                              ? "checkmark.circle.fill" : "circle")
-                            .font(.body)
-                            .foregroundStyle(vm.alarmStyle == style
-                                             ? Theme.accent : Theme.labelTertiary)
+                HStack(spacing: 12) {
+                    Button {
+                        vm.alarmStyle = style
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: vm.alarmStyle == style
+                                  ? "checkmark.circle.fill" : "circle")
+                                .font(.body)
+                                .foregroundStyle(vm.alarmStyle == style
+                                                 ? Theme.accent : Theme.labelTertiary)
 
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(style.displayName)
-                                .font(.subheadline)
-                                .foregroundStyle(Theme.labelPrimary)
-                            Text(style.subtitle)
-                                .font(.caption)
-                                .foregroundStyle(Theme.labelSecondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(style.displayName)
+                                    .font(.subheadline)
+                                    .foregroundStyle(Theme.labelPrimary)
+                                Text(style.subtitle)
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.labelSecondary)
+                            }
                         }
-                        Spacer()
                     }
-                    .padding(.vertical, 2)
+                    .buttonStyle(.plain)
+                    Spacer()
+                    Button(vm.isPreviewing(style: style) ? "Stop" : "Play") {
+                        vm.toggleAlarmStylePreview(for: style)
+                    }
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(vm.isPreviewing(style: style)
+                                  ? Theme.snoring.opacity(0.18)
+                                  : Theme.accent.opacity(0.18))
+                    )
+                    .foregroundStyle(vm.isPreviewing(style: style) ? Theme.snoring : Theme.accent)
                 }
-                .buttonStyle(.plain)
+                .padding(.vertical, 2)
             }
         } header: {
             Text("Alarm Style")
