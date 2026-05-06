@@ -61,7 +61,6 @@ struct SettingsView: View {
             alertChannelsSection(vm: vm)
             alarmStyleSection(vm: vm)
             alertTimingsSection(vm: vm)
-            volumeSection(vm: vm)
             actionsSection(vm: vm)
             legalSection()
         }
@@ -210,27 +209,6 @@ struct SettingsView: View {
         .listRowBackground(Theme.surface)
     }
 
-    private func volumeSection(vm: SettingsViewModel) -> some View {
-        Section {
-            VolumeRow(label: "Start volume",
-                      value: Binding(get: { Double(vm.alarmVolume) },
-                                     set: { vm.alarmVolume = Float($0) }))
-        } header: {
-            Text("Alarm")
-                .foregroundStyle(Theme.labelSecondary)
-        } footer: {
-            Text(
-                "Alarm starts at this level, then increases by 10% every 2 seconds until it reaches " +
-                "100% (maximum iPhone speaker output)."
-            )
-                .foregroundStyle(Theme.labelSecondary)
-                .font(.caption)
-        }
-        .opacity(vm.soundAlarmEnabled ? 1 : 0.45)
-        .disabled(!vm.soundAlarmEnabled)
-        .listRowBackground(Theme.surface)
-    }
-
     private func actionsSection(vm: SettingsViewModel) -> some View {
         Section {
             Button("Reset to Defaults") {
@@ -296,28 +274,6 @@ private struct TimingInfoRow: View {
             Text(value)
                 .font(Theme.monoDigit(size: 13))
                 .foregroundStyle(Theme.accent)
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-private struct VolumeRow: View {
-    let label: String
-    @Binding var value: Double
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(label)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.labelPrimary)
-                Spacer()
-                Text(String(format: "%.0f%%", value * 100))
-                    .font(Theme.monoDigit(size: 13))
-                    .foregroundStyle(Theme.accent)
-            }
-            Slider(value: $value, in: 0.10...1.0, step: 0.05)
-                .tint(Theme.accent)
         }
         .padding(.vertical, 4)
     }

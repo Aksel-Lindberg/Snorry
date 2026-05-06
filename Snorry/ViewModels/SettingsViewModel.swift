@@ -6,10 +6,10 @@ import SwiftData
 final class SettingsViewModel {
 
     private static let timingRange: ClosedRange<Double> = 1...10
+    private static let fixedAlarmStartVolume: Float = 0.10
 
     var notifyDelay: Double     = 2
     var soundAlarmAfter: Double = 10
-    var alarmVolume: Float      = 0.85
 
     var pushNotificationEnabled: Bool = true
     var soundAlarmEnabled: Bool       = true
@@ -44,7 +44,7 @@ final class SettingsViewModel {
         settings = stored
         notifyDelay                   = Self.clampTiming(stored.notifyDelaySeconds)
         soundAlarmAfter               = Self.clampTiming(stored.soundAlarmAfterSeconds)
-        alarmVolume                   = stored.alarmVolume
+        stored.alarmVolume            = Self.fixedAlarmStartVolume
         pushNotificationEnabled       = stored.pushNotificationEnabled
         soundAlarmEnabled             = stored.soundAlarmEnabled
         // Repeat push notifications are now always enabled; only interval is user-configurable.
@@ -74,7 +74,7 @@ final class SettingsViewModel {
 
         stored.notifyDelaySeconds              = notifyDelay
         stored.soundAlarmAfterSeconds          = soundAlarmAfter
-        stored.alarmVolume                     = alarmVolume
+        stored.alarmVolume                     = Self.fixedAlarmStartVolume
         stored.pushNotificationEnabled         = pushNotificationEnabled
         stored.soundAlarmEnabled               = soundAlarmEnabled
         stored.pushRepeatEnabled               = true
@@ -145,7 +145,7 @@ final class SettingsViewModel {
         alarmPreviewPlayer.setStyle(style)
         alarmPreviewTask = Task { @MainActor [weak self] in
             guard let self else { return }
-            var currentVolume = max(0.1, min(1.0, self.alarmVolume))
+            var currentVolume = Self.fixedAlarmStartVolume
             while !Task.isCancelled {
                 self.alarmPreviewPlayer.play(volume: currentVolume)
                 currentVolume = min(1.0, currentVolume + 0.1)

@@ -11,7 +11,7 @@ final class AlertSettings {
     /// Seconds of continuous snoring before the sound alarm begins (stepped bursts).
     var soundAlarmAfterSeconds: Double
 
-    /// Alarm starting output level (0–1); playback ramps +10% every 2 s until full volume.
+    /// Alarm starting output level (0–1); fixed at 10% in current app versions.
     var alarmVolume: Float
 
     /// Snore detection sensitivity (1 = low, 5 = very high). Fixed at 5; stored for
@@ -33,7 +33,7 @@ final class AlertSettings {
     init() {
         notifyDelaySeconds        = 2
         soundAlarmAfterSeconds    = 10
-        alarmVolume               = 0.85
+        alarmVolume               = 0.10
         snoringDetectionSensitivity = 5
         alarmStyleRaw             = AlarmStyle.classic.rawValue
         pushNotificationEnabled   = true
