@@ -10,15 +10,12 @@ final class AlertSettings {
     var notifyDelaySeconds: Double
     /// Seconds of continuous snoring before the sound alarm begins (stepped bursts).
     var soundAlarmAfterSeconds: Double
-    /// Seconds of silence before a snore bout is ended/stored (detector gap).
-    var clearDelaySeconds: Double
 
     /// Alarm starting output level (0–1); playback ramps +10% every 2 s until full volume.
     var alarmVolume: Float
 
-    /// Snore detection sensitivity (1 = low, 3 = medium default, 5 = high).
-    /// Higher values lower both the onset dB threshold and the classifier confidence
-    /// threshold so quieter snores are registered.
+    /// Snore detection sensitivity (1 = low, 5 = very high). Fixed at 5; stored for
+    /// potential future use but not exposed in the UI or read at runtime.
     var snoringDetectionSensitivity: Double
 
     /// Raw value of the selected `AlarmStyle` (stored as Int for SwiftData compatibility).
@@ -36,9 +33,8 @@ final class AlertSettings {
     init() {
         notifyDelaySeconds        = 2
         soundAlarmAfterSeconds    = 10
-        clearDelaySeconds         = 8
         alarmVolume               = 0.85
-        snoringDetectionSensitivity = 3
+        snoringDetectionSensitivity = 5
         alarmStyleRaw             = AlarmStyle.classic.rawValue
         pushNotificationEnabled   = true
         soundAlarmEnabled         = true

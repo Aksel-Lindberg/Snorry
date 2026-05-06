@@ -55,7 +55,6 @@ struct SettingsView: View {
 
     private func settingsContent(vm: SettingsViewModel) -> some View {
         List {
-            detectionSection(vm: vm)
             alertChannelsSection(vm: vm)
             alarmStyleSection(vm: vm)
             alertTimingsSection(vm: vm)
@@ -68,23 +67,6 @@ struct SettingsView: View {
     }
 
     // MARK: Sections
-
-    private func detectionSection(vm: SettingsViewModel) -> some View {
-        Section {
-            SensitivityRow(value: Binding(
-                get: { vm.snoringDetectionSensitivity },
-                set: { vm.snoringDetectionSensitivity = $0 }
-            ))
-        } header: {
-            Text("Snore Detection")
-                .foregroundStyle(Theme.labelSecondary)
-        } footer: {
-            Text("Higher sensitivity catches quieter snores but may increase false positives.")
-                .foregroundStyle(Theme.labelSecondary)
-                .font(.caption)
-        }
-        .listRowBackground(Theme.surface)
-    }
 
     private func alertChannelsSection(vm: SettingsViewModel) -> some View {
         Section {
@@ -146,7 +128,7 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Turn on one or both. With both on: push uses “Send push notification after”, then sound uses “Sound alarm after”. Sound-only skips push; push-only never plays sound.")
+                Text("Turn on one or both. With both on: push fires first, then sound after the configured delay. Sound-only skips push; push-only never plays sound.")
                     .foregroundStyle(Theme.labelSecondary)
                 if !vm.pushNotificationEnabled && !vm.soundAlarmEnabled {
                     Text("No alerts will fire until you enable push and/or sound.")
@@ -196,42 +178,25 @@ struct SettingsView: View {
 
     private func alertTimingsSection(vm: SettingsViewModel) -> some View {
         Section {
-            SliderRow(
-                label: "Send push notification after",
-                value: Binding(get: { vm.notifyDelay },
-                               set: { vm.notifyDelay = $0 }),
-                range: 1...10,
-                unit: "s",
-                step: 1
-            )
-            .disabled(!vm.pushNotificationEnabled)
-            .opacity(vm.pushNotificationEnabled ? 1 : 0.45)
+            TimingInfoRow(label: "Send push notification after", value: "2 s")
+                .opacity(vm.pushNotificationEnabled ? 1 : 0.45)
             SliderRow(
                 label: "Sound alarm after",
                 value: Binding(get: { vm.soundAlarmAfter },
                                set: { vm.soundAlarmAfter = $0 }),
-                range: 1...10,
+                range: 1...30,
                 unit: "s",
                 step: 1
             )
             .disabled(!vm.soundAlarmEnabled)
             .opacity(vm.soundAlarmEnabled ? 1 : 0.45)
-            SliderRow(
-                label: "Silence to end snore event",
-                value: Binding(get: { vm.clearDelay },
-                               set: { vm.clearDelay = $0 }),
-                range: 1...10,
-                unit: "s",
-                step: 1
-            )
         } header: {
             Text("Alert Timings")
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
             Text(
-                "Timings apply only to enabled channels. Both on: notify first, then sound after " +
-                "the longer “Sound alarm after” threshold (from snoring start). Silence to end " +
-                "snore event ends the bout."
+                "Push notification fires after a fixed 2 s. Sound alarm fires after the selected delay " +
+                "(from snoring start). Alerts stay active until snoring has stopped for 3 s."
             )
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)
@@ -311,42 +276,20 @@ private struct SliderRow: View {
     }
 }
 
-private struct SensitivityRow: View {
-    @Binding var value: Double
-
-    private var label: String {
-        switch Int(value) {
-        case 1: return "Very Low"
-        case 2: return "Low"
-        case 3: return "Medium"
-        case 4: return "High"
-        case 5: return "Very High"
-        default: return "Medium"
-        }
-    }
+/// Read-only row that displays a fixed timing value alongside its label.
+private struct TimingInfoRow: View {
+    let label: String
+    let value: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("Sensitivity")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.labelPrimary)
-                Spacer()
-                Text(label)
-                    .font(Theme.monoDigit(size: 13))
-                    .foregroundStyle(Theme.accent)
-            }
-            Slider(value: $value, in: 1...5, step: 1)
-                .tint(Theme.accent)
-            HStack {
-                Text("Low")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelSecondary)
-                Spacer()
-                Text("High")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelSecondary)
-            }
+        HStack {
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(Theme.labelPrimary)
+            Spacer()
+            Text(value)
+                .font(Theme.monoDigit(size: 13))
+                .foregroundStyle(Theme.accent)
         }
         .padding(.vertical, 4)
     }

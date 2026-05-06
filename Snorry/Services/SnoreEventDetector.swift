@@ -32,8 +32,8 @@ final class SnoreEventDetector: @unchecked Sendable {
 
     // MARK: Tunables
     /// Seconds of silence (classifier off) that end a confirmed snore event.
-    /// Driven by the "Silence to end snore event" setting; default 8 s.
-    var gapTolerance: TimeInterval             = 8.0
+    /// Fixed at 3 s; set by MonitorViewModel at session start.
+    var gapTolerance: TimeInterval             = 3.0
     private let minOnsetInterval: TimeInterval = 0.5    // de-bounce between onsets
     private let ambientAlpha: Float            = 0.02   // EMA weight for ambient baseline
     private let brpmWindowSize                 = 30     // max onsets used for BRPM

@@ -173,27 +173,26 @@ final class MonitorViewModel {
         sessionPushRepeatEnabled    = settings.pushRepeatEnabled
         sessionPushRepeatInterval   = settings.pushRepeatIntervalSeconds
 
-        alertManager.config.notifyDelay       = settings.notifyDelaySeconds
+        // Push notification delay is fixed; sound alarm delay is user-configurable.
+        alertManager.config.notifyDelay       = 2
         alertManager.config.soundAlarmAfter   = settings.soundAlarmAfterSeconds
-        // Keep alarm active through an ongoing snore event and clear only on event end.
-        // Retain detector silence gap here to align with "snore has ended".
-        alertManager.config.clearDelay        = settings.clearDelaySeconds
+        // Match alert clear delay to the detector gap so the alert machine never races ahead.
+        alertManager.config.clearDelay        = 3
         alertManager.config.alarmVolume       = settings.alarmVolume
         alertManager.config.pushEnabled       = settings.pushNotificationEnabled
         alertManager.config.soundEnabled      = settings.soundAlarmEnabled
 
-        // User slider: silence duration before ending/storing a snore bout (detector gap).
-        detector.gapTolerance = settings.clearDelaySeconds
+        // Fixed silence window before a snore bout is ended and stored.
+        detector.gapTolerance = 3
 
         // Alarm tone style for this session.
         alarmPlayer.setStyle(AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic)
 
-        // Map sensitivity (1–5) to detection thresholds using a power curve so that
-        // levels 4–5 produce noticeably larger jumps in sensitivity than levels 1–2.
-        // blend=0 (low) → high thresholds; blend=1 (very high) → low thresholds.
-        let blend = pow(Float((settings.snoringDetectionSensitivity - 1) / 4), 1.5)
-        detector.onsetThresholdDB        = (1 - blend) * 20.0 + blend * 2.0    // 20 dB → 2 dB
-        classifier.confidenceThreshold   = (1 - blend) * 0.75 + blend * 0.30   // 0.75 → 0.30
+        // Sensitivity is fixed at Very High (blend = 1.0): lowest onset threshold, most sensitive
+        // classifier. blend=0 (low) → high thresholds; blend=1 (very high) → low thresholds.
+        let blend: Float = 1.0
+        detector.onsetThresholdDB        = (1 - blend) * 20.0 + blend * 2.0    // fixed at 2 dB
+        classifier.confidenceThreshold   = (1 - blend) * 0.75 + blend * 0.30   // fixed at 0.30
 
         startTasks()
     }

@@ -9,7 +9,6 @@ final class SettingsViewModel {
 
     var notifyDelay: Double     = 2
     var soundAlarmAfter: Double = 10
-    var clearDelay: Double      = 8
     var alarmVolume: Float      = 0.85
 
     var pushNotificationEnabled: Bool = true
@@ -38,7 +37,6 @@ final class SettingsViewModel {
         settings = stored
         notifyDelay                   = Self.clampTiming(stored.notifyDelaySeconds)
         soundAlarmAfter               = Self.clampTiming(stored.soundAlarmAfterSeconds)
-        clearDelay                    = Self.clampTiming(stored.clearDelaySeconds)
         alarmVolume                   = stored.alarmVolume
         pushNotificationEnabled       = stored.pushNotificationEnabled
         soundAlarmEnabled             = stored.soundAlarmEnabled
@@ -54,7 +52,6 @@ final class SettingsViewModel {
         // Enforce supported timing slider range even for legacy persisted values.
         notifyDelay = Self.clampTiming(notifyDelay)
         soundAlarmAfter = Self.clampTiming(soundAlarmAfter)
-        clearDelay = Self.clampTiming(clearDelay)
         pushRepeatInterval = Self.clampTiming(pushRepeatInterval)
 
         // Record a change snapshot before writing if any tracked push/alarm field changed.
@@ -68,7 +65,6 @@ final class SettingsViewModel {
 
         stored.notifyDelaySeconds              = notifyDelay
         stored.soundAlarmAfterSeconds          = soundAlarmAfter
-        stored.clearDelaySeconds               = clearDelay
         stored.alarmVolume                     = alarmVolume
         stored.pushNotificationEnabled         = pushNotificationEnabled
         stored.soundAlarmEnabled               = soundAlarmEnabled
