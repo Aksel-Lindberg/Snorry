@@ -6,10 +6,10 @@ import SwiftData
 final class SettingsViewModel {
 
     private static let timingRange: ClosedRange<Double> = 1...10
-    private static let fixedAlarmStartVolume: Float = 0.10
 
     var notifyDelay: Double     = 2
     var soundAlarmAfter: Double = 10
+    var alarmVolume: Float      = 0.60
 
     var pushNotificationEnabled: Bool = true
     var soundAlarmEnabled: Bool       = true
@@ -27,10 +27,6 @@ final class SettingsViewModel {
     private let context: ModelContext
     private var settings: AlertSettings?
     private let alarmPreviewPlayer = AlarmTonePlayer()
-    private var alarmPreviewTask: Task<Void, Never>?
-
-    /// Seconds between preview volume increases.
-    private static let previewStepInterval: TimeInterval = 2
 
     init(context: ModelContext) {
         self.context = context
@@ -44,7 +40,7 @@ final class SettingsViewModel {
         settings = stored
         notifyDelay                   = Self.clampTiming(stored.notifyDelaySeconds)
         soundAlarmAfter               = Self.clampTiming(stored.soundAlarmAfterSeconds)
-        stored.alarmVolume            = Self.fixedAlarmStartVolume
+        alarmVolume                   = Self.clampAlarmVolume(stored.alarmVolume)
         pushNotificationEnabled       = stored.pushNotificationEnabled
         soundAlarmEnabled             = stored.soundAlarmEnabled
         // Repeat push notifications are now always enabled; only interval is user-configurable.
@@ -62,6 +58,7 @@ final class SettingsViewModel {
         notifyDelay = Self.clampTiming(notifyDelay)
         soundAlarmAfter = Self.clampTiming(soundAlarmAfter)
         pushRepeatInterval = Self.clampTiming(pushRepeatInterval)
+        alarmVolume = Self.clampAlarmVolume(alarmVolume)
 
         // Record a change snapshot before writing if any tracked push/alarm field changed.
         let hasChanged = stored.pushNotificationEnabled    != pushNotificationEnabled
@@ -69,12 +66,13 @@ final class SettingsViewModel {
             || stored.pushRepeatEnabled                    != true
             || stored.notifyDelaySeconds                   != notifyDelay
             || stored.soundAlarmAfterSeconds               != soundAlarmAfter
+            || stored.alarmVolume                          != alarmVolume
             || stored.pushRepeatIntervalSeconds            != pushRepeatInterval
             || stored.alarmStyleRaw                        != alarmStyle.rawValue
 
         stored.notifyDelaySeconds              = notifyDelay
         stored.soundAlarmAfterSeconds          = soundAlarmAfter
-        stored.alarmVolume                     = Self.fixedAlarmStartVolume
+        stored.alarmVolume                     = alarmVolume
         stored.pushNotificationEnabled         = pushNotificationEnabled
         stored.soundAlarmEnabled               = soundAlarmEnabled
         stored.pushRepeatEnabled               = true
@@ -127,8 +125,6 @@ final class SettingsViewModel {
     }
 
     func stopAlarmStylePreview() {
-        alarmPreviewTask?.cancel()
-        alarmPreviewTask = nil
         previewingAlarmStyle = nil
         alarmPreviewPlayer.stop()
         AudioSessionManager.shared.resetReplayOverrides()
@@ -143,18 +139,14 @@ final class SettingsViewModel {
         }
         previewingAlarmStyle = style
         alarmPreviewPlayer.setStyle(style)
-        alarmPreviewTask = Task { @MainActor [weak self] in
-            guard let self else { return }
-            var currentVolume = Self.fixedAlarmStartVolume
-            while !Task.isCancelled {
-                self.alarmPreviewPlayer.play(volume: currentVolume)
-                currentVolume = min(1.0, currentVolume + 0.1)
-                try? await Task.sleep(for: .seconds(Self.previewStepInterval))
-            }
-        }
+        alarmPreviewPlayer.play(volume: alarmVolume)
     }
 
     private static func clampTiming(_ value: Double) -> Double {
         min(max(value, timingRange.lowerBound), timingRange.upperBound)
+    }
+
+    private static func clampAlarmVolume(_ value: Float) -> Float {
+        min(max(value, 0.10), 1.0)
     }
 }

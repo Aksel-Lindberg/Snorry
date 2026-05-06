@@ -92,8 +92,6 @@ final class MonitorViewModel {
     private var alertTask: Task<Void, Never>?
     private var elapsedTimer: Task<Void, Never>?
     private var timelineTimer: Task<Void, Never>?
-    /// Steps alarm volume every 2 s while `.alarming`; cancelled when snoring stops.
-    private var alarmRampTask: Task<Void, Never>?
     /// Fires repeated push notifications while in `.notified`.
     private var pushRepeatTask: Task<Void, Never>?
 
@@ -104,9 +102,6 @@ final class MonitorViewModel {
     private var sessionPushRepeatInterval: TimeInterval = 60
 
     private let modelContext: ModelContext
-
-    /// Seconds between alarm volume updates while alarm is active.
-    private static let alarmVolumeStepInterval: TimeInterval = 2
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -257,9 +252,10 @@ final class MonitorViewModel {
                 if spectrumBands.count != rawBands.count {
                     spectrumBands = rawBands
                 } else {
-                    let a: Float = 0.38
-                    for i in rawBands.indices {
-                        spectrumBands[i] = a * rawBands[i] + (1 - a) * spectrumBands[i]
+                    let smoothingAlpha: Float = 0.38
+                    for bandIndex in rawBands.indices {
+                        spectrumBands[bandIndex] = smoothingAlpha * rawBands[bandIndex]
+                            + (1 - smoothingAlpha) * spectrumBands[bandIndex]
                     }
                 }
 
@@ -335,7 +331,6 @@ final class MonitorViewModel {
         alertTask?.cancel();     alertTask = nil
         elapsedTimer?.cancel();  elapsedTimer = nil
         timelineTimer?.cancel(); timelineTimer = nil
-        alarmRampTask?.cancel(); alarmRampTask = nil
         pushRepeatTask?.cancel(); pushRepeatTask = nil
     }
 
@@ -422,13 +417,12 @@ final class MonitorViewModel {
             pushRepeatTask?.cancel()
             pushRepeatTask = nil
             guard sessionSoundEnabled else { return }
-            startAlarmVolumeRamp()
+            let selectedVolume = max(0.10, min(1.0, alertManager.config.alarmVolume))
+            alarmPlayer.play(volume: selectedVolume)
 
         case .idle, .cleared:
             pushRepeatTask?.cancel()
             pushRepeatTask = nil
-            alarmRampTask?.cancel()
-            alarmRampTask = nil
             alarmPlayer.stop()
             notifications.cancelSnoringAlert()
             isEpisodeConfirmed = false
@@ -448,21 +442,6 @@ final class MonitorViewModel {
                 try? await Task.sleep(for: .seconds(interval))
                 guard isMonitoring, alertPhase == .notified else { break }
                 notifications.scheduleSnoringAlertRepeat()
-            }
-        }
-    }
-
-    /// Start at the configured volume, then raise playback by 10% every 2 s up to 100%.
-    private func startAlarmVolumeRamp() {
-        alarmRampTask?.cancel()
-        alarmRampTask = Task { @MainActor in
-            var currentVolume = max(0.1, min(1.0, alertManager.config.alarmVolume))
-            while !Task.isCancelled {
-                guard isMonitoring else { break }
-                alarmPlayer.play(volume: currentVolume)
-                currentVolume = min(1.0, currentVolume + 0.1)
-                try? await Task.sleep(for: .seconds(Self.alarmVolumeStepInterval))
-                guard alertPhase == .alarming else { break }
             }
         }
     }
