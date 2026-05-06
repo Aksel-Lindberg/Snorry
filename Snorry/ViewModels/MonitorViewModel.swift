@@ -182,8 +182,11 @@ final class MonitorViewModel {
         alertManager.config.pushEnabled       = settings.pushNotificationEnabled
         alertManager.config.soundEnabled      = settings.soundAlarmEnabled
 
-        // Fixed silence window before a snore bout is ended and stored.
-        detector.gapTolerance = 3
+        // Pending (unconfirmed) episodes are discarded after 3 s of silence.
+        // Confirmed events use the longer hysteresis window to bridge between individual
+        // snores and avoid premature fragmentation of a single bout.
+        detector.gapTolerance          = 3
+        detector.confirmedGapTolerance = 5
 
         // Alarm tone style for this session.
         alarmPlayer.setStyle(AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic)

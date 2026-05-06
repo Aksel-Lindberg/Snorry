@@ -31,9 +31,18 @@ enum DetectorEvent: Sendable {
 final class SnoreEventDetector: @unchecked Sendable {
 
     // MARK: Tunables
-    /// Seconds of silence (classifier off) that end a confirmed snore event.
-    /// Fixed at 3 s; set by MonitorViewModel at session start.
+    /// Seconds of silence before a still-pending (unconfirmed) episode is discarded.
+    /// Set by MonitorViewModel at session start.
     var gapTolerance: TimeInterval             = 3.0
+    /// Seconds of silence before a **confirmed** snore event ends and is stored.
+    /// Must be >= gapTolerance to achieve hysteresis: once an event is confirmed the
+    /// detector holds on longer, avoiding premature fragmentation between individual snores.
+    var confirmedGapTolerance: TimeInterval    = 5.0
+    /// Lower bound for adaptive confirmed-gap scaling, expressed in breath intervals.
+    /// Example: 2.5 × 3 s (20 BRPM) = 7.5 s hold window.
+    var confirmedGapBreathMultiplier: Double   = 2.5
+    /// Prevents runaway hold windows when BRPM estimation gets unstable.
+    var maxConfirmedGapTolerance: TimeInterval = 18.0
     private let minOnsetInterval: TimeInterval = 0.5    // de-bounce between onsets
     private let ambientAlpha: Float            = 0.02   // EMA weight for ambient baseline
     private let brpmWindowSize                 = 30     // max onsets used for BRPM
@@ -158,7 +167,10 @@ final class SnoreEventDetector: @unchecked Sendable {
         } else if pendingID != nil {
             if silenceStart == nil { silenceStart = now }
             let gap = now.timeIntervalSince(silenceStart!)
-            if gap >= gapTolerance {
+            // Use a longer gap tolerance once confirmed to bridge between individual snores
+            // (hysteresis: harder to leave the snoring state than to enter it).
+            let effectiveGap = isConfirmed ? effectiveConfirmedGapTolerance() : gapTolerance
+            if gap >= effectiveGap {
                 if isConfirmed {
                     finishCurrentEvent(at: now)
                     resetEpisodeState()
@@ -240,6 +252,15 @@ final class SnoreEventDetector: @unchecked Sendable {
     private func updateBRPM() {
         guard let brpm = computeBRPM() else { return }
         continuation?.yield(.brpmUpdated(brpm))
+    }
+
+    /// Dynamically extends the confirmed hold window for slower breathing patterns.
+    /// This keeps low-BRPM snores in one continuous event instead of splitting after one breath.
+    private func effectiveConfirmedGapTolerance() -> TimeInterval {
+        guard let brpm = computeBRPM(), brpm > 0 else { return confirmedGapTolerance }
+        let breathInterval = 60.0 / brpm
+        let adaptive = breathInterval * confirmedGapBreathMultiplier
+        return min(maxConfirmedGapTolerance, max(confirmedGapTolerance, adaptive))
     }
 
     private func computeBRPM() -> Double? {
