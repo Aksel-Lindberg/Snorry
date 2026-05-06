@@ -130,22 +130,31 @@ struct MonitorView: View {
         HStack(spacing: 12) {
             MetricTile(
                 label: "dBFS",
-                value: vm.currentDB > -160 ? String(format: "%.0f", vm.currentDB) : "—",
-                icon: "speaker.wave.3",
-                color: Theme.accent
-            )
+                value: vm.currentDB > -160 ? String(format: "%.0f", vm.currentDB) : "—"
+            ) {
+                LoudnessVisualizerIcon(
+                    dBFS: vm.currentDB,
+                    color: Theme.accent
+                )
+            }
             MetricTile(
                 label: "BRPM",
-                value: vm.brpmAvailable ? String(format: "%.0f", vm.currentBRPM) : "—",
-                icon: "lungs",
-                color: Theme.snoring
-            )
+                value: vm.brpmAvailable ? String(format: "%.0f", vm.currentBRPM) : "—"
+            ) {
+                BreathingLungsIcon(
+                    brpm: vm.currentBRPM,
+                    isActive: vm.brpmAvailable,
+                    color: Theme.snoring
+                )
+            }
             MetricTile(
                 label: "Events",
-                value: "\(vm.snoreEventCount)",
-                icon: "waveform.badge.exclamationmark",
-                color: Theme.good
-            )
+                value: "\(vm.snoreEventCount)"
+            ) {
+                Image(systemName: "waveform.badge.exclamationmark")
+                    .font(.title3)
+                    .foregroundStyle(Theme.good)
+            }
         }
     }
 
@@ -263,14 +272,18 @@ struct MonitorView: View {
 private struct MetricTile: View {
     let label: String
     let value: String
-    let icon: String
-    let color: Color
+    @ViewBuilder let iconView: () -> AnyView
+
+    init(label: String, value: String, @ViewBuilder iconView: @escaping () -> some View) {
+        self.label = label
+        self.value = value
+        self.iconView = { AnyView(iconView()) }
+    }
 
     var body: some View {
         VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(color)
+            iconView()
+                .frame(height: 22)
 
             Text(value)
                 .font(Theme.monoDigit(size: 22))
@@ -285,6 +298,76 @@ private struct MetricTile: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+    }
+}
+
+private struct LoudnessVisualizerIcon: View {
+    let dBFS: Float
+    let color: Color
+
+    /// Maps live dBFS to a stable 0...1 value used by the bar animation.
+    private var level: CGFloat {
+        CGFloat(AudioMath.normalisedLevel(dBFS))
+    }
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            HStack(alignment: .bottom, spacing: 2.2) {
+                ForEach(0..<6, id: \.self) { index in
+                    // Per-bar phase offsets create a rolling "equalizer" motion.
+                    let phase = t * 5.0 + Double(index) * 0.65
+                    let wave = (sin(phase) + 1) * 0.5
+                    let floor = max(0.14, level * 0.33)
+                    let height = 4 + 16 * max(floor, level * CGFloat(0.55 + 0.45 * wave))
+                    RoundedRectangle(cornerRadius: 1.2)
+                        .fill(color.opacity(0.55 + 0.45 * level))
+                        .frame(width: 3, height: height)
+                }
+            }
+            .frame(width: 30, height: 22, alignment: .bottom)
+            .drawingGroup()
+        }
+    }
+}
+
+private struct BreathingLungsIcon: View {
+    let brpm: Double
+    let isActive: Bool
+    let color: Color
+
+    private var clampedBRPM: Double {
+        min(max(brpm, 6), 40)
+    }
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            let period = 60.0 / clampedBRPM
+            // One full inhale/exhale per BRPM cycle.
+            let cycle = 0.5 + 0.5 * sin((2.0 * .pi * t) / period)
+            let breathScale = isActive ? (0.88 + 0.16 * cycle) : 0.92
+
+            HStack(spacing: 4) {
+                Capsule()
+                    .fill(color.opacity(isActive ? 0.95 : 0.45))
+                    .frame(width: 9, height: 14)
+                    .scaleEffect(x: breathScale, y: 1.0, anchor: .bottomTrailing)
+
+                Capsule()
+                    .fill(color.opacity(isActive ? 0.95 : 0.45))
+                    .frame(width: 9, height: 14)
+                    .scaleEffect(x: breathScale, y: 1.0, anchor: .bottomLeading)
+            }
+            .overlay(alignment: .top) {
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(color.opacity(isActive ? 0.95 : 0.45))
+                    .frame(width: 2.4, height: 7)
+                    .offset(y: -5)
+            }
+            .frame(width: 30, height: 22)
+            .drawingGroup()
+        }
     }
 }
 
