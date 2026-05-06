@@ -13,7 +13,7 @@ final class SettingsViewModel {
 
     var pushNotificationEnabled: Bool = true
     var soundAlarmEnabled: Bool       = true
-    var pushRepeatEnabled: Bool       = false
+    var pushRepeatEnabled: Bool       = true
     var pushRepeatInterval: Double    = 10
 
     /// Snore detection sensitivity level (1–5). 3 = factory default.
@@ -40,7 +40,8 @@ final class SettingsViewModel {
         alarmVolume                   = stored.alarmVolume
         pushNotificationEnabled       = stored.pushNotificationEnabled
         soundAlarmEnabled             = stored.soundAlarmEnabled
-        pushRepeatEnabled             = stored.pushRepeatEnabled
+        // Repeat push notifications are now always enabled; only interval is user-configurable.
+        pushRepeatEnabled             = true
         pushRepeatInterval            = Self.clampTiming(stored.pushRepeatIntervalSeconds)
         snoringDetectionSensitivity   = stored.snoringDetectionSensitivity
         alarmStyle                    = AlarmStyle(rawValue: stored.alarmStyleRaw) ?? .classic
@@ -57,7 +58,7 @@ final class SettingsViewModel {
         // Record a change snapshot before writing if any tracked push/alarm field changed.
         let hasChanged = stored.pushNotificationEnabled    != pushNotificationEnabled
             || stored.soundAlarmEnabled                    != soundAlarmEnabled
-            || stored.pushRepeatEnabled                    != pushRepeatEnabled
+            || stored.pushRepeatEnabled                    != true
             || stored.notifyDelaySeconds                   != notifyDelay
             || stored.soundAlarmAfterSeconds               != soundAlarmAfter
             || stored.pushRepeatIntervalSeconds            != pushRepeatInterval
@@ -68,7 +69,7 @@ final class SettingsViewModel {
         stored.alarmVolume                     = alarmVolume
         stored.pushNotificationEnabled         = pushNotificationEnabled
         stored.soundAlarmEnabled               = soundAlarmEnabled
-        stored.pushRepeatEnabled               = pushRepeatEnabled
+        stored.pushRepeatEnabled               = true
         stored.pushRepeatIntervalSeconds       = pushRepeatInterval
         stored.snoringDetectionSensitivity     = snoringDetectionSensitivity
         stored.alarmStyleRaw                   = alarmStyle.rawValue
@@ -77,7 +78,7 @@ final class SettingsViewModel {
             let change = AlertSettingsChange(
                 pushNotificationEnabled: pushNotificationEnabled,
                 notifyDelaySeconds: notifyDelay,
-                pushRepeatEnabled: pushRepeatEnabled,
+                pushRepeatEnabled: true,
                 pushRepeatIntervalSeconds: pushRepeatInterval,
                 soundAlarmEnabled: soundAlarmEnabled,
                 soundAlarmAfterSeconds: soundAlarmAfter,

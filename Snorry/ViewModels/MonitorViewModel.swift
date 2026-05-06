@@ -170,7 +170,8 @@ final class MonitorViewModel {
         let settings = AlertSettings.load(context: modelContext)
         sessionPushEnabled          = settings.pushNotificationEnabled
         sessionSoundEnabled         = settings.soundAlarmEnabled
-        sessionPushRepeatEnabled    = settings.pushRepeatEnabled
+        // Repeat push notifications are always enabled; interval remains user-configurable.
+        sessionPushRepeatEnabled    = true
         sessionPushRepeatInterval   = settings.pushRepeatIntervalSeconds
 
         // Push notification delay is fixed; sound alarm delay is user-configurable.

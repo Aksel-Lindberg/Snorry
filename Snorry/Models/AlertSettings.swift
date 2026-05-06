@@ -25,9 +25,9 @@ final class AlertSettings {
     var pushNotificationEnabled: Bool
     /// When false, no in-app sound alarm (volume/style ignored for playback).
     var soundAlarmEnabled: Bool
-    /// When true, additional push notifications fire while snoring continues after the first.
+    /// Legacy field kept for compatibility; repeat push is always enabled in current UI/runtime.
     var pushRepeatEnabled: Bool
-    /// Seconds between repeated push notifications (only if `pushRepeatEnabled`).
+    /// Seconds between repeated push notifications.
     var pushRepeatIntervalSeconds: Double
 
     init() {
@@ -38,7 +38,7 @@ final class AlertSettings {
         alarmStyleRaw             = AlarmStyle.classic.rawValue
         pushNotificationEnabled   = true
         soundAlarmEnabled         = true
-        pushRepeatEnabled         = false
+        pushRepeatEnabled         = true
         pushRepeatIntervalSeconds = 10
     }
 

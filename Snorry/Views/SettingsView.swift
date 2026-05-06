@@ -98,31 +98,16 @@ struct SettingsView: View {
             }
             .tint(Theme.accent)
 
-            Toggle(isOn: Binding(
-                get: { vm.pushRepeatEnabled },
-                set: { vm.pushRepeatEnabled = $0 }
-            )) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Repeat push notifications")
-                        .font(.subheadline)
-                    Text("While snoring continues after the first alert")
-                        .font(.caption)
-                        .foregroundStyle(Theme.labelSecondary)
-                }
-            }
-            .disabled(!vm.pushNotificationEnabled)
-            .tint(Theme.accent)
-
             SliderRow(
-                label: "Repeat push every",
+                label: "to Repeat Push notification every",
                 value: Binding(get: { vm.pushRepeatInterval },
                                set: { vm.pushRepeatInterval = $0 }),
                 range: 1...10,
                 unit: "s",
                 step: 1
             )
-            .disabled(!vm.pushNotificationEnabled || !vm.pushRepeatEnabled)
-            .opacity(vm.pushNotificationEnabled && vm.pushRepeatEnabled ? 1 : 0.45)
+            .disabled(!vm.pushNotificationEnabled)
+            .opacity(vm.pushNotificationEnabled ? 1 : 0.45)
         } header: {
             Text("Alert channels")
                 .foregroundStyle(Theme.labelSecondary)
