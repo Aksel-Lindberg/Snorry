@@ -18,6 +18,14 @@ final class SnoreSession {
     /// Peak dBFS recorded during the session.
     var peakDB: Float
 
+    // MARK: Alert snapshot (captured at session start; nil on legacy rows)
+    /// Whether push notifications were enabled when monitoring began.
+    var snapshotPushEnabled: Bool?
+    /// Whether the sound alarm was enabled when monitoring began.
+    var snapshotSoundEnabled: Bool?
+    /// Raw value of `AlarmStyle` active when monitoring began.
+    var snapshotAlarmStyleRaw: Int?
+
     @Relationship(deleteRule: .cascade)
     var events: [SnoreEvent]
 

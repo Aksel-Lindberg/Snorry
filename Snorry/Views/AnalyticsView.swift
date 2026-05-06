@@ -46,6 +46,7 @@ private struct AnalyticsContent: View {
                     SettingsChangeLegend(changes: vm.settingsChanges)
                 }
                 if vm.settingsChanges.isEmpty { markerInfoNote }
+                AlertCorrelationCard(points: vm.alertProfilePoints)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 40)
@@ -379,5 +380,130 @@ private struct SettingsChangeLegend: View {
                     .fill(Theme.background)
                     .overlay(Circle().strokeBorder(Theme.warning, lineWidth: 1.5))
             )
+    }
+}
+
+// MARK: - Alert configuration vs snore % card
+private struct AlertCorrelationCard: View {
+
+    let points: [AlertProfilePoint]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            cardHeader
+            if points.isEmpty {
+                emptyState
+            } else {
+                AlertCorrelationChart(points: points)
+                disclaimer
+            }
+        }
+        .padding(16)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+    }
+
+    private var cardHeader: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Alert Type vs Snore %")
+                .font(.headline)
+                .foregroundStyle(Theme.labelPrimary)
+            Text("Average per alert configuration · sessions in this period")
+                .font(.caption)
+                .foregroundStyle(Theme.labelTertiary)
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "bell.slash")
+                .font(.system(size: 38, weight: .thin))
+                .foregroundStyle(Theme.labelTertiary)
+            Text("No data yet")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Theme.labelSecondary)
+            Text("Complete a monitoring session to see how your alert settings correlate with snore percentage.")
+                .font(.caption)
+                .foregroundStyle(Theme.labelTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+    }
+
+    private var disclaimer: some View {
+        Text("Lower is better. Correlation only — not a causal measure.")
+            .font(.caption2)
+            .foregroundStyle(Theme.labelTertiary)
+            .padding(.top, 2)
+    }
+}
+
+// MARK: - Horizontal bar chart
+private struct AlertCorrelationChart: View {
+
+    let points: [AlertProfilePoint]
+
+    /// Colour for a bar: green at 0 %, red at 100 %.
+    private func barColor(for percent: Double) -> Color {
+        let t = min(max(percent / 100.0, 0), 1)
+        return Color(
+            red:   0.25 + 0.55 * t,
+            green: 0.75 - 0.45 * t,
+            blue:  0.35 - 0.15 * t
+        )
+    }
+
+    var body: some View {
+        Chart(points) { point in
+            BarMark(
+                x: .value("Avg Snore %", point.avgSnorePercent),
+                y: .value("Profile", point.label)
+            )
+            .foregroundStyle(barColor(for: point.avgSnorePercent))
+            .cornerRadius(6)
+            .annotation(position: .trailing, alignment: .leading, spacing: 6) {
+                HStack(spacing: 4) {
+                    Text(String(format: "%.0f%%", point.avgSnorePercent))
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Theme.labelPrimary)
+                    Text("n=\(point.sessionCount)")
+                        .font(.system(size: 10, weight: .regular, design: .monospaced))
+                        .foregroundStyle(point.isLowConfidence ? Theme.warning : Theme.labelTertiary)
+                }
+            }
+        }
+        .chartXScale(domain: 0...xMax)
+        .chartXAxis {
+            AxisMarks(values: xTicks) { value in
+                AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
+                AxisValueLabel {
+                    if let pct = value.as(Double.self) {
+                        Text("\(Int(pct))%")
+                            .font(.caption2)
+                            .foregroundStyle(Theme.labelTertiary)
+                    }
+                }
+            }
+        }
+        .chartYAxis {
+            AxisMarks { _ in
+                AxisValueLabel()
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelSecondary)
+            }
+        }
+        .frame(height: max(56, CGFloat(points.count) * 52))
+    }
+
+    /// X-axis ceiling rounded up to the nearest 25, minimum 25.
+    private var xMax: Double {
+        let peak = points.map(\.avgSnorePercent).max() ?? 0
+        guard peak > 0 else { return 100 }
+        return min(100, ceil((peak + 5) / 25) * 25)
+    }
+
+    private var xTicks: [Double] {
+        [0, 25, 50, 75, 100].filter { $0 <= xMax }
     }
 }

@@ -163,6 +163,12 @@ final class MonitorViewModel {
 
         // Apply saved alert settings
         let settings = AlertSettings.load(context: modelContext)
+
+        // Snapshot the active alert configuration onto the session for analytics.
+        session.snapshotPushEnabled    = settings.pushNotificationEnabled
+        session.snapshotSoundEnabled   = settings.soundAlarmEnabled
+        session.snapshotAlarmStyleRaw  = settings.alarmStyleRaw
+
         sessionPushEnabled          = settings.pushNotificationEnabled
         sessionSoundEnabled         = settings.soundAlarmEnabled
         // Repeat push notifications are always enabled; interval remains user-configurable.
