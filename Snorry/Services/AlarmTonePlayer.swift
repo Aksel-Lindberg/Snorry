@@ -7,40 +7,12 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
     case gentle  = 0
     case classic = 1
     case alert   = 2
-    case urgent  = 3
-    case siren   = 4
-    case extreme = 5
-    case nudge   = 6
-    case pianoLove = 7
-    case sideSoftFemaleVoice = 8
-    case sideSoftVoiceAlert = 9
-    case marimbaSoft = 10
-    case screamingWoman = 11
-    case shoutingWoman = 12
-    case catMeowSoft = 13
-    case dogBarkSoft = 14
-    case stopSnoringSoftFemale = 15
-    case firstLightOnPier = 16
 
     var displayName: String {
         switch self {
         case .gentle:  return "Gentle"
         case .classic: return "Classic"
         case .alert:   return "Alert"
-        case .urgent:  return "Urgent"
-        case .siren:   return "Siren"
-        case .extreme: return "Extreme"
-        case .nudge:   return "Soft Nudge"
-        case .pianoLove: return "I Love You Piano"
-        case .sideSoftFemaleVoice: return "Move to Side (Female)"
-        case .sideSoftVoiceAlert: return "Move to Side (Soft)"
-        case .marimbaSoft: return "Soft Marimba"
-        case .screamingWoman: return "Screaming Woman"
-        case .shoutingWoman: return "Shouting Woman"
-        case .catMeowSoft: return "Soft Cat Meow"
-        case .dogBarkSoft: return "Soft Dog Bark"
-        case .stopSnoringSoftFemale: return "Stop Snoring (Female)"
-        case .firstLightOnPier: return "First Light on the Pier"
         }
     }
 
@@ -49,37 +21,6 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .gentle:  return "440 Hz · soft slow pulse"
         case .classic: return "880 Hz · steady double-tone"
         case .alert:   return "1 kHz · triple burst"
-        case .urgent:  return "1.2 kHz · rapid staccato"
-        case .siren:   return "800–1400 Hz · rising sweep"
-        case .extreme: return "1.6 kHz · max-intensity rapid burst"
-        case .nudge:   return "Recorded soft position nudge"
-        case .pianoLove: return "Recorded piano clip"
-        case .sideSoftFemaleVoice: return "Recorded female voice prompt"
-        case .sideSoftVoiceAlert: return "Recorded soft voice alert"
-        case .marimbaSoft: return "Recorded marimba clip"
-        case .screamingWoman: return "Recorded loud voice clip"
-        case .shoutingWoman: return "Recorded shouting voice clip"
-        case .catMeowSoft: return "Recorded cat meow clip"
-        case .dogBarkSoft: return "Recorded dog bark clip"
-        case .stopSnoringSoftFemale: return "Recorded female voice prompt"
-        case .firstLightOnPier: return "Recorded piano track"
-        }
-    }
-
-    var bundledClipName: String? {
-        switch self {
-        case .nudge: return "soft_snore_position_nudge_alert"
-        case .pianoLove: return "i_love_you_short_piano_clip"
-        case .sideSoftFemaleVoice: return "move_to_side_soft_female_voice"
-        case .sideSoftVoiceAlert: return "move_to_side_soft_voice_alert"
-        case .marimbaSoft: return "nice_soft_marimba_clip"
-        case .screamingWoman: return "screaming_woman_clip"
-        case .shoutingWoman: return "shouting_woman_clip"
-        case .catMeowSoft: return "soft_cat_meow_clip"
-        case .dogBarkSoft: return "soft_dog_bark_clip"
-        case .stopSnoringSoftFemale: return "stop_snoring_soft_female_voice"
-        case .firstLightOnPier: return "first_light_on_the_pier"
-        default: return nil
         }
     }
 }
@@ -107,7 +48,6 @@ final class AlarmTonePlayer: @unchecked Sendable {
     /// Global loudness boost for synthesized alarms.
     /// Values > 1 increase perceived loudness before soft-clipping.
     private static let outputDrive: Double = 1.8
-    private static let bundledClipExtension = "mp3"
 
     init() {
         mixerNode = engine.mainMixerNode
@@ -223,49 +163,10 @@ final class AlarmTonePlayer: @unchecked Sendable {
     // MARK: Synthesis dispatcher
 
     private static func synthesize(style: AlarmStyle) -> AVAudioPCMBuffer? {
-        if let bundledClipName = style.bundledClipName {
-            return loadBundledClip(named: bundledClipName)
-        }
         switch style {
         case .gentle:  return synthesizeGentle()
         case .classic: return synthesizeClassic()
         case .alert:   return synthesizeAlert()
-        case .urgent:  return synthesizeUrgent()
-        case .siren:   return synthesizeSiren()
-        case .extreme: return synthesizeExtreme()
-        case .nudge,
-                .pianoLove,
-                .sideSoftFemaleVoice,
-                .sideSoftVoiceAlert,
-                .marimbaSoft,
-                .screamingWoman,
-                .shoutingWoman,
-                .catMeowSoft,
-                .dogBarkSoft,
-                .stopSnoringSoftFemale,
-                .firstLightOnPier:
-            return nil
-        }
-    }
-
-    private static func loadBundledClip(named name: String) -> AVAudioPCMBuffer? {
-        guard let fileURL = Bundle.main.url(forResource: name, withExtension: bundledClipExtension) else {
-            return nil
-        }
-        do {
-            let audioFile = try AVAudioFile(forReading: fileURL)
-            let frameCount = AVAudioFrameCount(audioFile.length)
-            guard frameCount > 0,
-                  let buffer = AVAudioPCMBuffer(
-                    pcmFormat: audioFile.processingFormat,
-                    frameCapacity: frameCount
-                  ) else {
-                return nil
-            }
-            try audioFile.read(into: buffer)
-            return buffer
-        } catch {
-            return nil
         }
     }
 
@@ -360,98 +261,4 @@ final class AlarmTonePlayer: @unchecked Sendable {
         return buf
     }
 
-    // MARK: Urgent — 1200/900 Hz, rapid 0.15 s on / 0.10 s off
-
-    private static func synthesizeUrgent() -> AVAudioPCMBuffer? {
-        let rate    = sampleRate
-        let onDur   = 0.15
-        let total   = AVAudioFrameCount(rate * 0.25)
-        let onCount = Int(rate * onDur)
-        guard let buf = AVAudioPCMBuffer(pcmFormat: makeFormat(), frameCapacity: total),
-              let data = buf.floatChannelData?[0] else { return nil }
-        buf.frameLength = total
-        for idx in 0..<Int(total) {
-            guard idx < onCount else { data[idx] = 0; continue }
-            let time = Double(idx) / rate
-            let wave = (sin(2 * .pi * 1200 * time) + sin(2 * .pi * 900 * time)) * 0.5
-            data[idx] = driven(
-                wave * cosEnv(
-                    pos: idx,
-                    duration: onCount,
-                    attackFrac: 0.05,
-                    releaseFrac: 0.05
-                )
-            )
-        }
-        return buf
-    }
-
-    // MARK: Siren — frequency sweep 800→1400 Hz over 1.0 s, then 0.3 s silence
-
-    private static func synthesizeSiren() -> AVAudioPCMBuffer? {
-        let rate     = sampleRate
-        let sweepDur = 1.0
-        let silDur   = 0.3
-        let total    = AVAudioFrameCount(rate * (sweepDur + silDur))
-        let sweepN   = Int(rate * sweepDur)
-        guard let buf = AVAudioPCMBuffer(pcmFormat: makeFormat(), frameCapacity: total),
-              let data = buf.floatChannelData?[0] else { return nil }
-        buf.frameLength = total
-        // Integrate instantaneous phase to avoid discontinuities at the start of silence.
-        var phase = 0.0
-        for idx in 0..<Int(total) {
-            guard idx < sweepN else { data[idx] = 0; continue }
-            let frac = Double(idx) / Double(sweepN)
-            let freq = 800.0 + 600.0 * frac
-            phase   += 2 * .pi * freq / rate
-            let wave = sin(phase)
-            data[idx] = driven(
-                wave * cosEnv(
-                    pos: idx,
-                    duration: sweepN,
-                    attackFrac: 0.04,
-                    releaseFrac: 0.08
-                )
-            )
-        }
-        return buf
-    }
-
-    // MARK: Extreme — 1600/1200 Hz + harmonic, rapid 0.14 s bursts for maximum urgency
-
-    private static func synthesizeExtreme() -> AVAudioPCMBuffer? {
-        let rate     = sampleRate
-        let beepDur  = 0.14
-        let gapDur   = 0.06
-        let pauseDur = 0.20
-        let cycleDur = (beepDur + gapDur) * 4 + pauseDur
-        let total    = AVAudioFrameCount(rate * cycleDur)
-        let beepN    = Int(rate * beepDur)
-        let stepN    = Int(rate * (beepDur + gapDur))
-
-        guard let buf = AVAudioPCMBuffer(pcmFormat: makeFormat(), frameCapacity: total),
-              let data = buf.floatChannelData?[0] else { return nil }
-        buf.frameLength = total
-
-        for idx in 0..<Int(total) {
-            let burstIndex = idx / stepN
-            let posInStep  = idx % stepN
-            guard burstIndex < 4, posInStep < beepN else { data[idx] = 0; continue }
-            let time = Double(idx) / rate
-            // Add a light third harmonic for stronger speaker presence.
-            let wave = (sin(2 * .pi * 1600 * time)
-                        + sin(2 * .pi * 1200 * time)
-                        + 0.35 * sin(2 * .pi * 2400 * time)) / 2.35
-            data[idx] = driven(
-                wave * cosEnv(
-                    pos: posInStep,
-                    duration: beepN,
-                    attackFrac: 0.03,
-                    releaseFrac: 0.04
-                ),
-                extraDrive: 1.35
-            )
-        }
-        return buf
-    }
 }
