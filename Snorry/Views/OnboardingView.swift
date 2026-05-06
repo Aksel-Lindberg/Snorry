@@ -76,9 +76,9 @@ private struct WelcomePage: View {
                     FeatureCard(
                         icon: "applewatch",
                         iconColor: Theme.good,
-                        title: "Wrist Nudges via Apple Watch",
+                        title: "Wrist Nudges via iOS-Compatible Smartwatch",
                         description: "Snore alerts use standard iOS notifications, which may appear " +
-                                     "on your Apple Watch as a gentle haptic nudge — small enough to " +
+                                     "on your iOS-Compatible Smartwatch as a gentle haptic nudge — small enough to " +
                                      "prompt a position change without fully waking you."
                     )
 
@@ -160,7 +160,7 @@ private struct ConsentPage: View {
                         icon: "bell.badge.fill",
                         title: "Notifications",
                         description: "Used to send snore alerts while you sleep. Standard iOS local " +
-                                     "notifications — they can appear on your Apple Watch so you get " +
+                                     "notifications — they can appear on your iOS-Compatible Smartwatch so you get " +
                                      "wrist nudges that help you stop snoring without waking up."
                     )
                 }
