@@ -10,6 +10,17 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
     case urgent  = 3
     case siren   = 4
     case extreme = 5
+    case nudge   = 6
+    case pianoLove = 7
+    case sideSoftFemaleVoice = 8
+    case sideSoftVoiceAlert = 9
+    case marimbaSoft = 10
+    case screamingWoman = 11
+    case shoutingWoman = 12
+    case catMeowSoft = 13
+    case dogBarkSoft = 14
+    case stopSnoringSoftFemale = 15
+    case firstLightOnPier = 16
 
     var displayName: String {
         switch self {
@@ -19,6 +30,17 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .urgent:  return "Urgent"
         case .siren:   return "Siren"
         case .extreme: return "Extreme"
+        case .nudge:   return "Soft Nudge"
+        case .pianoLove: return "I Love You Piano"
+        case .sideSoftFemaleVoice: return "Move to Side (Female)"
+        case .sideSoftVoiceAlert: return "Move to Side (Soft)"
+        case .marimbaSoft: return "Soft Marimba"
+        case .screamingWoman: return "Screaming Woman"
+        case .shoutingWoman: return "Shouting Woman"
+        case .catMeowSoft: return "Soft Cat Meow"
+        case .dogBarkSoft: return "Soft Dog Bark"
+        case .stopSnoringSoftFemale: return "Stop Snoring (Female)"
+        case .firstLightOnPier: return "First Light on the Pier"
         }
     }
 
@@ -30,6 +52,34 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .urgent:  return "1.2 kHz · rapid staccato"
         case .siren:   return "800–1400 Hz · rising sweep"
         case .extreme: return "1.6 kHz · max-intensity rapid burst"
+        case .nudge:   return "Recorded soft position nudge"
+        case .pianoLove: return "Recorded piano clip"
+        case .sideSoftFemaleVoice: return "Recorded female voice prompt"
+        case .sideSoftVoiceAlert: return "Recorded soft voice alert"
+        case .marimbaSoft: return "Recorded marimba clip"
+        case .screamingWoman: return "Recorded loud voice clip"
+        case .shoutingWoman: return "Recorded shouting voice clip"
+        case .catMeowSoft: return "Recorded cat meow clip"
+        case .dogBarkSoft: return "Recorded dog bark clip"
+        case .stopSnoringSoftFemale: return "Recorded female voice prompt"
+        case .firstLightOnPier: return "Recorded piano track"
+        }
+    }
+
+    var bundledClipName: String? {
+        switch self {
+        case .nudge: return "soft_snore_position_nudge_alert"
+        case .pianoLove: return "i_love_you_short_piano_clip"
+        case .sideSoftFemaleVoice: return "move_to_side_soft_female_voice"
+        case .sideSoftVoiceAlert: return "move_to_side_soft_voice_alert"
+        case .marimbaSoft: return "nice_soft_marimba_clip"
+        case .screamingWoman: return "screaming_woman_clip"
+        case .shoutingWoman: return "shouting_woman_clip"
+        case .catMeowSoft: return "soft_cat_meow_clip"
+        case .dogBarkSoft: return "soft_dog_bark_clip"
+        case .stopSnoringSoftFemale: return "stop_snoring_soft_female_voice"
+        case .firstLightOnPier: return "first_light_on_the_pier"
+        default: return nil
         }
     }
 }
@@ -57,12 +107,17 @@ final class AlarmTonePlayer: @unchecked Sendable {
     /// Global loudness boost for synthesized alarms.
     /// Values > 1 increase perceived loudness before soft-clipping.
     private static let outputDrive: Double = 1.8
+    private static let bundledClipExtension = "mp3"
 
     init() {
         mixerNode = engine.mainMixerNode
         engine.attach(playerNode)
-        engine.connect(playerNode, to: mixerNode, format: Self.makeFormat())
         toneBuffer = Self.synthesize(style: .classic)
+        if let toneBuffer {
+            configurePlayerConnection(for: toneBuffer.format)
+        } else {
+            configurePlayerConnection(for: Self.makeFormat())
+        }
     }
 
     // MARK: Style selection
@@ -71,10 +126,15 @@ final class AlarmTonePlayer: @unchecked Sendable {
     /// Safe to call before or after `play()`; a running engine is restarted.
     func setStyle(_ newStyle: AlarmStyle) {
         guard newStyle != style else { return }
-        style      = newStyle
+        style = newStyle
         let wasRunning = isRunning
         if wasRunning { stop() }
-        toneBuffer = Self.synthesize(style: newStyle)
+        toneBuffer = Self.synthesize(style: newStyle) ?? Self.synthesize(style: .classic)
+        if let toneBuffer {
+            configurePlayerConnection(for: toneBuffer.format)
+        } else {
+            configurePlayerConnection(for: Self.makeFormat())
+        }
         if wasRunning { startEngine() }
     }
 
@@ -128,6 +188,14 @@ final class AlarmTonePlayer: @unchecked Sendable {
         if !playerNode.isPlaying { playerNode.play() }
     }
 
+    /// Keeps player-node output format aligned with the currently selected buffer format.
+    /// This avoids AVAudioPlayerNode schedule crashes when switching between mono synth tones
+    /// and stereo bundled clips.
+    private func configurePlayerConnection(for format: AVAudioFormat) {
+        engine.disconnectNodeOutput(playerNode)
+        engine.connect(playerNode, to: mixerNode, format: format)
+    }
+
     private func startRamp(completion: (() -> Void)? = nil) {
         rampTimer?.invalidate()
         let stepInterval: TimeInterval = 0.05
@@ -155,6 +223,9 @@ final class AlarmTonePlayer: @unchecked Sendable {
     // MARK: Synthesis dispatcher
 
     private static func synthesize(style: AlarmStyle) -> AVAudioPCMBuffer? {
+        if let bundledClipName = style.bundledClipName {
+            return loadBundledClip(named: bundledClipName)
+        }
         switch style {
         case .gentle:  return synthesizeGentle()
         case .classic: return synthesizeClassic()
@@ -162,6 +233,39 @@ final class AlarmTonePlayer: @unchecked Sendable {
         case .urgent:  return synthesizeUrgent()
         case .siren:   return synthesizeSiren()
         case .extreme: return synthesizeExtreme()
+        case .nudge,
+                .pianoLove,
+                .sideSoftFemaleVoice,
+                .sideSoftVoiceAlert,
+                .marimbaSoft,
+                .screamingWoman,
+                .shoutingWoman,
+                .catMeowSoft,
+                .dogBarkSoft,
+                .stopSnoringSoftFemale,
+                .firstLightOnPier:
+            return nil
+        }
+    }
+
+    private static func loadBundledClip(named name: String) -> AVAudioPCMBuffer? {
+        guard let fileURL = Bundle.main.url(forResource: name, withExtension: bundledClipExtension) else {
+            return nil
+        }
+        do {
+            let audioFile = try AVAudioFile(forReading: fileURL)
+            let frameCount = AVAudioFrameCount(audioFile.length)
+            guard frameCount > 0,
+                  let buffer = AVAudioPCMBuffer(
+                    pcmFormat: audioFile.processingFormat,
+                    frameCapacity: frameCount
+                  ) else {
+                return nil
+            }
+            try audioFile.read(into: buffer)
+            return buffer
+        } catch {
+            return nil
         }
     }
 
