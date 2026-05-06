@@ -1,4 +1,5 @@
 import AVFoundation
+import Accelerate
 import os.log
 
 // MARK: - Alarm tone styles
@@ -127,10 +128,12 @@ final class AlarmTonePlayer: @unchecked Sendable {
     private let logger = Logger(subsystem: "app.Snorry", category: "AlarmTone")
 
     private static let sampleRate: Double = 44_100
-    /// Global loudness boost for synthesized alarms.
-    /// Values > 1 increase perceived loudness before soft-clipping.
-    private static let outputDrive: Double = 1.8
+    /// Global loudness boost for synthesized alarms fed into tanh soft-clipping.
+    /// Higher values push the waveform harder into saturation → louder, fuller sound at 100%.
+    private static let outputDrive: Double = 3.5
     private static let bundledClipExtension = "mp3"
+    /// Peak target for bundled clip normalisation (≈ -0.7 dBFS).
+    private static let clipNormalisationPeak: Float = 0.92
 
     init() {
         mixerNode = engine.mainMixerNode
@@ -288,9 +291,35 @@ final class AlarmTonePlayer: @unchecked Sendable {
                 return nil
             }
             try audioFile.read(into: buffer)
+            // Normalise each clip to a consistent peak level so quiet source
+            // recordings are as loud as possible at 100% volume.
+            normalisePCMBuffer(buffer)
             return buffer
         } catch {
             return nil
+        }
+    }
+
+    /// Peak-normalises an in-memory PCM buffer to `clipNormalisationPeak` using Accelerate.
+    /// No-ops if the buffer is silent or has no float channel data.
+    private static func normalisePCMBuffer(_ buffer: AVAudioPCMBuffer) {
+        let channelCount = Int(buffer.format.channelCount)
+        let frameCount   = vDSP_Length(buffer.frameLength)
+        guard frameCount > 0, let channelData = buffer.floatChannelData else { return }
+
+        // Find the absolute peak across all channels.
+        var peak: Float = 0
+        for ch in 0..<channelCount {
+            var channelPeak: Float = 0
+            vDSP_maxmgv(channelData[ch], 1, &channelPeak, frameCount)
+            peak = max(peak, channelPeak)
+        }
+        guard peak > 1e-6 else { return }
+
+        // Scale every sample so the loudest peak lands at clipNormalisationPeak.
+        var gain = clipNormalisationPeak / peak
+        for ch in 0..<channelCount {
+            vDSP_vsmul(channelData[ch], 1, &gain, channelData[ch], 1, frameCount)
         }
     }
 
