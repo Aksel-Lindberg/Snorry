@@ -5,6 +5,7 @@ import SwiftData
 struct SessionsListView: View {
 
     @Environment(\.modelContext) private var context
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var vm: SessionsListViewModel?
 
     var body: some View {
@@ -31,24 +32,28 @@ struct SessionsListView: View {
 
     @ViewBuilder
     private func content(vm: SessionsListViewModel) -> some View {
-        if vm.sessions.isEmpty {
-            emptyState
-        } else {
-            List {
-                ForEach(vm.sessions) { session in
-                    NavigationLink(destination: SessionDetailView(session: session)) {
-                        SessionRowView(session: session)
+        Group {
+            if vm.sessions.isEmpty {
+                emptyState
+            } else {
+                List {
+                    ForEach(vm.sessions) { session in
+                        NavigationLink(destination: SessionDetailView(session: session)) {
+                            SessionRowView(session: session)
+                        }
+                        .listRowBackground(Theme.surface)
+                        .listRowSeparatorTint(Theme.surfaceSecondary)
                     }
-                    .listRowBackground(Theme.surface)
-                    .listRowSeparatorTint(Theme.surfaceSecondary)
+                    .onDelete { offsets in
+                        for i in offsets { vm.deleteSession(vm.sessions[i]) }
+                    }
                 }
-                .onDelete { offsets in
-                    for i in offsets { vm.deleteSession(vm.sessions[i]) }
-                }
+                .scrollContentBackground(.hidden)
+                .listStyle(.insetGrouped)
             }
-            .scrollContentBackground(.hidden)
-            .listStyle(.insetGrouped)
         }
+        .frame(maxWidth: horizontalSizeClass == .regular ? 840 : .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     private var emptyState: some View {

@@ -6,6 +6,7 @@ import SwiftData
 struct HomeView: View {
 
     @Environment(\.modelContext) private var context
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Query private var alertSettingsRows: [AlertSettings]
     @State private var vm: MonitorViewModel?
     @State private var showMonitor = false
@@ -37,6 +38,17 @@ struct HomeView: View {
     }
 
     private func mainContent(vm: MonitorViewModel) -> some View {
+        Group {
+            if horizontalSizeClass == .regular {
+                padMonitorLayout(vm: vm)
+            } else {
+                compactMonitorLayout(vm: vm)
+            }
+        }
+    }
+
+    /// iPhone / compact split — original vertical stack.
+    private func compactMonitorLayout(vm: MonitorViewModel) -> some View {
         VStack(spacing: 0) {
             headerSection
                 .padding(.top, 36)
@@ -59,6 +71,41 @@ struct HomeView: View {
                 .padding(.bottom, 32)
         }
         .padding(.horizontal, 24)
+    }
+
+    /// iPad / regular width — uses horizontal space without stretching a single narrow column.
+    private func padMonitorLayout(vm: MonitorViewModel) -> some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                headerSection
+                    .padding(.top, 28)
+
+                HStack(alignment: .top, spacing: 40) {
+                    VStack(spacing: 20) {
+                        startButtonSection(vm: vm)
+                    }
+                    .frame(minWidth: 260)
+
+                    VStack(alignment: .leading, spacing: 22) {
+                        if let settings = alertSettingsRows.first {
+                            AlertSetupSummaryCard(
+                                settings: settings,
+                                notificationsAuthorized: vm.notificationAuthorized,
+                                caption: "Used for the next monitoring session"
+                            )
+                        }
+                        recentSessionCard(vm: vm)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.horizontal, 44)
+                .padding(.top, 28)
+                .frame(maxWidth: 1100)
+                .frame(maxWidth: .infinity)
+
+                Color.clear.frame(height: 36)
+            }
+        }
     }
 
     // MARK: Header

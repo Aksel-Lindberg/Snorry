@@ -6,6 +6,7 @@ struct MonitorView: View {
 
     @Bindable var vm: MonitorViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @State private var pulseAnimation = false
 
@@ -22,9 +23,11 @@ struct MonitorView: View {
                     timelineCard
                     stopButton
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
                 .padding(.top, 12)
                 .padding(.bottom, 40)
+                .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
+                .frame(maxWidth: .infinity)
             }
         }
         .navigationTitle("Monitoring")

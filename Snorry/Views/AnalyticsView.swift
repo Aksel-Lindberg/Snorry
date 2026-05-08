@@ -35,6 +35,7 @@ struct AnalyticsView: View {
 private struct AnalyticsContent: View {
 
     @Bindable var vm: AnalyticsViewModel
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var areSettingsChangesExpanded = true
 
     var body: some View {
@@ -55,8 +56,10 @@ private struct AnalyticsContent: View {
                 if vm.settingsChanges.isEmpty { markerInfoNote }
                 AlertCorrelationCard(points: vm.alertProfilePoints)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
             .padding(.bottom, 40)
+            .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
+            .frame(maxWidth: .infinity)
         }
     }
 

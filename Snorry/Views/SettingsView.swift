@@ -9,6 +9,7 @@ struct SettingsView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss)      private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var vm: SettingsViewModel?
     @State private var confirmDeleteAllLogs = false
 
@@ -68,6 +69,8 @@ struct SettingsView: View {
         }
         .scrollContentBackground(.hidden)
         .listStyle(.insetGrouped)
+        .frame(maxWidth: horizontalSizeClass == .regular ? 820 : .infinity)
+        .frame(maxWidth: .infinity)
         .confirmationDialog(
             "Delete all sleep logs and settings history?",
             isPresented: $confirmDeleteAllLogs,
