@@ -59,9 +59,9 @@ struct SettingsView: View {
     private func settingsContent(vm: SettingsViewModel) -> some View {
         List {
             alertChannelsSection(vm: vm)
-            alarmStyleSection(vm: vm)
             alertTimingsSection(vm: vm)
             volumeSection(vm: vm)
+            alarmStyleSection(vm: vm)
             actionsSection(vm: vm)
             legalSection()
         }
@@ -105,7 +105,7 @@ struct SettingsView: View {
             .tint(Theme.accent)
 
             SliderRow(
-                label: "to Repeat Push notification every",
+                label: "Repeat Push notification every",
                 value: Binding(get: { vm.pushRepeatInterval },
                                set: { vm.pushRepeatInterval = $0 }),
                 range: 1...10,
