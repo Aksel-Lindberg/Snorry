@@ -9,20 +9,23 @@ final class SettingsViewModel {
 
     var notifyDelay: Double     = 2
     var soundAlarmAfter: Double = 10
-    var alarmVolume: Float      = 0.60
+    var alarmVolume: Float      = 0.50
 
     var pushNotificationEnabled: Bool = true
     var soundAlarmEnabled: Bool       = true
     var pushRepeatEnabled: Bool       = true
-    var pushRepeatInterval: Double    = 10
+    var pushRepeatInterval: Double    = 3
 
     /// Snore detection sensitivity level (1–5). 3 = factory default.
     var snoringDetectionSensitivity: Double = 3
 
     /// Selected alarm tone style.
-    var alarmStyle: AlarmStyle = .classic
+    var alarmStyle: AlarmStyle = .marimbaIntrumental
     /// Alarm style currently being previewed in Settings.
     private(set) var previewingAlarmStyle: AlarmStyle?
+
+    /// Set when bulk log deletion fails so the UI can show an alert.
+    private(set) var deleteLogsFailedMessage: String?
 
     private let context: ModelContext
     private var settings: AlertSettings?
@@ -108,6 +111,37 @@ final class SettingsViewModel {
         context.insert(fresh)
         settings = fresh
         load()
+    }
+
+    /// Removes all sleep sessions (events, waveforms, snore clips on disk) and `AlertSettingsChange` analytics markers.
+    /// Does not alter current `AlertSettings` preferences.
+    func deleteAllSleepAndSettingsLogs() {
+        stopAlarmStylePreview()
+        deleteLogsFailedMessage = nil
+        do {
+            let sessions = try context.fetch(FetchDescriptor<SnoreSession>())
+            for session in sessions {
+                for event in session.events {
+                    if let url = event.audioURL {
+                        try? FileManager.default.removeItem(at: url)
+                    }
+                }
+                context.delete(session)
+            }
+            let changes = try context.fetch(FetchDescriptor<AlertSettingsChange>())
+            for change in changes {
+                context.delete(change)
+            }
+            // Avoid pointing at a deleted session if monitoring state was left in UserDefaults.
+            UserDefaults.standard.removeObject(forKey: "currentSessionID")
+            try context.save()
+        } catch {
+            deleteLogsFailedMessage = error.localizedDescription
+        }
+    }
+
+    func clearDeleteLogsError() {
+        deleteLogsFailedMessage = nil
     }
 
     // MARK: Alarm style preview

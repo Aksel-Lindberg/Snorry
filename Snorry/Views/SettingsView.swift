@@ -10,6 +10,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss)      private var dismiss
     @State private var vm: SettingsViewModel?
+    @State private var confirmDeleteAllLogs = false
 
     var body: some View {
         NavigationStack {
@@ -67,6 +68,31 @@ struct SettingsView: View {
         }
         .scrollContentBackground(.hidden)
         .listStyle(.insetGrouped)
+        .confirmationDialog(
+            "Delete all sleep logs and settings history?",
+            isPresented: $confirmDeleteAllLogs,
+            titleVisibility: .visible
+        ) {
+            Button("Delete All", role: .destructive) {
+                vm.deleteAllSleepAndSettingsLogs()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(
+                "This permanently removes every saved sleep session, snore clips, and settings-change markers used in analytics. Your current Settings values are not changed."
+            )
+        }
+        .alert(
+            "Couldn’t Delete Logs",
+            isPresented: Binding(
+                get: { vm.deleteLogsFailedMessage != nil },
+                set: { if !$0 { vm.clearDeleteLogsError() } }
+            )
+        ) {
+            Button("OK", role: .cancel) { vm.clearDeleteLogsError() }
+        } message: {
+            Text(vm.deleteLogsFailedMessage ?? "")
+        }
     }
 
     // MARK: Sections
@@ -234,6 +260,16 @@ struct SettingsView: View {
                 vm.reset()
             }
             .foregroundStyle(Theme.snoring)
+
+            Button("Delete All Sleep & Settings Logs", role: .destructive) {
+                confirmDeleteAllLogs = true
+            }
+        } footer: {
+            Text(
+                "Delete All removes every sleep session, waveform, snore clip, and settings-change history. Current preferences stay as they are."
+            )
+            .foregroundStyle(Theme.labelSecondary)
+            .font(.caption)
         }
         .listRowBackground(Theme.surface)
     }

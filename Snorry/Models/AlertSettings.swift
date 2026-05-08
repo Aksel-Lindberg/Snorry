@@ -33,13 +33,13 @@ final class AlertSettings {
     init() {
         notifyDelaySeconds        = 2
         soundAlarmAfterSeconds    = 10
-        alarmVolume               = 0.60
+        alarmVolume               = 0.50
         snoringDetectionSensitivity = 5
-        alarmStyleRaw             = AlarmStyle.classic.rawValue
+        alarmStyleRaw             = AlarmStyle.marimbaIntrumental.rawValue
         pushNotificationEnabled   = true
         soundAlarmEnabled         = true
         pushRepeatEnabled         = true
-        pushRepeatIntervalSeconds = 10
+        pushRepeatIntervalSeconds = 3
     }
 
     /// Returns existing or creates default settings.
