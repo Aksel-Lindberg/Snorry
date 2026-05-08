@@ -423,8 +423,12 @@ final class MonitorViewModel {
             pushRepeatTask?.cancel()
             pushRepeatTask = nil
             guard sessionSoundEnabled else { return }
+            // Re-assert speaker routing before playing — the session can lose its
+            // port override if interrupted by a system sound, phone call, etc.
+            AudioSessionManager.shared.activateSpeakerForAlarm()
             let selectedVolume = max(0.10, min(1.0, alertManager.config.alarmVolume))
-            alarmPlayer.play(volume: selectedVolume)
+            // Jump straight to the configured volume — no fade-in for a real alarm.
+            alarmPlayer.playImmediate(volume: selectedVolume)
 
         case .idle, .cleared:
             pushRepeatTask?.cancel()

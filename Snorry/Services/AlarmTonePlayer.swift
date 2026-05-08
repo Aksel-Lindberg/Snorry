@@ -166,10 +166,22 @@ final class AlarmTonePlayer: @unchecked Sendable {
 
     // MARK: Playback control
 
+    /// Starts playback with a gentle volume ramp — use for Settings previews.
     func play(volume: Float) {
         targetVolume = volume
         if !isRunning { startEngine() }
         startRamp()
+    }
+
+    /// Starts playback and jumps to `volume` immediately — use for live alarm firing.
+    /// Skips the fade-in so the alarm hits at full intensity from the first sample.
+    func playImmediate(volume: Float) {
+        rampTimer?.invalidate()
+        rampTimer = nil
+        targetVolume  = volume
+        currentVolume = volume
+        mixerNode.outputVolume = volume
+        if !isRunning { startEngine() }
     }
 
     /// Hard-stop with no fade — use when snoring ends.
@@ -309,17 +321,17 @@ final class AlarmTonePlayer: @unchecked Sendable {
 
         // Find the absolute peak across all channels.
         var peak: Float = 0
-        for ch in 0..<channelCount {
+        for channel in 0..<channelCount {
             var channelPeak: Float = 0
-            vDSP_maxmgv(channelData[ch], 1, &channelPeak, frameCount)
+            vDSP_maxmgv(channelData[channel], 1, &channelPeak, frameCount)
             peak = max(peak, channelPeak)
         }
         guard peak > 1e-6 else { return }
 
         // Scale every sample so the loudest peak lands at clipNormalisationPeak.
         var gain = clipNormalisationPeak / peak
-        for ch in 0..<channelCount {
-            vDSP_vsmul(channelData[ch], 1, &gain, channelData[ch], 1, frameCount)
+        for channel in 0..<channelCount {
+            vDSP_vsmul(channelData[channel], 1, &gain, channelData[channel], 1, frameCount)
         }
     }
 
