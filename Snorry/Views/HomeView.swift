@@ -11,6 +11,7 @@ struct HomeView: View {
     @State private var vm: MonitorViewModel?
     @State private var showMonitor = false
     @State private var showPermissions = false
+    @State private var showHelp = false
 
     var body: some View {
         NavigationStack {
@@ -33,6 +34,25 @@ struct HomeView: View {
             .onAppear {
                 setupViewModel()
                 ensureAlertSettingsRowExists()
+            }
+            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showHelp = true
+                    } label: {
+                        Image(systemName: "questionmark.circle")
+                            .font(.title3)
+                            .foregroundStyle(Theme.accent)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .accessibilityLabel("Help")
+                    .accessibilityHint("Opens help and how-to for Snorry")
+                }
+            }
+            .sheet(isPresented: $showHelp) {
+                HelpCenterView()
             }
         }
     }
