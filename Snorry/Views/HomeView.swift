@@ -80,7 +80,7 @@ struct HomeView: View {
             Text("Connect your watch · get Snore alerts on your wrist")
                 .font(Theme.handwritten(size: 13, bold: false))
                 .italic()
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Color.white.opacity(0.52))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
                 .padding(.top, 6)
