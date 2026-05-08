@@ -28,6 +28,11 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
     case singball = 18
     case tornado = 19
     case windplay = 20
+    case quietFoundUs = 21
+    case indigoWindow = 22
+    case copperLightAtSix = 23
+    case lateNightCurb = 24
+    case rapidWake = 25
 
     var displayName: String {
         switch self {
@@ -52,6 +57,11 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .singball: return "Singball"
         case .tornado: return "Tornado"
         case .windplay: return "Windplay"
+        case .quietFoundUs: return "Quiet Found Us"
+        case .indigoWindow: return "Indigo Window"
+        case .copperLightAtSix: return "Copper Light at Six"
+        case .lateNightCurb: return "Late Night Curb"
+        case .rapidWake: return "Rapid Wake"
         }
     }
 
@@ -77,7 +87,12 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
                 .raindrop,
                 .singball,
                 .tornado,
-                .windplay:
+                .windplay,
+                .quietFoundUs,
+                .indigoWindow,
+                .copperLightAtSix,
+                .lateNightCurb,
+                .rapidWake:
             return "Recorded clip"
         }
     }
@@ -104,6 +119,11 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .singball: return "Singball"
         case .tornado: return "Tornado"
         case .windplay: return "Windplay"
+        case .quietFoundUs: return "Quiet_Found_Us"
+        case .indigoWindow: return "Indigo_Window"
+        case .copperLightAtSix: return "Copper_Light_at_Six"
+        case .lateNightCurb: return "Late_Night_Curb"
+        case .rapidWake: return "Rapid_Wake"
         }
     }
 }
@@ -282,7 +302,12 @@ final class AlarmTonePlayer: @unchecked Sendable {
                 .raindrop,
                 .singball,
                 .tornado,
-                .windplay:
+                .windplay,
+                .quietFoundUs,
+                .indigoWindow,
+                .copperLightAtSix,
+                .lateNightCurb,
+                .rapidWake:
             guard let name = style.bundledClipName else { return nil }
             return loadBundledClip(named: name)
         }

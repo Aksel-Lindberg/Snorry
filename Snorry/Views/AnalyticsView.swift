@@ -35,6 +35,7 @@ struct AnalyticsView: View {
 private struct AnalyticsContent: View {
 
     @Bindable var vm: AnalyticsViewModel
+    @State private var areSettingsChangesExpanded = true
 
     var body: some View {
         ScrollView {
@@ -43,7 +44,13 @@ private struct AnalyticsContent: View {
                 if !vm.dailyPoints.isEmpty { summaryRow }
                 snoreTrendCard
                 if !vm.settingsChanges.isEmpty {
-                    SettingsChangeLegend(changes: vm.settingsChanges)
+                    SettingsChangeLegend(
+                        changes: vm.settingsChanges,
+                        isExpanded: $areSettingsChangesExpanded,
+                        onDelete: { change in
+                            vm.deleteSettingsChange(change)
+                        }
+                    )
                 }
                 if vm.settingsChanges.isEmpty { markerInfoNote }
                 AlertCorrelationCard(points: vm.alertProfilePoints)
@@ -326,17 +333,32 @@ private struct SnoreTrendChart: View {
 private struct SettingsChangeLegend: View {
 
     let changes: [AlertSettingsChange]
+    @Binding var isExpanded: Bool
+    let onDelete: (AlertSettingsChange) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            header
-            Text("Numbered markers on the chart correspond to rows below.")
-                .font(.caption)
-                .foregroundStyle(Theme.labelTertiary)
-            VStack(spacing: 10) {
-                ForEach(Array(changes.enumerated()), id: \.offset) { index, change in
-                    changeRow(index: index, change: change)
+            DisclosureGroup(isExpanded: $isExpanded) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Numbered markers on the chart correspond to rows below.")
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelTertiary)
+                    VStack(spacing: 10) {
+                        ForEach(Array(changes.enumerated()), id: \.offset) { index, change in
+                            changeRow(index: index, change: change)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        onDelete(change)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                        }
+                    }
                 }
+                .padding(.top, 6)
+            } label: {
+                header
             }
         }
         .padding(16)

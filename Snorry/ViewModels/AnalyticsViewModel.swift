@@ -71,6 +71,18 @@ final class AnalyticsViewModel {
         loadAlertCorrelation(since: cutoff)
     }
 
+    /// Deletes one saved settings-change marker and refreshes analytics state.
+    func deleteSettingsChange(_ change: AlertSettingsChange) {
+        context.delete(change)
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            return
+        }
+        refresh()
+    }
+
     // MARK: Computed chart helpers
 
     /// Earliest date shown on the X axis for the selected range.
