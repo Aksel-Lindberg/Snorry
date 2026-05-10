@@ -9,12 +9,18 @@ struct AlertSetupSummaryCard: View {
     var notificationsAuthorized: Bool
     /// Short line under the title (context-specific copy).
     var caption: String
+    /// Tighter padding and typography on Monitor home (saves vertical space above tab bar).
+    var compact: Bool = false
 
     var body: some View {
         let style = AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic
+        let blockSpacing: CGFloat = compact ? 8 : 14
+        let rowSpacing: CGFloat = compact ? 6 : 10
+        let outerPadding: CGFloat = compact ? 12 : 16
+        let alarmIconSize: Font = compact ? .title3 : .title2
 
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: blockSpacing) {
+            VStack(alignment: .leading, spacing: compact ? 2 : 4) {
                 Label("Alert setup", systemImage: "bell.and.waves.left.and.right")
                     .font(.caption.bold())
                     .foregroundStyle(Theme.labelSecondary)
@@ -23,37 +29,39 @@ struct AlertSetupSummaryCard: View {
                     .foregroundStyle(Theme.labelTertiary)
             }
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: rowSpacing) {
                 summaryRow(
                     icon: "bell.badge.fill",
                     iconTint: settings.pushNotificationEnabled ? Theme.accent : Theme.labelTertiary,
                     title: "Push notifications",
-                    detail: Self.pushNotificationSummary(settings: settings)
+                    detail: Self.pushNotificationSummary(settings: settings),
+                    compact: compact
                 )
 
                 summaryRow(
                     icon: "speaker.wave.3.fill",
                     iconTint: settings.soundAlarmEnabled ? Theme.accent : Theme.labelTertiary,
                     title: "Sound alarm",
-                    detail: Self.soundAlarmSummary(settings: settings)
+                    detail: Self.soundAlarmSummary(settings: settings),
+                    compact: compact
                 )
             }
 
             Divider()
                 .background(Theme.labelTertiary.opacity(0.35))
 
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: compact ? 10 : 12) {
                 Image(systemName: "waveform.circle.fill")
-                    .font(.title2)
+                    .font(alarmIconSize)
                     .foregroundStyle(Theme.accent)
                     .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: compact ? 2 : 4) {
                     Text("Alarm sound")
                         .font(.caption.bold())
                         .foregroundStyle(Theme.labelSecondary)
                     Text(style.displayName)
-                        .font(.subheadline.weight(.semibold))
+                        .font(compact ? .footnote.weight(.semibold) : .subheadline.weight(.semibold))
                         .foregroundStyle(Theme.labelPrimary)
                     Text(Self.alarmSoundFootnote(for: style))
                         .font(.caption2)
@@ -86,7 +94,7 @@ struct AlertSetupSummaryCard: View {
                 }
             }
         }
-        .padding(16)
+        .padding(outerPadding)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
         .overlay(
             RoundedRectangle(cornerRadius: Theme.radiusCard)
@@ -94,19 +102,19 @@ struct AlertSetupSummaryCard: View {
         )
     }
 
-    private func summaryRow(icon: String, iconTint: Color, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+    private func summaryRow(icon: String, iconTint: Color, title: String, detail: String, compact: Bool) -> some View {
+        HStack(alignment: .top, spacing: compact ? 8 : 10) {
             Image(systemName: icon)
-                .font(.body)
+                .font(compact ? .callout : .body)
                 .foregroundStyle(iconTint)
-                .frame(width: 22, alignment: .center)
+                .frame(width: compact ? 20 : 22, alignment: .center)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(.caption.bold())
                     .foregroundStyle(Theme.labelSecondary)
                 Text(detail)
-                    .font(.caption)
+                    .font(compact ? .caption2 : .caption)
                     .foregroundStyle(Theme.labelPrimary)
                     .fixedSize(horizontal: false, vertical: true)
             }

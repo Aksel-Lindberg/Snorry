@@ -95,15 +95,16 @@ struct HomeView: View {
                 AlertSetupSummaryCard(
                     settings: settings,
                     notificationsAuthorized: vm.notificationAuthorized,
-                    caption: "Used for the next monitoring session"
+                    caption: "Used for the next monitoring session",
+                    compact: true
                 )
-                .padding(.top, 14)
+                .padding(.top, 10)
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 6)
 
             recentSessionCard()
-                .padding(.bottom, 16)
+                .padding(.bottom, 24)
         }
         .padding(.horizontal, 24)
     }
@@ -121,12 +122,13 @@ struct HomeView: View {
                     }
                     .frame(minWidth: 260)
 
-                    VStack(alignment: .leading, spacing: 22) {
+                    VStack(alignment: .leading, spacing: 16) {
                         if let settings = alertSettingsRows.first {
                             AlertSetupSummaryCard(
                                 settings: settings,
                                 notificationsAuthorized: vm.notificationAuthorized,
-                                caption: "Used for the next monitoring session"
+                                caption: "Used for the next monitoring session",
+                                compact: true
                             )
                         }
                         recentSessionCard()
@@ -138,7 +140,7 @@ struct HomeView: View {
                 .frame(maxWidth: 1100)
                 .frame(maxWidth: .infinity)
 
-                Color.clear.frame(height: 36)
+                Color.clear.frame(height: 28)
             }
         }
     }
@@ -212,7 +214,8 @@ struct HomeView: View {
     @ViewBuilder
     private func recentSessionCard() -> some View {
         if let session = completedSessions.first {
-            VStack(alignment: .leading, spacing: 10) {
+            let cardPadding: CGFloat = horizontalSizeClass == .regular ? 14 : 12
+            VStack(alignment: .leading, spacing: horizontalSizeClass == .regular ? 8 : 6) {
                 Label("Last Session", systemImage: "clock")
                     .font(.caption.bold())
                     .foregroundStyle(Theme.labelSecondary)
@@ -220,9 +223,9 @@ struct HomeView: View {
                 if horizontalSizeClass == .regular {
                     lastSessionMetrics(session: session)
                 } else {
-                    VStack(spacing: 10) {
+                    VStack(spacing: 6) {
                         HStack(spacing: 0) {
-                            summaryItem(label: "Duration", value: session.displayDurationSummary)
+                            summaryItem(label: "Sleep duration", value: session.displayDurationSummary)
                             summaryItem(label: "Events", value: "\(session.eventCount)")
                             summaryItem(label: "Snoring", value: session.displaySnoringPercent)
                         }
@@ -233,7 +236,7 @@ struct HomeView: View {
                     }
                 }
             }
-            .padding(16)
+            .padding(cardPadding)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
         }
     }
@@ -241,7 +244,7 @@ struct HomeView: View {
     /// Single-row metric strip for iPad / wide Monitor layout.
     private func lastSessionMetrics(session: SnoreSession) -> some View {
         HStack(spacing: 0) {
-            summaryItem(label: "Duration", value: session.displayDurationSummary)
+            summaryItem(label: "Sleep duration", value: session.displayDurationSummary)
             summaryItem(label: "Events", value: "\(session.eventCount)")
             summaryItem(label: "Total snore", value: session.displayTotalSnoreTime)
             summaryItem(label: "Avg / event", value: session.displayAvgSnoreTimePerEvent)
@@ -250,9 +253,10 @@ struct HomeView: View {
     }
 
     private func summaryItem(label: String, value: String) -> some View {
-        VStack(spacing: 2) {
+        let valueSize: CGFloat = horizontalSizeClass == .regular ? 17 : 15
+        return VStack(spacing: 1) {
             Text(value)
-                .font(Theme.monoDigit(size: horizontalSizeClass == .regular ? 18 : 17))
+                .font(Theme.monoDigit(size: valueSize))
                 .foregroundStyle(Theme.labelPrimary)
                 .minimumScaleFactor(0.65)
                 .lineLimit(1)
@@ -261,7 +265,7 @@ struct HomeView: View {
                 .foregroundStyle(Theme.labelTertiary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .minimumScaleFactor(0.85)
+                .minimumScaleFactor(0.8)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity)
