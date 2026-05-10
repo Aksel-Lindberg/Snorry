@@ -412,10 +412,12 @@ struct EventPlaybackRow: View {
         return (duration - minSeconds) / (maxSeconds - minSeconds)
     }
 
-    /// The harmonic frequency stored at event-end — identical to the red marker
-    /// shown on the Live Power Spectrum during monitoring. Nil when not captured.
-    private var rumbleHz: Double? {
-        event.rumbleFrequencyHz > 0 ? event.rumbleFrequencyHz : nil
+    /// Strongest rumble-band frequency: **measured from the clip** when `spectralPeakHz` is set;
+    /// otherwise the legacy breath-tempo harmonic (~85 Hz) from older sessions.
+    private var rumbleDisplayHz: Double? {
+        if event.spectralPeakHz > 0 { return event.spectralPeakHz }
+        if event.rumbleFrequencyHz > 0 { return event.rumbleFrequencyHz }
+        return nil
     }
 
     var body: some View {
@@ -444,7 +446,8 @@ struct EventPlaybackRow: View {
             }
 
             // Metric bars — shown when duration and/or other measurements were captured for this event.
-            if durationFill != nil || event.brpm > 0 || event.avgDB > -160 {
+            if durationFill != nil || event.brpm > 0 || event.avgDB > -160
+                || event.spectralPeakHz > 0 || event.rumbleFrequencyHz > 0 {
                 VStack(spacing: 5) {
                     // Snore duration: mapped from 5 s (0%) to 10 min (100%).
                     if let durationFill {
@@ -468,12 +471,16 @@ struct EventPlaybackRow: View {
                         )
                     }
 
-                    // Snore rumble: harmonic captured from the live spectrum during monitoring.
-                    // Log-scale bar centred at 80 Hz (range 20–320 Hz, 20×320 = 80²).
-                    if let rumbleFreq = rumbleHz {
-                        let logFill = log(rumbleFreq / 20) / log(320.0 / 20)
+                    // Rumble: dominant FFT peak in the snore band from the recording (new);
+                    // older rows fall back to breath harmonic. Log-scale bar 50–2000 Hz.
+                    if let rumbleFreq = rumbleDisplayHz {
+                        let lo = 50.0
+                        let hi = 2000.0
+                        let clamped = min(max(rumbleFreq, lo), hi)
+                        let logFill = log(clamped / lo) / log(hi / lo)
+                        let rumbleLabel = event.spectralPeakHz > 0 ? "Rumble" : "Breath harmonic"
                         EventMetricBar(
-                            label: "Rumble",
+                            label: rumbleLabel,
                             value: String(format: "%.0f Hz", rumbleFreq),
                             fill: logFill,
                             color: Theme.snoring,

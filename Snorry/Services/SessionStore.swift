@@ -86,7 +86,22 @@ final class SessionStore {
         event.avgDB = avgDB
         event.rumbleFrequencyHz = rumbleFrequencyHz
         openEvents.removeValue(forKey: id)
-        logger.debug("Event ended: \(id), rumble=\(rumbleFrequencyHz, format: .fixed(precision: 0)) Hz, avgDB=\(avgDB, format: .fixed(precision: 1))")
+        logger.debug("Event ended: \(id), breathHarmonic=\(rumbleFrequencyHz) Hz, avgDB=\(avgDB)")
+    }
+
+    /// Background clip analysis writes the measured rumble peak after `endEvent`.
+    func setSpectralPeakHz(_ peakHz: Double, eventID: UUID) {
+        let uuid = eventID
+        let descriptor = FetchDescriptor<SnoreEvent>(predicate: #Predicate<SnoreEvent> { snoreEvent in
+            snoreEvent.id == uuid
+        })
+        guard let event = try? context.fetch(descriptor).first else {
+            logger.warning("setSpectralPeakHz: no event \(eventID.uuidString)")
+            return
+        }
+        event.spectralPeakHz = peakHz
+        saveContext()
+        logger.debug("Spectral peak stored: \(eventID) \(peakHz) Hz")
     }
 
     func updateEventAudioPath(_ path: String, eventID: UUID) {

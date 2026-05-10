@@ -391,17 +391,22 @@ final class MonitorViewModel {
             break
 
         case .snoreEnded(let id, let at, let brpm, let peakDB, let avgDB):
+            var clipRelativePath: String?
             if clipOpen {
                 let relativePath = clipRecorder.endClip()
                 clipOpen = false
                 if let clipPath = relativePath {
                     sessionStore?.updateEventAudioPath(clipPath, eventID: id)
+                    clipRelativePath = clipPath
                 }
             }
-            // Capture the same harmonic shown as the red marker on the live spectrum.
+            // Breath-tempo harmonic (live spectrum red marker); distinct from clip `spectralPeakHz`.
             let rumbleHz = AudioMath.brpmHarmonicHighlightHz(brpm: brpm) ?? 0
             sessionStore?.endEvent(id: id, at: at, brpm: brpm, peakDB: peakDB,
                                    avgDB: avgDB, rumbleFrequencyHz: rumbleHz)
+            if let rel = clipRelativePath {
+                scheduleClipSpectralAnalysis(relativePath: rel, eventID: id)
+            }
             currentBRPM   = brpm
             brpmAvailable = brpm > 0
             activeEventID = nil
@@ -468,17 +473,41 @@ final class MonitorViewModel {
     /// Ends an in-flight AAC encode and persists the SwiftData row when stopping mid-snore bout.
     private func finalizeOpenClipAndEventIfInterrupted() {
         guard let id = activeEventID else { return }
+        var clipRelativePath: String?
         if clipOpen {
             let relativePath = clipRecorder.endClip()
             clipOpen = false
             if let clipPath = relativePath {
                 sessionStore?.updateEventAudioPath(clipPath, eventID: id)
+                clipRelativePath = clipPath
             }
         }
         let peak = min(Float(0), max(currentDB, -160))
         let rumbleHz = AudioMath.brpmHarmonicHighlightHz(brpm: currentBRPM) ?? 0
         sessionStore?.endEvent(id: id, at: Date(), brpm: max(0, currentBRPM), peakDB: peak,
                                avgDB: peak, rumbleFrequencyHz: rumbleHz)
+        if let rel = clipRelativePath {
+            scheduleClipSpectralAnalysis(relativePath: rel, eventID: id)
+        }
         activeEventID = nil
+    }
+
+    /// FFT-based rumble peak from the saved clip (background); updates `spectralPeakHz`.
+    private func scheduleClipSpectralAnalysis(relativePath: String, eventID: UUID) {
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let url = support.appendingPathComponent(relativePath)
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+
+        let context = modelContext
+        let id = eventID
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(200))
+            let peakHz: Double? = await Task.detached(priority: .utility) {
+                try? SnoreClipSpectralAnalyzer.dominantPeakHz(fileURL: url)
+            }.value
+            guard let hz = peakHz else { return }
+            SessionStore(context: context).setSpectralPeakHz(hz, eventID: id)
+        }
     }
 }

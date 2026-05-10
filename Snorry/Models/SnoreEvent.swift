@@ -18,6 +18,9 @@ final class SnoreEvent {
     /// (same value shown as the red marker on the Live Power Spectrum during monitoring).
     /// 0 when not available.
     var rumbleFrequencyHz: Double
+    /// Strongest frequency in the snore rumble band (**measured** from the saved AAC clip via FFT).
+    /// Used for timbre / person comparison; 0 until background analysis finishes or if the clip is unusable.
+    var spectralPeakHz: Double
     /// Relative path to the AAC clip file under Application Support/SnoreClips/.
     var audioRelativePath: String?
 
@@ -31,6 +34,7 @@ final class SnoreEvent {
         self.peakDB = -160
         self.avgDB = -160
         self.rumbleFrequencyHz = 0
+        self.spectralPeakHz = 0
     }
 
     var duration: TimeInterval? {
