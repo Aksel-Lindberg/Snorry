@@ -3,15 +3,34 @@ import AVFoundation
 import SwiftData
 import os.log
 
+// MARK: - Chart-only timeline samples (downsampled for Swift Charts performance)
+
+/// Lightweight point for session replay chart — not a persisted `@Model`.
+struct TimelineChartPoint: Identifiable, Sendable {
+    let id: UUID
+    let timestamp: Date
+    let dBFS: Float
+    let brpm: Double
+    let isSnoringActive: Bool
+}
+
+private struct WaveformSnapshot: Sendable {
+    let id: UUID
+    let timestamp: Date
+    let dBFS: Float
+    let brpm: Double
+    let isSnoringActive: Bool
+}
+
 @Observable
 @MainActor
 final class SessionDetailViewModel {
 
     let session: SnoreSession
 
-    // Timeline data
-    var waveformSamples: [WaveformSample] = []
-    var snoreEvents: [SnoreEvent] = []
+    /// Downsampled waveform — avoids rendering tens of thousands of `AreaMark`s.
+    private(set) var chartTimelinePoints: [TimelineChartPoint] = []
+    private(set) var snoreEvents: [SnoreEvent] = []
 
     // Playback state
     var playingEventID: UUID?
@@ -22,13 +41,89 @@ final class SessionDetailViewModel {
     private let clipPlayer = NormalizingClipPlayer()
     private let logger     = Logger(subsystem: "app.Snorry", category: "SessionDetail")
 
-    init(session: SnoreSession) {
+    /// Loads relationships eagerly off the navigation transition so the History list stays responsive.
+    static func prepare(session: SnoreSession, modelContext: ModelContext) async -> SessionDetailViewModel {
+        await Task.yield()
+        let vm = SessionDetailViewModel(session: session)
+        await vm.buildTimeline(from: modelContext)
+        return vm
+    }
+
+    private init(session: SnoreSession) {
         self.session = session
-        waveformSamples = session.waveformSamples
-            .sorted { $0.timestamp < $1.timestamp }
         snoreEvents = session.events
             .filter { $0.endDate != nil }
             .sorted { $0.startDate < $1.startDate }
+    }
+
+    private func buildTimeline(from context: ModelContext) async {
+        let sortedSamples = Self.loadSortedWaveformSamples(for: session.id, context: context)
+        let snapshots: [WaveformSnapshot] = sortedSamples.map {
+            WaveformSnapshot(
+                id: $0.id,
+                timestamp: $0.timestamp,
+                dBFS: $0.dBFS,
+                brpm: $0.brpm,
+                isSnoringActive: $0.isSnoringActive
+            )
+        }
+        chartTimelinePoints = await Self.downsampleForChart(snapshots)
+    }
+
+    private static func loadSortedWaveformSamples(for sessionID: UUID, context: ModelContext) -> [WaveformSample] {
+        let byRelationship: () -> [WaveformSample] = {
+            var d = FetchDescriptor<SnoreSession>(predicate: #Predicate<SnoreSession> { $0.id == sessionID })
+            d.fetchLimit = 1
+            guard let s = try? context.fetch(d).first else { return [] }
+            return s.waveformSamples.sorted { $0.timestamp < $1.timestamp }
+        }
+
+        let descriptor = FetchDescriptor<WaveformSample>(
+            predicate: #Predicate<WaveformSample> { sample in
+                sample.session?.id == sessionID
+            },
+            sortBy: [SortDescriptor(\.timestamp, order: .forward)]
+        )
+        if let fetched = try? context.fetch(descriptor), !fetched.isEmpty {
+            return fetched
+        }
+        return byRelationship()
+    }
+
+    /// Caps chart complexity (~2k marks) while preserving coverage across long nights.
+    private static func downsampleForChart(_ snapshots: [WaveformSnapshot]) async -> [TimelineChartPoint] {
+        let maxPoints = 2000
+        guard snapshots.count > maxPoints else {
+            return snapshots.map {
+                TimelineChartPoint(
+                    id: $0.id,
+                    timestamp: $0.timestamp,
+                    dBFS: $0.dBFS,
+                    brpm: $0.brpm,
+                    isSnoringActive: $0.isSnoringActive
+                )
+            }
+        }
+        return await Task.detached {
+            let count = snapshots.count
+            var out: [TimelineChartPoint] = []
+            out.reserveCapacity(maxPoints)
+            let denom = Double(maxPoints - 1)
+            for i in 0..<maxPoints {
+                let idx = min(count - 1, Int((Double(i) / denom * Double(count - 1)).rounded()))
+                let t = snapshots[idx]
+                out.append(
+                    TimelineChartPoint(
+                        id: t.id,
+                        timestamp: t.timestamp,
+                        dBFS: t.dBFS,
+                        brpm: t.brpm,
+                        isSnoringActive: t.isSnoringActive
+                    )
+                )
+            }
+            return out
+        }.value
     }
 
     // MARK: Playback
@@ -89,14 +184,7 @@ final class SessionDetailViewModel {
 
     // MARK: Summary helpers
 
-    var durationString: String {
-        guard let dur = session.duration else { return "—" }
-        let hours   = Int(dur) / 3600
-        let minutes = Int(dur) % 3600 / 60
-        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
-    }
+    var durationString: String { session.displayDurationSummary }
 
-    var snorePercentString: String {
-        String(format: "%.0f%%", session.snoreFraction * 100)
-    }
+    var snorePercentString: String { session.displaySnoringPercent }
 }

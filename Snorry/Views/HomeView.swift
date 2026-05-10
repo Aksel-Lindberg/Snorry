@@ -8,6 +8,13 @@ struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Query private var alertSettingsRows: [AlertSettings]
+    /// Completed sessions only — stays valid when rows are deleted (avoids stale `SnoreSession` references).
+    @Query(
+        filter: #Predicate<SnoreSession> { $0.endDate != nil },
+        sort: \SnoreSession.startDate,
+        order: .reverse
+    )
+    private var completedSessions: [SnoreSession]
     @State private var vm: MonitorViewModel?
     @State private var showMonitor = false
     @State private var showPermissions = false
@@ -79,10 +86,10 @@ struct HomeView: View {
     private func compactMonitorLayout(vm: MonitorViewModel) -> some View {
         VStack(spacing: 0) {
             headerSection
-                .padding(.top, 36)
+                .padding(.top, 28)
 
             startButtonSection(vm: vm)
-                .padding(.top, 20)
+                .padding(.top, 12)
 
             if let settings = alertSettingsRows.first {
                 AlertSetupSummaryCard(
@@ -90,13 +97,13 @@ struct HomeView: View {
                     notificationsAuthorized: vm.notificationAuthorized,
                     caption: "Used for the next monitoring session"
                 )
-                .padding(.top, 20)
+                .padding(.top, 14)
             }
 
-            Spacer(minLength: 16)
+            Spacer(minLength: 8)
 
-            recentSessionCard(vm: vm)
-                .padding(.bottom, 32)
+            recentSessionCard()
+                .padding(.bottom, 16)
         }
         .padding(.horizontal, 24)
     }
@@ -122,7 +129,7 @@ struct HomeView: View {
                                 caption: "Used for the next monitoring session"
                             )
                         }
-                        recentSessionCard(vm: vm)
+                        recentSessionCard()
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -163,7 +170,7 @@ struct HomeView: View {
     }
 
     private func startButtonSection(vm: MonitorViewModel) -> some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 14) {
             Button {
                 handleStartTap(vm: vm)
             } label: {
@@ -203,23 +210,27 @@ struct HomeView: View {
     }
 
     @ViewBuilder
-    private func recentSessionCard(vm: MonitorViewModel) -> some View {
-        if let session = vm.recentSession {
+    private func recentSessionCard() -> some View {
+        if let session = completedSessions.first {
             VStack(alignment: .leading, spacing: 10) {
                 Label("Last Session", systemImage: "clock")
                     .font(.caption.bold())
                     .foregroundStyle(Theme.labelSecondary)
 
-                HStack(spacing: 0) {
-                    summaryItem(label: "Duration",
-                                value: SessionDetailViewModel(session: session).durationString)
-                    summaryItem(label: "Events",
-                                value: "\(session.eventCount)")
-                    summaryItem(label: "BRPM avg",
-                                value: session.avgBRPM > 0
-                                       ? String(format: "%.0f", session.avgBRPM) : "—")
-                    summaryItem(label: "Snoring",
-                                value: SessionDetailViewModel(session: session).snorePercentString)
+                if horizontalSizeClass == .regular {
+                    lastSessionMetrics(session: session)
+                } else {
+                    VStack(spacing: 10) {
+                        HStack(spacing: 0) {
+                            summaryItem(label: "Duration", value: session.displayDurationSummary)
+                            summaryItem(label: "Events", value: "\(session.eventCount)")
+                            summaryItem(label: "Snoring", value: session.displaySnoringPercent)
+                        }
+                        HStack(spacing: 0) {
+                            summaryItem(label: "Total snore", value: session.displayTotalSnoreTime)
+                            summaryItem(label: "Avg / event", value: session.displayAvgSnoreTimePerEvent)
+                        }
+                    }
                 }
             }
             .padding(16)
@@ -227,14 +238,31 @@ struct HomeView: View {
         }
     }
 
+    /// Single-row metric strip for iPad / wide Monitor layout.
+    private func lastSessionMetrics(session: SnoreSession) -> some View {
+        HStack(spacing: 0) {
+            summaryItem(label: "Duration", value: session.displayDurationSummary)
+            summaryItem(label: "Events", value: "\(session.eventCount)")
+            summaryItem(label: "Total snore", value: session.displayTotalSnoreTime)
+            summaryItem(label: "Avg / event", value: session.displayAvgSnoreTimePerEvent)
+            summaryItem(label: "Snoring", value: session.displaySnoringPercent)
+        }
+    }
+
     private func summaryItem(label: String, value: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(Theme.monoDigit(size: 18))
+                .font(Theme.monoDigit(size: horizontalSizeClass == .regular ? 18 : 17))
                 .foregroundStyle(Theme.labelPrimary)
+                .minimumScaleFactor(0.65)
+                .lineLimit(1)
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(Theme.labelTertiary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity)
     }

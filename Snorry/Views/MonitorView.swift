@@ -29,6 +29,11 @@ struct MonitorView: View {
                 .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
                 .frame(maxWidth: .infinity)
             }
+            .allowsHitTesting(!vm.isStoppingMonitoring)
+
+            if vm.isStoppingMonitoring {
+                stoppingOverlay
+            }
         }
         .navigationTitle("Monitoring")
         .navigationBarTitleDisplayMode(.inline)
@@ -209,13 +214,14 @@ struct MonitorView: View {
 
     private var stopButton: some View {
         Button {
-            vm.stopMonitoring()
-            dismiss()
+            Task {
+                await vm.stopMonitoringAsync()
+            }
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "stop.circle.fill")
                     .font(.title2)
-                Text("Stop Monitoring")
+                Text(vm.isStoppingMonitoring ? "Stopping…" : "Stop Monitoring")
                     .font(.headline)
             }
             .foregroundStyle(.white)
@@ -223,6 +229,36 @@ struct MonitorView: View {
             .padding(.vertical, 18)
             .background(Theme.stopGradient, in: RoundedRectangle(cornerRadius: Theme.radiusButton))
         }
+        .disabled(vm.isStoppingMonitoring)
+    }
+
+    private var stoppingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.42)
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+                ProgressView()
+                    .controlSize(.large)
+                    .tint(Theme.accent)
+                Text("Saving session…")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.labelPrimary)
+                Text("Finishing audio and storing events.")
+                    .font(.caption)
+                    .foregroundStyle(Theme.labelSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(26)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.radiusCard)
+                    .strokeBorder(Theme.surfaceSecondary.opacity(0.9), lineWidth: 1)
+            )
+            .padding(.horizontal, 36)
+        }
+        .transition(.opacity)
+        .animation(.easeOut(duration: 0.2), value: vm.isStoppingMonitoring)
     }
 
     // MARK: Helpers

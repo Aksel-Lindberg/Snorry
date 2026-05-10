@@ -37,7 +37,14 @@ struct SessionDetailView: View {
                     .padding(.bottom, 40)
                 }
             } else {
-                ProgressView().tint(Theme.accent)
+                VStack(spacing: 14) {
+                    ProgressView()
+                        .controlSize(.large)
+                        .tint(Theme.accent)
+                    Text("Loading session…")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Theme.labelSecondary)
+                }
             }
         }
         .navigationTitle(session.startDate.formatted(date: .abbreviated, time: .shortened))
@@ -45,8 +52,10 @@ struct SessionDetailView: View {
         .toolbarBackground(Theme.background, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
-            if vm == nil { vm = SessionDetailViewModel(session: session) }
             ensureAlertSettingsRowExists()
+        }
+        .task(id: session.id) {
+            vm = await SessionDetailViewModel.prepare(session: session, modelContext: modelContext)
         }
         .task {
             let status = await NotificationManager.shared.checkAuthorisationStatus()
@@ -114,13 +123,13 @@ struct SessionDetailView: View {
                 .foregroundStyle(Theme.labelSecondary)
                 .padding(.horizontal, 4)
 
-            if vm.waveformSamples.isEmpty {
+            if vm.chartTimelinePoints.isEmpty {
                 Text("No waveform data recorded.")
                     .font(.caption)
                     .foregroundStyle(Theme.labelTertiary)
                     .padding()
             } else {
-                SessionTimelineChart(samples: vm.waveformSamples, events: vm.snoreEvents)
+                SessionTimelineChart(samples: vm.chartTimelinePoints, events: vm.snoreEvents)
                     .frame(height: 160)
                     .padding(.horizontal, 4)
             }
@@ -309,7 +318,7 @@ private struct StatCard: View {
 // MARK: - Session timeline (Swift Charts)
 private struct SessionTimelineChart: View {
 
-    let samples: [WaveformSample]
+    let samples: [TimelineChartPoint]
     let events: [SnoreEvent]
 
     var body: some View {

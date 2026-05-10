@@ -13,12 +13,23 @@ final class SessionStore {
     private var activeSession: SnoreSession?
     private var openEvents: [UUID: SnoreEvent] = [:]
 
+    /// Debounced saves keyed by context so **any** `SessionStore` instance (or Settings bulk-delete)
+    /// can cancel pending writes for the shared main `ModelContext`.
+    private static var pendingDebouncedSaveTasks: [ObjectIdentifier: Task<Void, Never>] = [:]
+
     // Accumulate stats in memory to avoid frequent SwiftData flushes
     private var waveformAccumulator: [WaveformSample] = []
     private var lastWaveformFlush = Date()
 
     init(context: ModelContext) {
         self.context = context
+    }
+
+    /// Cancels a delayed `save()` scheduled after clip path updates — call before bulk-delete or teardown.
+    static func cancelPendingDebouncedSave(for context: ModelContext) {
+        let key = ObjectIdentifier(context)
+        pendingDebouncedSaveTasks[key]?.cancel()
+        pendingDebouncedSaveTasks[key] = nil
     }
 
     // MARK: Session lifecycle
@@ -33,6 +44,7 @@ final class SessionStore {
     }
 
     func finalizeSession() {
+        cancelPendingSave()
         guard let session = activeSession else { return }
         session.endDate = Date()
 
@@ -86,7 +98,7 @@ final class SessionStore {
             return
         }
         event.audioRelativePath = path
-        saveContext()
+        scheduleDebouncedSave()
         logger.debug("Audio path set for event \(eventID.uuidString): \(path)")
     }
 
@@ -106,6 +118,7 @@ final class SessionStore {
 
     private func flushWaveformBuffer(to session: SnoreSession?) {
         guard let session, !waveformAccumulator.isEmpty else { return }
+        cancelPendingSave()
         for sample in waveformAccumulator {
             sample.session = session
             session.waveformSamples.append(sample)
@@ -126,6 +139,7 @@ final class SessionStore {
     }
 
     func deleteSession(_ session: SnoreSession) {
+        cancelPendingSave()
         // Remove audio clips
         for event in session.events {
             if let url = event.audioURL {
@@ -138,7 +152,7 @@ final class SessionStore {
 
     // MARK: Orphan recovery
 
-    /// Call on launch to close any session that was interrupted by a process kill.
+    /// Call on launch to close any session that was interrupted by a prior process kill.
     func recoverOrphanedSession() {
         guard let idString = UserDefaults.standard.string(forKey: "currentSessionID"),
               let id = UUID(uuidString: idString) else { return }
@@ -155,6 +169,22 @@ final class SessionStore {
     }
 
     // MARK: Private
+
+    private func cancelPendingSave() {
+        Self.cancelPendingDebouncedSave(for: context)
+    }
+
+    /// Batches rapid `audioRelativePath` writes from clip lifecycle into one flush to disk.
+    private func scheduleDebouncedSave() {
+        let key = ObjectIdentifier(context)
+        Self.pendingDebouncedSaveTasks[key]?.cancel()
+        Self.pendingDebouncedSaveTasks[key] = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(500))
+            guard let self, !Task.isCancelled else { return }
+            Self.pendingDebouncedSaveTasks[key] = nil
+            self.saveContext()
+        }
+    }
 
     private func saveContext() {
         do {

@@ -16,7 +16,8 @@ struct SleepAnimationView: View {
     @State private var moonFloat  = false
     @State private var barPhase   = false
 
-    private let diameter: CGFloat = 200
+    /// Home START control — slightly smaller than standalone hero so Monitor fits above the tab bar.
+    private let diameter: CGFloat = 172
 
     var body: some View {
         Group {

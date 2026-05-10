@@ -6,47 +6,40 @@ struct SessionsListView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @State private var vm: SessionsListViewModel?
+
+    /// Live-updates when logs are bulk-deleted from Settings (no stale `SnoreSession` references).
+    @Query(sort: \SnoreSession.startDate, order: .reverse)
+    private var sessions: [SnoreSession]
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Theme.nightGradient.ignoresSafeArea()
 
-                if let vm {
-                    content(vm: vm)
-                } else {
-                    ProgressView().tint(Theme.accent)
-                }
+                content
             }
             .navigationTitle("Sleep History")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .onAppear {
-                if vm == nil { vm = SessionsListViewModel(context: context) }
-                vm?.loadSessions()
-            }
         }
     }
 
     @ViewBuilder
-    private func content(vm: SessionsListViewModel) -> some View {
+    private var content: some View {
         Group {
-            if vm.sessions.isEmpty {
+            if sessions.isEmpty {
                 emptyState
             } else {
                 List {
-                    ForEach(vm.sessions) { session in
+                    ForEach(sessions) { session in
                         NavigationLink(destination: SessionDetailView(session: session)) {
                             SessionRowView(session: session)
                         }
                         .listRowBackground(Theme.surface)
                         .listRowSeparatorTint(Theme.surfaceSecondary)
                     }
-                    .onDelete { offsets in
-                        for i in offsets { vm.deleteSession(vm.sessions[i]) }
-                    }
+                    .onDelete(perform: deleteSessions)
                 }
                 .scrollContentBackground(.hidden)
                 .listStyle(.insetGrouped)
@@ -54,6 +47,13 @@ struct SessionsListView: View {
         }
         .frame(maxWidth: horizontalSizeClass == .regular ? 840 : .infinity)
         .frame(maxWidth: .infinity)
+    }
+
+    private func deleteSessions(at offsets: IndexSet) {
+        let store = SessionStore(context: context)
+        for index in offsets {
+            store.deleteSession(sessions[index])
+        }
     }
 
     private var emptyState: some View {

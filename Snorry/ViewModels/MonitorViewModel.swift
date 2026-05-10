@@ -21,7 +21,8 @@ final class MonitorViewModel {
     var alertPhase: AlertPhase = .idle
     var elapsedSeconds: Int = 0
     var snoreEventCount = 0
-    var recentSession: SnoreSession?
+    /// True while tearing down audio pipelines and finalizing SwiftData — UI shows a blocking overlay.
+    var isStoppingMonitoring = false
 
     /// Three-state detection status for the UI status badge.
     enum DetectionPhase { case quiet, detecting, confirmed }
@@ -217,7 +218,6 @@ final class MonitorViewModel {
         notifications.cancelSnoringAlert()
 
         sessionStore?.finalizeSession()
-        recentSession = activeSession
         activeSession = nil
         activeEventID = nil
 
@@ -229,6 +229,15 @@ final class MonitorViewModel {
         brpmAvailable      = false
 
         UIApplication.shared.isIdleTimerDisabled = false
+    }
+
+    /// Lets SwiftUI paint a “Saving session…” overlay before heavy teardown + SwiftData finalize.
+    func stopMonitoringAsync() async {
+        guard isMonitoring, !isStoppingMonitoring else { return }
+        isStoppingMonitoring = true
+        await Task.yield()
+        defer { isStoppingMonitoring = false }
+        stopMonitoring()
     }
 
     // MARK: Async pipelines

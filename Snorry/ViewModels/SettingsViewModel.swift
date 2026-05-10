@@ -118,6 +118,8 @@ final class SettingsViewModel {
     func deleteAllSleepAndSettingsLogs() {
         stopAlarmStylePreview()
         deleteLogsFailedMessage = nil
+        // Prevent a debounced clip-path save (from monitoring) from firing after rows are deleted.
+        SessionStore.cancelPendingDebouncedSave(for: context)
         do {
             let sessions = try context.fetch(FetchDescriptor<SnoreSession>())
             for session in sessions {
