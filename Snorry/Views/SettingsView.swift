@@ -65,6 +65,7 @@ struct SettingsView: View {
             volumeSection(vm: vm)
             alarmStyleSection(vm: vm)
             actionsSection(vm: vm)
+            supportSection()
             legalSection()
         }
         .scrollContentBackground(.hidden)
@@ -298,6 +299,38 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.accent)
         } header: {
             Text("Legal")
+                .foregroundStyle(Theme.labelSecondary)
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    private func supportSection() -> some View {
+        Section {
+            NavigationLink {
+                SupportView()
+            } label: {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "lifepreserver.fill")
+                        .font(.body)
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 24)
+                        .padding(.top, 2)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Support")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.labelPrimary)
+                        Text("Contact support and get help with setup, permissions, alerts, logs, and troubleshooting.")
+                            .font(.caption)
+                            .foregroundStyle(Theme.labelSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .tint(Theme.labelPrimary)
+        } header: {
+            Text("Support")
                 .foregroundStyle(Theme.labelSecondary)
         }
         .listRowBackground(Theme.surface)
