@@ -25,14 +25,17 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     // Majority-vote window: last 5 classification results
     private var voteWindow: [Bool] = []
     private let voteWindowSize = 5
-    private let voteThreshold = 3   // at least 3 "snoring" votes to emit true
+    /// Foreground SoundAnalysis path — 3-of-5 votes.
+    private let foregroundVoteThreshold = 3
+    /// Background RMS path — stricter (less sensitive): need 4-of-5 loud frames.
+    private let energyFallbackVoteThreshold = 4
 
     /// Minimum classifier confidence to count a frame as snoring.
     /// Derived from the user-facing sensitivity setting (lower → more sensitive).
     var confidenceThreshold: Float = 0.60
 
-    /// While locked / background: loudness gate (~16 kHz mono dBFS). Coarser than SoundAnalysis but GPU-free.
-    private let energyFallbackThresholdDB: Float = -38
+    /// Background RMS gate: higher dBFS = louder required → **less** sensitive than foreground ML.
+    private let energyFallbackThresholdDB: Float = -34
 
     /// Only read/written on `analysisQueue` — true after `didEnterBackground`, false after `willEnterForeground`.
     private var useEnergyFallbackWhileBackground = false
@@ -160,7 +163,8 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
             voteWindow.removeFirst()
         }
         let votes = voteWindow.filter { $0 }.count
-        let smoothed = votes >= voteThreshold
+        let need = useEnergyFallbackWhileBackground ? energyFallbackVoteThreshold : foregroundVoteThreshold
+        let smoothed = votes >= need
         continuation?.yield(smoothed)
     }
 }

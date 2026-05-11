@@ -95,12 +95,22 @@ final class MonitorViewModel {
     private var timelineTimer: Task<Void, Never>?
     /// Fires repeated push notifications while in `.notified`.
     private var pushRepeatTask: Task<Void, Never>?
+    /// Hard-stops the sound alarm after 5 s while the phone is locked (`applicationState` ≠ active).
+    private var lockScreenAlarmCapTask: Task<Void, Never>?
 
     /// Copied from settings at session start (alert UI / playback).
     private var sessionPushEnabled = true
     private var sessionSoundEnabled = true
     private var sessionPushRepeatEnabled = false
     private var sessionPushRepeatInterval: TimeInterval = 60
+
+    /// Restored when unlocking — snapshot from `startMonitoring()`.
+    private var savedDetectorConfirmedGap: TimeInterval = 5
+    private var savedAlertClearDelay: TimeInterval = 3
+
+    /// Held only for removal in `deinit` (nonisolated) — tokens are thread-safe opaque handles.
+    nonisolated(unsafe) private var lockScreenBGObserver: NSObjectProtocol?
+    nonisolated(unsafe) private var lockScreenFGObserver: NSObjectProtocol?
 
     private let modelContext: ModelContext
 
@@ -109,6 +119,35 @@ final class MonitorViewModel {
         self.spectrumAnalyzer = LiveSpectrumAnalyzer(bandCount: spectrumBandCount)
         sessionStore = SessionStore(context: modelContext)
         checkPermissions()
+
+        let nc = NotificationCenter.default
+        lockScreenBGObserver = nc.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.applyLockScreenDetectorTuning()
+            }
+        }
+        lockScreenFGObserver = nc.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.restoreLockScreenDetectorTuning()
+            }
+        }
+    }
+
+    deinit {
+        if let lockScreenBGObserver {
+            NotificationCenter.default.removeObserver(lockScreenBGObserver)
+        }
+        if let lockScreenFGObserver {
+            NotificationCenter.default.removeObserver(lockScreenFGObserver)
+        }
     }
 
     // MARK: Permission checks
@@ -190,6 +229,8 @@ final class MonitorViewModel {
         // snores and avoid premature fragmentation of a single bout.
         detector.gapTolerance          = 3
         detector.confirmedGapTolerance = 5
+        savedDetectorConfirmedGap      = detector.confirmedGapTolerance
+        savedAlertClearDelay           = alertManager.config.clearDelay
 
         // Alarm tone style for this session.
         alarmPlayer.setStyle(AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic)
@@ -210,6 +251,7 @@ final class MonitorViewModel {
         finalizeOpenClipAndEventIfInterrupted()
 
         cancelTasks()
+        cancelLockScreenAlarmCapTask()
         audioService.stop()
         classifier.stop()
         detector.stop()
@@ -430,10 +472,52 @@ final class MonitorViewModel {
     }
 
     /// Runs the alert state machine from confirmed episode state.
-    /// While an episode is confirmed, treat it as sustained snoring until `.snoreEnded`.
+    ///
+    /// Uses live `isSnoring` after confirmation so **silence** reaches `AlertManager` while locked.
+    /// Feeding only `isEpisodeConfirmed` keeps `update(isSnoring: true)` for the whole bout, so the
+    /// alarm never sees quiet time and won't clear until `clearDelay` — which never ran — causing
+    /// the tone to loop after snoring stops on the lock screen.
     private func updateAlertSnoringState() {
-        let sustainedSnoring = isEpisodeConfirmed
-        alertManager.update(isSnoring: sustainedSnoring, at: Date())
+        let sustainedForAlerts = isEpisodeConfirmed && isSnoring
+        alertManager.update(isSnoring: sustainedForAlerts, at: Date())
+    }
+
+    /// Bout-end tuning while locked; also uses a **5 s** silence window before alerts clear (matches lock-screen alarm cap default).
+    private func applyLockScreenDetectorTuning() {
+        guard isMonitoring else { return }
+        detector.confirmedGapTolerance = 2.5
+        alertManager.config.clearDelay = 5
+        // If the sound alarm was already playing before the phone locked, start the 5 s cap from now.
+        if alertPhase == .alarming, sessionSoundEnabled {
+            scheduleLockScreenAlarmAutoStopIfNeeded()
+        }
+    }
+
+    private func restoreLockScreenDetectorTuning() {
+        guard isMonitoring else { return }
+        cancelLockScreenAlarmCapTask()
+        detector.confirmedGapTolerance = savedDetectorConfirmedGap
+        alertManager.config.clearDelay = savedAlertClearDelay
+    }
+
+    private func cancelLockScreenAlarmCapTask() {
+        lockScreenAlarmCapTask?.cancel()
+        lockScreenAlarmCapTask = nil
+    }
+
+    /// When locked, the alarm tone stops automatically after **5 seconds** (then alerts reset like a bout end).
+    private func scheduleLockScreenAlarmAutoStopIfNeeded() {
+        cancelLockScreenAlarmCapTask()
+        guard UIApplication.shared.applicationState != .active else { return }
+
+        lockScreenAlarmCapTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled, isMonitoring else { return }
+            guard alertPhase == .alarming else { return }
+
+            alarmPlayer.stop()
+            alertManager.clearAfterSnoreBoutEnded()
+        }
     }
 
     private func handleAlertPhase(_ phase: AlertPhase) {
@@ -453,8 +537,10 @@ final class MonitorViewModel {
             let selectedVolume = max(0.10, min(1.0, alertManager.config.alarmVolume))
             // Jump straight to the configured volume — no fade-in for a real alarm.
             alarmPlayer.playImmediate(volume: selectedVolume)
+            scheduleLockScreenAlarmAutoStopIfNeeded()
 
         case .idle, .cleared:
+            cancelLockScreenAlarmCapTask()
             pushRepeatTask?.cancel()
             pushRepeatTask = nil
             alarmPlayer.stop()
