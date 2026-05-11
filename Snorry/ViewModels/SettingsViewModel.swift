@@ -26,6 +26,8 @@ final class SettingsViewModel {
 
     /// Set when bulk log deletion fails so the UI can show an alert.
     private(set) var deleteLogsFailedMessage: String?
+    /// True while the bulk-delete operation is running.
+    private(set) var isDeletingLogs = false
 
     private let context: ModelContext
     private var settings: AlertSettings?
@@ -116,29 +118,63 @@ final class SettingsViewModel {
     /// Removes all sleep sessions (events, waveforms, snore clips on disk) and `AlertSettingsChange` analytics markers.
     /// Does not alter current `AlertSettings` preferences.
     func deleteAllSleepAndSettingsLogs() {
+        guard !isDeletingLogs else { return }
         stopAlarmStylePreview()
         deleteLogsFailedMessage = nil
-        // Prevent a debounced clip-path save (from monitoring) from firing after rows are deleted.
-        SessionStore.cancelPendingDebouncedSave(for: context)
-        do {
-            let sessions = try context.fetch(FetchDescriptor<SnoreSession>())
-            for session in sessions {
-                for event in session.events {
-                    if let url = event.audioURL {
-                        try? FileManager.default.removeItem(at: url)
+
+        Task { @MainActor in
+            isDeletingLogs = true
+            defer { isDeletingLogs = false }
+
+            // Prevent a debounced clip-path save (from monitoring) from firing after rows are deleted.
+            SessionStore.cancelPendingDebouncedSave(for: context)
+
+            do {
+                // Do not wipe rows while monitoring is active; that can leave live pipelines pointing
+                // at deleted models and make the app appear frozen until restart.
+                let activeDescriptor = FetchDescriptor<SnoreSession>(
+                    predicate: #Predicate<SnoreSession> { $0.endDate == nil }
+                )
+                let hasActiveSession = try !context.fetch(activeDescriptor).isEmpty
+                if hasActiveSession {
+                    deleteLogsFailedMessage = "Stop monitoring before deleting logs."
+                    return
+                }
+
+                let sessions = try context.fetch(FetchDescriptor<SnoreSession>())
+                var clipURLs: [URL] = []
+                clipURLs.reserveCapacity(sessions.count * 2)
+
+                for (index, session) in sessions.enumerated() {
+                    clipURLs.append(contentsOf: session.events.compactMap(\.audioURL))
+                    context.delete(session)
+
+                    // Batch flushes keep large deletions responsive.
+                    if index.isMultiple(of: 40) {
+                        try context.save()
+                        await Task.yield()
                     }
                 }
-                context.delete(session)
+
+                let changes = try context.fetch(FetchDescriptor<AlertSettingsChange>())
+                for (index, change) in changes.enumerated() {
+                    context.delete(change)
+                    if index.isMultiple(of: 120) {
+                        try context.save()
+                        await Task.yield()
+                    }
+                }
+
+                // Avoid pointing at a deleted session if monitoring state was left in UserDefaults.
+                UserDefaults.standard.removeObject(forKey: "currentSessionID")
+                try context.save()
+
+                Task.detached(priority: .utility) {
+                    Self.deleteClipFiles(urls: clipURLs)
+                }
+            } catch {
+                deleteLogsFailedMessage = error.localizedDescription
             }
-            let changes = try context.fetch(FetchDescriptor<AlertSettingsChange>())
-            for change in changes {
-                context.delete(change)
-            }
-            // Avoid pointing at a deleted session if monitoring state was left in UserDefaults.
-            UserDefaults.standard.removeObject(forKey: "currentSessionID")
-            try context.save()
-        } catch {
-            deleteLogsFailedMessage = error.localizedDescription
         }
     }
 
@@ -184,5 +220,28 @@ final class SettingsViewModel {
 
     private static func clampAlarmVolume(_ value: Float) -> Float {
         min(max(value, 0.10), 1.0)
+    }
+
+    /// Best-effort background cleanup for persisted clip files after DB rows are removed.
+    nonisolated private static func deleteClipFiles(urls: [URL]) {
+        let fileManager = FileManager.default
+        var parentDirectories = Set<URL>()
+
+        for url in urls {
+            parentDirectories.insert(url.deletingLastPathComponent())
+            try? fileManager.removeItem(at: url)
+        }
+
+        // Remove any now-empty per-session clip folders.
+        for directory in parentDirectories {
+            let remaining = (try? fileManager.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            )) ?? []
+            if remaining.isEmpty {
+                try? fileManager.removeItem(at: directory)
+            }
+        }
     }
 }

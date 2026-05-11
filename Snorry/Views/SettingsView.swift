@@ -79,6 +79,7 @@ struct SettingsView: View {
             Button("Delete All", role: .destructive) {
                 vm.deleteAllSleepAndSettingsLogs()
             }
+            .disabled(vm.isDeletingLogs)
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(
@@ -263,9 +264,21 @@ struct SettingsView: View {
                 vm.reset()
             }
             .foregroundStyle(Theme.snoring)
+            .disabled(vm.isDeletingLogs)
 
             Button("Delete All Sleep & Settings Logs", role: .destructive) {
                 confirmDeleteAllLogs = true
+            }
+            .disabled(vm.isDeletingLogs)
+
+            if vm.isDeletingLogs {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .tint(Theme.accent)
+                    Text("Deleting logs…")
+                        .foregroundStyle(Theme.labelSecondary)
+                        .font(.footnote)
+                }
             }
         } footer: {
             Text(
