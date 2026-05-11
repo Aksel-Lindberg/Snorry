@@ -2,11 +2,17 @@ import SoundAnalysis
 import AVFoundation
 import CoreMedia
 import CoreML
+import UIKit
 import os.log
 
 // MARK: - SoundAnalysis wrapper with 3-of-5 majority-vote smoothing
 /// Accepts 16 kHz mono Float32 PCM buffers from `AudioMonitorService`
 /// and emits `Bool` frames (true = snoring detected) via an AsyncStream.
+///
+/// **Background / lock screen:** iOS forbids GPU (Metal) work while the app is backgrounded, even with
+/// background audio. SoundAnalysis’s bundled pipeline still touches Espresso/Metal internally, so when
+/// the device locks we **stop calling** `SNAudioStreamAnalyzer` and use a coarse RMS-level gate instead.
+/// That avoids `kIOGPUCommandBufferCallbackErrorBackgroundExecutionNotPermitted` entirely.
 final class SnoreClassifier: NSObject, @unchecked Sendable {
 
     private let analyzer: SNAudioStreamAnalyzer
@@ -25,7 +31,16 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     /// Derived from the user-facing sensitivity setting (lower → more sensitive).
     var confidenceThreshold: Float = 0.60
 
+    /// While locked / background: loudness gate (~16 kHz mono dBFS). Coarser than SoundAnalysis but GPU-free.
+    private let energyFallbackThresholdDB: Float = -38
+
+    /// Only read/written on `analysisQueue` — true after `didEnterBackground`, false after `willEnterForeground`.
+    private var useEnergyFallbackWhileBackground = false
+
     private let logger = Logger(subsystem: "app.Snorry", category: "Classifier")
+
+    private var backgroundObserver: NSObjectProtocol?
+    private var foregroundObserver: NSObjectProtocol?
 
     // MARK: Init
 
@@ -38,36 +53,67 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         )!
         analyzer = SNAudioStreamAnalyzer(format: format)
 
-        // Built-in classifier — label set includes "snoring".
-        // Load the bundled mlmodelc manually with cpuAndGPU compute units to avoid
-        // the ANE "InnerProduct kernel has no weights" error on some devices / OS versions.
+        // CPU-only Core ML load — used while foreground; still avoids the identifier fallback that may pick GPU.
         request = Self.makeRequest()
 
         super.init()
+
+        let queue = analysisQueue
+        let nc = NotificationCenter.default
+        backgroundObserver = nc.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            guard let self else { return }
+            queue.async { [weak self] in
+                guard let self else { return }
+                self.useEnergyFallbackWhileBackground = true
+                self.voteWindow.removeAll()
+                self.logger.info("Classifier: lock/background — RMS energy gate (SoundAnalysis paused, no GPU)")
+            }
+        }
+        foregroundObserver = nc.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            guard let self else { return }
+            queue.async { [weak self] in
+                guard let self else { return }
+                self.useEnergyFallbackWhileBackground = false
+                self.voteWindow.removeAll()
+                self.logger.info("Classifier: foreground — SoundAnalysis active again")
+            }
+        }
+    }
+
+    deinit {
+        if let backgroundObserver {
+            NotificationCenter.default.removeObserver(backgroundObserver)
+        }
+        if let foregroundObserver {
+            NotificationCenter.default.removeObserver(foregroundObserver)
+        }
     }
 
     private static func makeRequest() -> SNClassifySoundRequest {
         let mlConfig = MLModelConfiguration()
-        mlConfig.computeUnits = .cpuAndGPU
+        mlConfig.computeUnits = .cpuOnly
 
         let modelURL = URL(fileURLWithPath:
             "/System/Library/Frameworks/SoundAnalysis.framework/SNSoundClassifierVersion1Model.mlmodelc")
 
-        if let mlModel = try? MLModel(contentsOf: modelURL, configuration: mlConfig),
-           let req = try? SNClassifySoundRequest(mlModel: mlModel) {
+        do {
+            let mlModel = try MLModel(contentsOf: modelURL, configuration: mlConfig)
+            let req = try SNClassifySoundRequest(mlModel: mlModel)
             req.windowDuration = CMTime(seconds: 1.0,
                                         preferredTimescale: CMTimeScale(AudioMonitorService.targetSampleRate))
             req.overlapFactor = 0.5
             return req
+        } catch {
+            fatalError("SnoreClassifier: could not load bundled SoundAnalysis model (CPU): \(error)")
         }
-
-        // Fallback: let the system choose compute units (may still log an ANE warning,
-        // but the classifier will fall back to CPU automatically and continue working).
-        let fallback = try! SNClassifySoundRequest(classifierIdentifier: .version1)
-        fallback.windowDuration = CMTime(seconds: 1.0,
-                                         preferredTimescale: CMTimeScale(AudioMonitorService.targetSampleRate))
-        fallback.overlapFactor = 0.5
-        return fallback
     }
 
     // MARK: Lifecycle
@@ -94,8 +140,28 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
 
     func analyze(buffer: AVAudioPCMBuffer, at time: AVAudioTime) {
         analysisQueue.async { [weak self] in
-            self?.analyzer.analyze(buffer, atAudioFramePosition: time.sampleTime)
+            guard let self else { return }
+
+            if self.useEnergyFallbackWhileBackground {
+                let db = AudioMath.rmsDBFS(buffer: buffer)
+                let loud = db >= self.energyFallbackThresholdDB
+                self.pushVoteFrame(loud)
+                return
+            }
+
+            self.analyzer.analyze(buffer, atAudioFramePosition: time.sampleTime)
         }
+    }
+
+    /// Single exit point for smoothed bool stream (SoundAnalysis + energy paths).
+    private func pushVoteFrame(_ rawSnoringFrame: Bool) {
+        voteWindow.append(rawSnoringFrame)
+        if voteWindow.count > voteWindowSize {
+            voteWindow.removeFirst()
+        }
+        let votes = voteWindow.filter { $0 }.count
+        let smoothed = votes >= voteThreshold
+        continuation?.yield(smoothed)
     }
 }
 
@@ -107,23 +173,19 @@ extension SnoreClassifier: SNResultsObserving {
                  didProduce result: SNResult) {
         guard let classResult = result as? SNClassificationResult else { return }
 
-        // Look for the "snoring" label from the built-in classifier
-        let snoringLabel = "snoring"
-        let confidence = classResult.classifications
-            .first(where: { $0.identifier.lowercased() == snoringLabel })
-            .map { $0.confidence } ?? 0
+        analysisQueue.async { [weak self] in
+            guard let self else { return }
+            // Ignore late SoundAnalysis callbacks while we are in energy-only mode (no GPU submitted).
+            guard !self.useEnergyFallbackWhileBackground else { return }
 
-        let isSnoring = Float(confidence) >= confidenceThreshold
+            let snoringLabel = "snoring"
+            let confidence = classResult.classifications
+                .first(where: { $0.identifier.lowercased() == snoringLabel })
+                .map { $0.confidence } ?? 0
 
-        // Majority vote smoothing
-        voteWindow.append(isSnoring)
-        if voteWindow.count > voteWindowSize {
-            voteWindow.removeFirst()
+            let isSnoring = Float(confidence) >= self.confidenceThreshold
+            self.pushVoteFrame(isSnoring)
         }
-        let votes = voteWindow.filter { $0 }.count
-        let smoothed = votes >= voteThreshold
-
-        continuation?.yield(smoothed)
     }
 
     func request(_ request: SNRequest, didFailWithError error: Error) {

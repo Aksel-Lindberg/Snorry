@@ -1,4 +1,5 @@
 import AVFoundation
+import Foundation
 import os.log
 
 // MARK: - Central AVAudioSession configuration
@@ -8,7 +9,114 @@ final class AudioSessionManager: @unchecked Sendable {
     static let shared = AudioSessionManager()
     private let logger = Logger(subsystem: "app.Snorry", category: "AudioSession")
 
-    private init() {}
+    /// True while `AudioMonitorService` has an active monitoring session (mic tap + engine).
+    private let monitoringStateLock = NSLock()
+    private var isMonitoringAudioActive = false
+
+    private nonisolated(unsafe) var interruptionObserver: NSObjectProtocol?
+    private nonisolated(unsafe) var routeChangeObserver: NSObjectProtocol?
+    private nonisolated(unsafe) var mediaResetObserver: NSObjectProtocol?
+
+    private init() {
+        installSessionNotifications()
+    }
+
+    deinit {
+        if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
+        if let routeChangeObserver { NotificationCenter.default.removeObserver(routeChangeObserver) }
+        if let mediaResetObserver { NotificationCenter.default.removeObserver(mediaResetObserver) }
+    }
+
+    /// Called by `AudioMonitorService` when monitoring starts / stops so route and interruption
+    /// handlers only reconfigure while the user expects capture to be running.
+    func setMonitoringAudioActive(_ active: Bool) {
+        monitoringStateLock.lock()
+        isMonitoringAudioActive = active
+        monitoringStateLock.unlock()
+    }
+
+    private func monitoringAudioActive() -> Bool {
+        monitoringStateLock.lock()
+        defer { monitoringStateLock.unlock() }
+        return isMonitoringAudioActive
+    }
+
+    private func installSessionNotifications() {
+        let center = NotificationCenter.default
+        let main = OperationQueue.main
+
+        interruptionObserver = center.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: main
+        ) { [weak self] notification in
+            self?.handleInterruption(notification)
+        }
+
+        routeChangeObserver = center.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: main
+        ) { [weak self] notification in
+            self?.handleRouteChange(notification)
+        }
+
+        mediaResetObserver = center.addObserver(
+            forName: AVAudioSession.mediaServicesWereResetNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: main
+        ) { [weak self] _ in
+            self?.handleMediaServicesReset()
+        }
+    }
+
+    private func handleInterruption(_ notification: Notification) {
+        guard let info = notification.userInfo,
+              let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
+
+        switch type {
+        case .began:
+            logger.info("Audio session interruption began")
+        case .ended:
+            guard let optionsValue = info[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            guard options.contains(.shouldResume) else {
+                logger.info("Interruption ended without shouldResume — leaving engine state unchanged")
+                return
+            }
+            guard monitoringAudioActive() else { return }
+            logger.info("Interruption ended with shouldResume — attempting engine resume")
+            AudioMonitorService.shared.resumeAfterInterruptionIfNeeded()
+        @unknown default:
+            break
+        }
+    }
+
+    private func handleRouteChange(_ notification: Notification) {
+        guard monitoringAudioActive() else { return }
+        guard let info = notification.userInfo,
+              let reasonValue = info[AVAudioSessionRouteChangeReasonKey] as? UInt,
+              let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else { return }
+
+        switch reason {
+        case .oldDeviceUnavailable, .newDeviceAvailable, .categoryChange, .override, .routeConfigurationChange:
+            do {
+                try AVAudioSession.sharedInstance().overrideOutputAudioPort(.speaker)
+                logger.info("Re-applied speaker output after route change (reason \(reason.rawValue))")
+            } catch {
+                logger.error("Route change speaker override failed: \(error)")
+            }
+        default:
+            break
+        }
+    }
+
+    private func handleMediaServicesReset() {
+        guard monitoringAudioActive() else { return }
+        logger.warning("Media services were reset — attempting full session + engine resume")
+        AudioMonitorService.shared.resumeAfterInterruptionIfNeeded()
+    }
 
     /// Configure the session for simultaneous recording + playback so the alarm
     /// tone can play while the mic tap remains active.

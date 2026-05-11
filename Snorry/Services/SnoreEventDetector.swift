@@ -81,6 +81,10 @@ final class SnoreEventDetector: @unchecked Sendable {
 
     private let logger = Logger(subsystem: "app.Snorry", category: "Detector")
 
+    /// Audio ticks (`feed(tick:)`) and classifier frames (`feed(classifierResult:)`) run on different
+    /// concurrent tasks — serialize mutations so detector state stays coherent when the phone locks.
+    private let feedLock = NSLock()
+
     // MARK: Lifecycle
 
     func start() {
@@ -92,7 +96,10 @@ final class SnoreEventDetector: @unchecked Sendable {
     }
 
     func stop() {
+        feedLock.lock()
         if isConfirmed { finishCurrentEvent(at: Date()) }
+        feedLock.unlock()
+
         continuation?.finish()
         continuation = nil
         stream = nil
@@ -102,6 +109,8 @@ final class SnoreEventDetector: @unchecked Sendable {
     /// Ends the current episode (if any) and resets per-episode state so
     /// the next snore bout is detected as a fresh event.
     func resetForNewEpisode() {
+        feedLock.lock()
+        defer { feedLock.unlock() }
         if isConfirmed { finishCurrentEvent(at: Date()) }
         resetEpisodeState()
         // sessionHasConfirmedEpisode intentionally NOT reset here —
@@ -128,6 +137,9 @@ final class SnoreEventDetector: @unchecked Sendable {
     // MARK: Classifier feed
 
     func feed(classifierResult: Bool) {
+        feedLock.lock()
+        defer { feedLock.unlock() }
+
         classifierActive = classifierResult
         continuation?.yield(.snoringActive(classifierResult))
 
@@ -141,6 +153,9 @@ final class SnoreEventDetector: @unchecked Sendable {
     // MARK: Audio tick feed
 
     func feed(tick: MonitorTick) {
+        feedLock.lock()
+        defer { feedLock.unlock() }
+
         let db  = tick.dBFS
         let now = tick.timestamp
 

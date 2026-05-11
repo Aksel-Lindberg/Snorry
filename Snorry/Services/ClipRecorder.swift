@@ -5,6 +5,8 @@ import os.log
 // MARK: - Records per-event AAC clips (pre-roll + live audio)
 final class ClipRecorder: @unchecked Sendable {
 
+    /// Serializes access — clip begin/end runs on MainActor while PCM writes run on the monitoring pipeline queue.
+    private let ioLock = NSLock()
     private var audioFile: AVAudioFile?
     private var currentRelativePath: String?
     private let logger = Logger(subsystem: "app.Snorry", category: "ClipRecorder")
@@ -40,7 +42,10 @@ final class ClipRecorder: @unchecked Sendable {
                    nativePreRoll: PreRollRingBuffer,
                    inputFormat: AVAudioFormat,
                    captureFrom: Date) -> String? {
-        endClip()   // safety: close any open file
+        ioLock.lock()
+        defer { ioLock.unlock() }
+
+        endClipUnderLock()   // safety: close any open file
 
         let relativePath = "SnoreClips/\(sessionID.uuidString)/\(eventID.uuidString).m4a"
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
@@ -78,6 +83,8 @@ final class ClipRecorder: @unchecked Sendable {
 
     /// Write a live native-format buffer to the current clip (same levels as input).
     func write(buffer: AVAudioPCMBuffer) {
+        ioLock.lock()
+        defer { ioLock.unlock() }
         guard let file = audioFile else { return }
         do {
             try file.write(from: buffer)
@@ -89,6 +96,12 @@ final class ClipRecorder: @unchecked Sendable {
     /// Close the current clip.
     @discardableResult
     func endClip() -> String? {
+        ioLock.lock()
+        defer { ioLock.unlock() }
+        return endClipUnderLock()
+    }
+
+    private func endClipUnderLock() -> String? {
         let path = currentRelativePath
         audioFile = nil
         currentRelativePath = nil

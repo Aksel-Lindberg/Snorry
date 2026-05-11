@@ -76,9 +76,15 @@ struct HelpCenterView: View {
                                 detail: "Quick stats from your most recent night: duration, snore events, breathing rate (BRPM) average, and snoring percentage."
                             )
                             HelpBullet(
+                                icon: "lock.fill",
+                                title: "Overnight & locked iPhone",
+                                detail: "Start monitoring, then lock your phone. Background audio keeps the mic on for that session only while monitoring runs."
+                            )
+                            HelpBullet(
                                 icon: "applewatch",
                                 title: "Apple Watch",
-                                detail: "Pair your watch for wrist alerts—Snorry is built to complement phone notifications when you wear it overnight."
+                                detail: "Snorry is iPhone-only. Snore alerts are local notifications; they can mirror to your watch if iPhone alerts mirror to Apple Watch. " +
+                                    "There is no watchOS app—wrist delivery is not guaranteed."
                             )
                         }
 

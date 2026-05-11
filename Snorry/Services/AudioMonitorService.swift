@@ -123,10 +123,27 @@ final class AudioMonitorService: @unchecked Sendable {
 
         engine.prepare()
         try engine.start()
+        AudioSessionManager.shared.setMonitoringAudioActive(true)
         logger.info("AudioMonitorService started")
     }
 
+    /// After phone calls, Siri, or other session interruptions, re-activates the session and restarts
+    /// the engine if monitoring is still supposed to be running (`stream` remains non-nil).
+    func resumeAfterInterruptionIfNeeded() {
+        guard stream != nil else { return }
+        do {
+            try AudioSessionManager.shared.configureForMonitoring()
+            if !engine.isRunning {
+                try engine.start()
+            }
+            logger.info("AudioMonitorService resumed after interruption")
+        } catch {
+            logger.error("Failed to resume AudioMonitorService after interruption: \(error)")
+        }
+    }
+
     func stop() {
+        AudioSessionManager.shared.setMonitoringAudioActive(false)
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         continuation?.finish()

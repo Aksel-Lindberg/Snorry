@@ -244,45 +244,55 @@ final class MonitorViewModel {
 
     private func startTasks() {
         // 1. Consume AudioMonitorService ticks → classifier + detector + clip recorder
-        monitorTask = Task { @MainActor [weak self] in
-            guard let self else { return }
-            guard let stream = audioService.stream else { return }
+        //
+        // Must not run on the main actor: when the phone is locked, iOS deprioritizes UI threads and
+        // `SnoreClassifier` + `SnoreEventDetector` would stall while audio capture continues — leaving
+        // snore detection “dead” until the device unlocks. Processing at `.userInitiated` keeps the
+        // pipeline aligned with background audio.
+        let audioRef = audioService
+        let classifierRef = classifier
+        let detectorRef = detector
+        let spectrumRef = spectrumAnalyzer
+        let clipsRef = clipRecorder
+        let analysisRate = AudioMonitorService.targetSampleRate
+
+        monitorTask = Task(priority: .userInitiated) { [weak self] in
+            guard let stream = audioRef.stream else { return }
             for await tick in stream {
                 guard !Task.isCancelled else { break }
-                let time = AVAudioTime(sampleTime: 0,
-                                      atRate: AudioMonitorService.targetSampleRate)
-                classifier.analyze(buffer: tick.buffer, at: time)
-                detector.feed(tick: tick)
 
-                // Write native-format PCM to the clip for whichever snore-event file is currently open.
-                // Using the native buffer (not the 16 kHz analysis buffer) preserves the full
-                // frequency range so replay sounds exactly like the original recording.
-                if clipOpen {
-                    clipRecorder.write(buffer: tick.nativeBuffer)
-                }
+                let time = AVAudioTime(sampleTime: 0, atRate: analysisRate)
+                classifierRef.analyze(buffer: tick.buffer, at: time)
+                detectorRef.feed(tick: tick)
 
-                // Update live dB + waveform on main actor
-                // Live power spectrum — same PCM as recording / classifier (~20 ms frame).
-                let rawBands = spectrumAnalyzer.bands(fromPCM: tick.buffer)
-                if spectrumBands.count != rawBands.count {
-                    spectrumBands = rawBands
-                } else {
-                    let smoothingAlpha: Float = 0.38
-                    for bandIndex in rawBands.indices {
-                        spectrumBands[bandIndex] = smoothingAlpha * rawBands[bandIndex]
-                            + (1 - smoothingAlpha) * spectrumBands[bandIndex]
+                // `ClipRecorder.write` no-ops when no file is open; safe every tick (clip IO is locked).
+                clipsRef.write(buffer: tick.nativeBuffer)
+
+                let rawBands = spectrumRef.bands(fromPCM: tick.buffer)
+
+                await MainActor.run { [weak self] in
+                    guard let self, self.isMonitoring else { return }
+
+                    if self.spectrumBands.count != rawBands.count {
+                        self.spectrumBands = rawBands
+                    } else {
+                        let smoothingAlpha: Float = 0.38
+                        for bandIndex in rawBands.indices {
+                            self.spectrumBands[bandIndex] = smoothingAlpha * rawBands[bandIndex]
+                                + (1 - smoothingAlpha) * self.spectrumBands[bandIndex]
+                        }
                     }
-                }
 
-                currentDB = tick.dBFS
-                if tick.dBFS > (activeSession?.peakDB ?? -160) {
-                    activeSession?.peakDB = tick.dBFS
+                    self.currentDB = tick.dBFS
+                    if tick.dBFS > (self.activeSession?.peakDB ?? -160) {
+                        self.activeSession?.peakDB = tick.dBFS
+                    }
                 }
             }
         }
 
-        // 2. Classifier result → detector
-        classifierTask = Task { [weak self] in
+        // 2. Classifier result → detector (same priority as the tick loop)
+        classifierTask = Task(priority: .userInitiated) { [weak self] in
             guard let self else { return }
             guard let stream = classifier.stream else { return }
             for await result in stream {
