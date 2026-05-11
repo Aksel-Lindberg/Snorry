@@ -24,7 +24,7 @@
 		4FE5C5B5A8628421E3FCF11E /* Windplay.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */; };
 		5AE41B3C3FD7C95969F2831C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0D7E4820D5B40D5D01D18D1 /* Theme.swift */; };
 		5B89E8165FC1A8B789037BD7 /* Birds.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 279BCEFABDD69D92780F30DE /* Birds.mp3 */; };
-		5FE74C729D851388FB516A3A /* HomeAppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 561F4542E356DF40A905FE37 /* HomeAppIcon.png */; };
+		5A0E2D2F4C1745B890A1D3E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A0E2D2F4C1745B890A1D3E2 /* Assets.xcassets */; };
 		619277A0FEAB50A31193F873 /* AudioMonitorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */; };
 		65C469C1EF899DFC639AE675 /* Rapid_Wake.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 78A70941B37140F2EDDE04BA /* Rapid_Wake.mp3 */; };
 		676F52EF24FBBC3904445F24 /* AudioMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E1FD86195053E77F6425F9F /* AudioMath.swift */; };
@@ -79,7 +79,6 @@
 		EF96694FBC2893F5056D48FE /* Double tones.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = D478DD736616BB856D2F2D94 /* Double tones.mp3 */; };
 		F6F9545BB9B8179202A70A85 /* AudioSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0CC6D2C570ADD8994AFDE52 /* AudioSessionManager.swift */; };
 		F9537C4A3F8A5E54F1AB8222 /* AlertSetupSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC3AAF0922B2A428E2CD2A6E /* AlertSetupSummaryCard.swift */; };
-		F99E01EECC541A8532285E9D /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = EBA71BB6DB21EBD47AF17F9A /* AppIcon.png */; };
 		FBF5D5B5DD8B447E0C510FBE /* Raindrop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */; };
 		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
 /* End PBXBuildFile section */
@@ -122,6 +121,7 @@
 		4A03A690D2181A0F7355602F /* Contents.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = Contents.json; path = Assets.xcassets/HomeAppIcon.imageset/Contents.json; sourceTree = "<group>"; };
 		51A9F63FA957C465BB7935C9 /* SettingsViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SettingsViewModel.swift; path = ViewModels/SettingsViewModel.swift; sourceTree = "<group>"; };
 		561F4542E356DF40A905FE37 /* HomeAppIcon.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = HomeAppIcon.png; path = Assets.xcassets/HomeAppIcon.imageset/HomeAppIcon.png; sourceTree = "<group>"; };
+		5A0E2D2F4C1745B890A1D3E2 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Assets.xcassets; sourceTree = "<group>"; };
 		5A22F7770F71C072B638D91A /* NormalizingClipPlayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NormalizingClipPlayer.swift; path = Services/NormalizingClipPlayer.swift; sourceTree = "<group>"; };
 		5A55EDDD2F1C197F6A297891 /* Bell.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Bell.mp3; path = Resources/Bell.mp3; sourceTree = "<group>"; };
 		688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Marimba intrumental.mp3"; path = "Resources/Marimba intrumental.mp3"; sourceTree = "<group>"; };
@@ -244,12 +244,7 @@
 		5188949AEDBE6EB0975A320F /* Snorry */ = {
 			isa = PBXGroup;
 			children = (
-				F7E9D3E4D483BE41918390A6 /* Contents.json */,
-				EBA71BB6DB21EBD47AF17F9A /* AppIcon.png */,
-				26DA08A7F2F357828EE93D90 /* Contents.json */,
-				E311ACF2ABDBCC1B453F2F33 /* Contents.json */,
-				4A03A690D2181A0F7355602F /* Contents.json */,
-				561F4542E356DF40A905FE37 /* HomeAppIcon.png */,
+				5A0E2D2F4C1745B890A1D3E2 /* Assets.xcassets */,
 				455FBB9E12AF91E48C08F0D7 /* ContentView.swift */,
 				B32091DC2B8034B37F8455EB /* AlertSettings.swift */,
 				F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */,
@@ -457,8 +452,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F99E01EECC541A8532285E9D /* AppIcon.png in Resources */,
-				5FE74C729D851388FB516A3A /* HomeAppIcon.png in Resources */,
+				5A0E2D2F4C1745B890A1D3E1 /* Assets.xcassets in Resources */,
 				9394A28B5E3B8350FD48D341 /* Bell.mp3 in Resources */,
 				7856D6CBD3BC3258C029264A /* Birds 2.mp3 in Resources */,
 				3FFFD31FADCB1FC67529C3CB /* Birds 3.mp3 in Resources */,
