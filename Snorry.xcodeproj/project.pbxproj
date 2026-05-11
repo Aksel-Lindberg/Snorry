@@ -3,226 +3,489 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 46;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0204F0527B08014F22F355E5 /* SnoreEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC33EC45DDFD9E8E895030C2 /* SnoreEvent.swift */; };
+		126EEBF382F3787E48EAA38B /* GIFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C3E57FFA2899D2DBB53474 /* GIFView.swift */; };
+		1277197B759EFC05E0B4695D /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF033425D8DA29B54123B2C1 /* NotificationManager.swift */; };
+		19C900D5FA475B6B4D0BA767 /* SnoreClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847E52E3C320BA4F7714D0B6 /* SnoreClassifier.swift */; };
+		204A3710F3EFE4F903D04FEC /* SnoreClipSpectralAnalyzerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */; };
+		25657F1F23E5AE334FB85ADB /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */; };
+		28D85592CFB40755C5F689D7 /* SessionDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97CCF1673CF0A8A9A928601 /* SessionDetailViewModel.swift */; };
+		2E28E782D7B3045FB6F2F177 /* AlarmTonePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3DF721CCFE5BF5EA3AF9F05 /* AlarmTonePlayer.swift */; };
+		2F07F61077B2165A37B82697 /* HelpCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742A6FD9950680E53BE23A63 /* HelpCenterView.swift */; };
+		3035876B19288EDE9C61B092 /* MonitorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EF584F086C55FF9542E4815 /* MonitorViewModel.swift */; };
+		37A803ABEE40E3C7971FA296 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51A9F63FA957C465BB7935C9 /* SettingsViewModel.swift */; };
+		3FFFD31FADCB1FC67529C3CB /* Birds 3.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C37029CCF29EF0BC50C6D96A /* Birds 3.mp3 */; };
+		462D2683E00D754D63ADE2AE /* SleepAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C2F7F64989DD486B79A682 /* SleepAnimationView.swift */; };
+		4F47721AC0740B9C1C3322C1 /* AudioMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */; };
+		4FE5C5B5A8628421E3FCF11E /* Windplay.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */; };
+		5AE41B3C3FD7C95969F2831C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0D7E4820D5B40D5D01D18D1 /* Theme.swift */; };
+		5B89E8165FC1A8B789037BD7 /* Birds.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 279BCEFABDD69D92780F30DE /* Birds.mp3 */; };
+		5FE74C729D851388FB516A3A /* HomeAppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 561F4542E356DF40A905FE37 /* HomeAppIcon.png */; };
+		619277A0FEAB50A31193F873 /* AudioMonitorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */; };
+		65C469C1EF899DFC639AE675 /* Rapid_Wake.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 78A70941B37140F2EDDE04BA /* Rapid_Wake.mp3 */; };
+		676F52EF24FBBC3904445F24 /* AudioMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E1FD86195053E77F6425F9F /* AudioMath.swift */; };
+		67F2A7DBA071F9FB248CC060 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3150F582F1A08C93632BD1E /* OnboardingView.swift */; };
+		692538E70ED9525590726985 /* WaveformSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 718076CEB0C1A73D98CC0A5C /* WaveformSample.swift */; };
+		6E94C1B677C4DABD0B6E0F4F /* Indigo_Window.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 37F972562D70C58D2A242EE7 /* Indigo_Window.mp3 */; };
+		72E8F98FA654A60864C1AAFC /* Clock.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */; };
+		733C5279F76F30354CDA23D8 /* AlertManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C47BD28A2BFED416769A000D /* AlertManager.swift */; };
+		73CF9829E4F68348FD3AA440 /* SnoreSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFE39AA711F0B5E5D9F976D3 /* SnoreSession.swift */; };
+		7856D6CBD3BC3258C029264A /* Birds 2.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CBAFF4958BCBF90A7F36F62B /* Birds 2.mp3 */; };
+		7FC54D79C11431252C9A0281 /* Singball.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = F8170BA25460F76D30A51269 /* Singball.mp3 */; };
+		81268466B97DBFE5362212D0 /* SnorryUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78777A59E97CCC64F50A8332 /* SnorryUITestsLaunchTests.swift */; };
+		816A252C25E70F5AEA938D82 /* AlertSettingsChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */; };
+		843144C05A02FD2EA8F9B74C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ED084ECB6E38A5EFA3D92D5D /* Foundation.framework */; };
+		860264A4FDF0BE7D93399EA1 /* Harpstrok.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 6B24745E7652D0A94B0D0744 /* Harpstrok.mp3 */; };
+		867BFD246F3BE36AB5069DF5 /* NormalizingClipPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A22F7770F71C072B638D91A /* NormalizingClipPlayer.swift */; };
+		879DD6FE5499994F27C23EC6 /* PermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DFCC2A41C477B067869FD2E /* PermissionsView.swift */; };
+		8864456BE8BA204800BA2E1E /* Icecracks.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = A854F1BE96B16C0133B0B0CD /* Icecracks.mp3 */; };
+		8A0E7EFDB09BB1215A6FCB19 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 455FBB9E12AF91E48C08F0D7 /* ContentView.swift */; };
+		8C3549B2D2B451254FBB43DD /* Copper_Light_at_Six.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C69F5F66A10D0D418B3D145B /* Copper_Light_at_Six.mp3 */; };
+		8D4113C819EC1938C1CD7572 /* Quiet_Found_Us.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7765A74740F9C7B0312BA6FE /* Quiet_Found_Us.mp3 */; };
+		9394A28B5E3B8350FD48D341 /* Bell.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 5A55EDDD2F1C197F6A297891 /* Bell.mp3 */; };
+		9B36F38783F18604D068DB12 /* AlertSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32091DC2B8034B37F8455EB /* AlertSettings.swift */; };
+		A4B0A49A1378A7721A654C36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 799CEF95A14F0173040FE75B /* HomeView.swift */; };
+		A98E1AF9D24946D3969651DF /* Marimba intrumental.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */; };
+		AC645F2038FE2E11B32BC934 /* Tornado.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = E8752C417837145970A7AE3E /* Tornado.mp3 */; };
+		AF86D422BDA1C67CD7A9D9F3 /* LiveSpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */; };
+		B075C6C506A48FFCE98C30BA /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C900E57250862B011EE8C4 /* SessionStore.swift */; };
+		BA1ABF8B48D0F03CE67C68E9 /* SnoreEventDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */; };
+		BC2665D2FF0AF7EA995045FB /* ClipRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D62F5369622A86D30CFA65A /* ClipRecorder.swift */; };
+		BD8650C6E292C580A1917E4C /* AlertManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0BF8FEF9DD4EF6084ACC6C /* AlertManagerTests.swift */; };
+		BE0F4514E2F40BFCBF9DC9EE /* SnorryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 034D2D9AB10665B0C8CB1B9F /* SnorryUITests.swift */; };
+		C449FA418A604F5FD8CFDB9D /* SnoreGIFData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9B7B29710F28E6010817EE4 /* SnoreGIFData.swift */; };
+		C784724E11F6B0A2E1CE2530 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF6A271B36245A9E88548DD /* SessionDetailView.swift */; };
+		C8A2DCDBFCABCB28A1B95E8D /* Cracks.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7402D35EA4D4457C9981B2FF /* Cracks.mp3 */; };
+		CAB47A9FA3F1D262A22CD570 /* Late_Night_Curb.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 0EE2C4964B91AB4720E8AFC3 /* Late_Night_Curb.mp3 */; };
+		D214018AD76AD8991A859992 /* SessionsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33D1DDE7F8E9E6DBA7BBDCA0 /* SessionsListView.swift */; };
+		D3F0BA1D9B15A737A7F58DFD /* SnoreEventDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02D05DF695906DB7AAF6107F /* SnoreEventDetector.swift */; };
+		D40D2F44182FA85C919E46D4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF99C03511A2D5234A814CD /* SettingsView.swift */; };
+		D873A3BE9BB26C1E786825FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ED084ECB6E38A5EFA3D92D5D /* Foundation.framework */; };
+		D88311DD24FD7FAA65EBFD70 /* Piano.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 49D488573FFBA9ADFCE1E490 /* Piano.mp3 */; };
+		D8922993778F463A75C76C90 /* Pianoarpeggio.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 025A9DF44B0DFA8CA8921E2F /* Pianoarpeggio.mp3 */; };
+		DB7F36E374350C24D327A90A /* MonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13777D4919BAC1C94B113483 /* MonitorView.swift */; };
+		DD9AEAE799E3D63F37D484D5 /* SnorryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAA098990B7D477424D611E /* SnorryTests.swift */; };
+		E1A139FB4DFC69AB15BD8121 /* Marimba.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B535260A902657556E2C94B2 /* Marimba.mp3 */; };
+		E297E9221819A5E9C632A273 /* AnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E320C54E6B2C3B59E8B041C8 /* AnalyticsView.swift */; };
+		E6AE4D1B1AD210053BE7E6FA /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ED084ECB6E38A5EFA3D92D5D /* Foundation.framework */; };
+		E897FC2C83E3A454C9FB91F4 /* SnorryApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92B789E63D6E30A4F499CB1E /* SnorryApp.swift */; };
+		EE47D6282AEC20E24ACDB499 /* AnalyticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A95B0DD1AEC516E507C1B1B /* AnalyticsViewModel.swift */; };
+		EE7999D9F5A806F3EAFEAB07 /* Blades.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C0E7F74222B44790C949159B /* Blades.mp3 */; };
+		EF5CC0251F040554878D0EBD /* SnoreClipSpectralAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF43A2D12306F7CD8D9E23C3 /* SnoreClipSpectralAnalyzer.swift */; };
+		EF96694FBC2893F5056D48FE /* Double tones.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = D478DD736616BB856D2F2D94 /* Double tones.mp3 */; };
+		F6F9545BB9B8179202A70A85 /* AudioSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0CC6D2C570ADD8994AFDE52 /* AudioSessionManager.swift */; };
+		F9537C4A3F8A5E54F1AB8222 /* AlertSetupSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC3AAF0922B2A428E2CD2A6E /* AlertSetupSummaryCard.swift */; };
+		F99E01EECC541A8532285E9D /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = EBA71BB6DB21EBD47AF17F9A /* AppIcon.png */; };
+		FBF5D5B5DD8B447E0C510FBE /* Raindrop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */; };
+		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
-		1C7EC0592FA67A4200FBEB7D /* PBXContainerItemProxy */ = {
+		CFCE65C24726562555C1F2C5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 1C7EC0412FA67A4000FBEB7D /* Project object */;
+			containerPortal = 7363CB5C462D9CA35C25AE60 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 1C7EC0482FA67A4000FBEB7D;
+			remoteGlobalIDString = 49A6F22F5AA2164E0F24618F;
 			remoteInfo = Snorry;
 		};
-		1C7EC0632FA67A4200FBEB7D /* PBXContainerItemProxy */ = {
+		DE36677C68ECCCB7719E52EB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 1C7EC0412FA67A4000FBEB7D /* Project object */;
+			containerPortal = 7363CB5C462D9CA35C25AE60 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 1C7EC0482FA67A4000FBEB7D;
+			remoteGlobalIDString = 49A6F22F5AA2164E0F24618F;
 			remoteInfo = Snorry;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		1C7EC0492FA67A4000FBEB7D /* Snorry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Snorry.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1C7EC0582FA67A4200FBEB7D /* SnorryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnorryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		1C7EC0622FA67A4200FBEB7D /* SnorryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnorryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		025A9DF44B0DFA8CA8921E2F /* Pianoarpeggio.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Pianoarpeggio.mp3; path = Resources/Pianoarpeggio.mp3; sourceTree = "<group>"; };
+		02D05DF695906DB7AAF6107F /* SnoreEventDetector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreEventDetector.swift; path = Services/SnoreEventDetector.swift; sourceTree = "<group>"; };
+		034D2D9AB10665B0C8CB1B9F /* SnorryUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnorryUITests.swift; path = SnorryUITests/SnorryUITests.swift; sourceTree = "<group>"; };
+		03C900E57250862B011EE8C4 /* SessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionStore.swift; path = Services/SessionStore.swift; sourceTree = "<group>"; };
+		0E1FD86195053E77F6425F9F /* AudioMath.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioMath.swift; path = Utilities/AudioMath.swift; sourceTree = "<group>"; };
+		0EE2C4964B91AB4720E8AFC3 /* Late_Night_Curb.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Late_Night_Curb.mp3; path = Resources/Late_Night_Curb.mp3; sourceTree = "<group>"; };
+		13777D4919BAC1C94B113483 /* MonitorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitorView.swift; path = Views/MonitorView.swift; sourceTree = "<group>"; };
+		1A95B0DD1AEC516E507C1B1B /* AnalyticsViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AnalyticsViewModel.swift; path = ViewModels/AnalyticsViewModel.swift; sourceTree = "<group>"; };
+		1EF584F086C55FF9542E4815 /* MonitorViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitorViewModel.swift; path = ViewModels/MonitorViewModel.swift; sourceTree = "<group>"; };
+		21AA62568AD509DB2EF3C867 /* LegalLinks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LegalLinks.swift; path = Utilities/LegalLinks.swift; sourceTree = "<group>"; };
+		26DA08A7F2F357828EE93D90 /* Contents.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = Contents.json; path = Assets.xcassets/AppIcon.appiconset/Contents.json; sourceTree = "<group>"; };
+		279BCEFABDD69D92780F30DE /* Birds.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Birds.mp3; path = Resources/Birds.mp3; sourceTree = "<group>"; };
+		2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiveSpectrumAnalyzer.swift; path = Utilities/LiveSpectrumAnalyzer.swift; sourceTree = "<group>"; };
+		33D1DDE7F8E9E6DBA7BBDCA0 /* SessionsListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionsListView.swift; path = Views/SessionsListView.swift; sourceTree = "<group>"; };
+		37F972562D70C58D2A242EE7 /* Indigo_Window.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Indigo_Window.mp3; path = Resources/Indigo_Window.mp3; sourceTree = "<group>"; };
+		455FBB9E12AF91E48C08F0D7 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		49D488573FFBA9ADFCE1E490 /* Piano.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Piano.mp3; path = Resources/Piano.mp3; sourceTree = "<group>"; };
+		4A03A690D2181A0F7355602F /* Contents.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = Contents.json; path = Assets.xcassets/HomeAppIcon.imageset/Contents.json; sourceTree = "<group>"; };
+		51A9F63FA957C465BB7935C9 /* SettingsViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SettingsViewModel.swift; path = ViewModels/SettingsViewModel.swift; sourceTree = "<group>"; };
+		561F4542E356DF40A905FE37 /* HomeAppIcon.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = HomeAppIcon.png; path = Assets.xcassets/HomeAppIcon.imageset/HomeAppIcon.png; sourceTree = "<group>"; };
+		5A22F7770F71C072B638D91A /* NormalizingClipPlayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NormalizingClipPlayer.swift; path = Services/NormalizingClipPlayer.swift; sourceTree = "<group>"; };
+		5A55EDDD2F1C197F6A297891 /* Bell.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Bell.mp3; path = Resources/Bell.mp3; sourceTree = "<group>"; };
+		688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Marimba intrumental.mp3"; path = "Resources/Marimba intrumental.mp3"; sourceTree = "<group>"; };
+		69C2F7F64989DD486B79A682 /* SleepAnimationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepAnimationView.swift; path = Views/SleepAnimationView.swift; sourceTree = "<group>"; };
+		6B0BF8FEF9DD4EF6084ACC6C /* AlertManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertManagerTests.swift; path = SnorryTests/AlertManagerTests.swift; sourceTree = "<group>"; };
+		6B24745E7652D0A94B0D0744 /* Harpstrok.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Harpstrok.mp3; path = Resources/Harpstrok.mp3; sourceTree = "<group>"; };
+		6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreEventDetectorTests.swift; path = SnorryTests/SnoreEventDetectorTests.swift; sourceTree = "<group>"; };
+		718076CEB0C1A73D98CC0A5C /* WaveformSample.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WaveformSample.swift; path = Models/WaveformSample.swift; sourceTree = "<group>"; };
+		7402D35EA4D4457C9981B2FF /* Cracks.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Cracks.mp3; path = Resources/Cracks.mp3; sourceTree = "<group>"; };
+		742A6FD9950680E53BE23A63 /* HelpCenterView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HelpCenterView.swift; path = Views/HelpCenterView.swift; sourceTree = "<group>"; };
+		7765A74740F9C7B0312BA6FE /* Quiet_Found_Us.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Quiet_Found_Us.mp3; path = Resources/Quiet_Found_Us.mp3; sourceTree = "<group>"; };
+		78777A59E97CCC64F50A8332 /* SnorryUITestsLaunchTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnorryUITestsLaunchTests.swift; path = SnorryUITests/SnorryUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		78A70941B37140F2EDDE04BA /* Rapid_Wake.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Rapid_Wake.mp3; path = Resources/Rapid_Wake.mp3; sourceTree = "<group>"; };
+		799CEF95A14F0173040FE75B /* HomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HomeView.swift; path = Views/HomeView.swift; sourceTree = "<group>"; };
+		7CAA098990B7D477424D611E /* SnorryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnorryTests.swift; path = SnorryTests/SnorryTests.swift; sourceTree = "<group>"; };
+		7D62F5369622A86D30CFA65A /* ClipRecorder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ClipRecorder.swift; path = Services/ClipRecorder.swift; sourceTree = "<group>"; };
+		847E52E3C320BA4F7714D0B6 /* SnoreClassifier.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreClassifier.swift; path = Services/SnoreClassifier.swift; sourceTree = "<group>"; };
+		88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioMonitorService.swift; path = Services/AudioMonitorService.swift; sourceTree = "<group>"; };
+		9034FB5F88CC6CE01A88F2B4 /* SnorryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnorryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		92B789E63D6E30A4F499CB1E /* SnorryApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnorryApp.swift; path = SnorryApp.swift; sourceTree = "<group>"; };
+		9DF99C03511A2D5234A814CD /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SettingsView.swift; path = Views/SettingsView.swift; sourceTree = "<group>"; };
+		9DFCC2A41C477B067869FD2E /* PermissionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PermissionsView.swift; path = Views/PermissionsView.swift; sourceTree = "<group>"; };
+		A0C3E57FFA2899D2DBB53474 /* GIFView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GIFView.swift; path = Views/GIFView.swift; sourceTree = "<group>"; };
+		A0CC6D2C570ADD8994AFDE52 /* AudioSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioSessionManager.swift; path = Utilities/AudioSessionManager.swift; sourceTree = "<group>"; };
+		A1C3C8E48A75DE8B17178BC1 /* Snorry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Snorry.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WaveformView.swift; path = Views/WaveformView.swift; sourceTree = "<group>"; };
+		A854F1BE96B16C0133B0B0CD /* Icecracks.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Icecracks.mp3; path = Resources/Icecracks.mp3; sourceTree = "<group>"; };
+		AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioMathTests.swift; path = SnorryTests/AudioMathTests.swift; sourceTree = "<group>"; };
+		AF033425D8DA29B54123B2C1 /* NotificationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NotificationManager.swift; path = Services/NotificationManager.swift; sourceTree = "<group>"; };
+		B32091DC2B8034B37F8455EB /* AlertSettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSettings.swift; path = Models/AlertSettings.swift; sourceTree = "<group>"; };
+		B535260A902657556E2C94B2 /* Marimba.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Marimba.mp3; path = Resources/Marimba.mp3; sourceTree = "<group>"; };
+		BC3AAF0922B2A428E2CD2A6E /* AlertSetupSummaryCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSetupSummaryCard.swift; path = Views/AlertSetupSummaryCard.swift; sourceTree = "<group>"; };
+		BF43A2D12306F7CD8D9E23C3 /* SnoreClipSpectralAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreClipSpectralAnalyzer.swift; path = Utilities/SnoreClipSpectralAnalyzer.swift; sourceTree = "<group>"; };
+		C0E7F74222B44790C949159B /* Blades.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Blades.mp3; path = Resources/Blades.mp3; sourceTree = "<group>"; };
+		C37029CCF29EF0BC50C6D96A /* Birds 3.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Birds 3.mp3"; path = "Resources/Birds 3.mp3"; sourceTree = "<group>"; };
+		C3DF721CCFE5BF5EA3AF9F05 /* AlarmTonePlayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlarmTonePlayer.swift; path = Services/AlarmTonePlayer.swift; sourceTree = "<group>"; };
+		C47BD28A2BFED416769A000D /* AlertManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertManager.swift; path = Services/AlertManager.swift; sourceTree = "<group>"; };
+		C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreClipSpectralAnalyzerTests.swift; path = SnorryTests/SnoreClipSpectralAnalyzerTests.swift; sourceTree = "<group>"; };
+		C69F5F66A10D0D418B3D145B /* Copper_Light_at_Six.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Copper_Light_at_Six.mp3; path = Resources/Copper_Light_at_Six.mp3; sourceTree = "<group>"; };
+		C97CCF1673CF0A8A9A928601 /* SessionDetailViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionDetailViewModel.swift; path = ViewModels/SessionDetailViewModel.swift; sourceTree = "<group>"; };
+		CAF6A271B36245A9E88548DD /* SessionDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionDetailView.swift; path = Views/SessionDetailView.swift; sourceTree = "<group>"; };
+		CBAFF4958BCBF90A7F36F62B /* Birds 2.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Birds 2.mp3"; path = "Resources/Birds 2.mp3"; sourceTree = "<group>"; };
+		CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Raindrop.mp3; path = Resources/Raindrop.mp3; sourceTree = "<group>"; };
+		D478DD736616BB856D2F2D94 /* Double tones.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Double tones.mp3"; path = "Resources/Double tones.mp3"; sourceTree = "<group>"; };
+		DCE4FE625B3757CCE6D15E39 /* SnorryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnorryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E0D7E4820D5B40D5D01D18D1 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Theme.swift; path = Utilities/Theme.swift; sourceTree = "<group>"; };
+		E311ACF2ABDBCC1B453F2F33 /* Contents.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = Contents.json; path = Assets.xcassets/Contents.json; sourceTree = "<group>"; };
+		E320C54E6B2C3B59E8B041C8 /* AnalyticsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AnalyticsView.swift; path = Views/AnalyticsView.swift; sourceTree = "<group>"; };
+		E8752C417837145970A7AE3E /* Tornado.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Tornado.mp3; path = Resources/Tornado.mp3; sourceTree = "<group>"; };
+		EBA71BB6DB21EBD47AF17F9A /* AppIcon.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = AppIcon.png; path = Assets.xcassets/AppIcon.appiconset/AppIcon.png; sourceTree = "<group>"; };
+		EC33EC45DDFD9E8E895030C2 /* SnoreEvent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreEvent.swift; path = Models/SnoreEvent.swift; sourceTree = "<group>"; };
+		ED084ECB6E38A5EFA3D92D5D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		EFE39AA711F0B5E5D9F976D3 /* SnoreSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreSession.swift; path = Models/SnoreSession.swift; sourceTree = "<group>"; };
+		F3150F582F1A08C93632BD1E /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OnboardingView.swift; path = Views/OnboardingView.swift; sourceTree = "<group>"; };
+		F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Windplay.mp3; path = Resources/Windplay.mp3; sourceTree = "<group>"; };
+		F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSettingsChange.swift; path = Models/AlertSettingsChange.swift; sourceTree = "<group>"; };
+		F7E9D3E4D483BE41918390A6 /* Contents.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = Contents.json; path = Assets.xcassets/AccentColor.colorset/Contents.json; sourceTree = "<group>"; };
+		F8170BA25460F76D30A51269 /* Singball.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Singball.mp3; path = Resources/Singball.mp3; sourceTree = "<group>"; };
+		F9B7B29710F28E6010817EE4 /* SnoreGIFData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreGIFData.swift; path = Resources/SnoreGIFData.swift; sourceTree = "<group>"; };
+		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		1C7EC04B2FA67A4000FBEB7D /* Snorry */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Snorry;
-			sourceTree = "<group>";
-		};
-		1C7EC05B2FA67A4200FBEB7D /* SnorryTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SnorryTests;
-			sourceTree = "<group>";
-		};
-		1C7EC0652FA67A4200FBEB7D /* SnorryUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SnorryUITests;
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
-
 /* Begin PBXFrameworksBuildPhase section */
-		1C7EC0462FA67A4000FBEB7D /* Frameworks */ = {
+		645D52A07B25AD6AF919C57E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E6AE4D1B1AD210053BE7E6FA /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1C7EC0552FA67A4200FBEB7D /* Frameworks */ = {
+		90C5B7F7D34DD9EA978693B5 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				843144C05A02FD2EA8F9B74C /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1C7EC05F2FA67A4200FBEB7D /* Frameworks */ = {
+		F33B0DFC1915B28DACCB1D30 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D873A3BE9BB26C1E786825FD /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1C7EC0402FA67A4000FBEB7D = {
+		0B94D6212CAC6B31EDAC4ADE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1C7EC04B2FA67A4000FBEB7D /* Snorry */,
-				1C7EC05B2FA67A4200FBEB7D /* SnorryTests */,
-				1C7EC0652FA67A4200FBEB7D /* SnorryUITests */,
-				1C7EC04A2FA67A4000FBEB7D /* Products */,
+				A1C3C8E48A75DE8B17178BC1 /* Snorry.app */,
+				DCE4FE625B3757CCE6D15E39 /* SnorryTests.xctest */,
+				9034FB5F88CC6CE01A88F2B4 /* SnorryUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2D30C36A91FB32014B844459 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				ED084ECB6E38A5EFA3D92D5D /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		36823818A3F0AFEBB82E9507 = {
+			isa = PBXGroup;
+			children = (
+				0B94D6212CAC6B31EDAC4ADE /* Products */,
+				F3641713180FACFF70D87879 /* Frameworks */,
+				5188949AEDBE6EB0975A320F /* Snorry */,
+				CD6650B2EBB49A8A862F6614 /* SnorryTests */,
+				5E771653D29DCD96D48423FB /* SnorryUITests */,
 			);
 			sourceTree = "<group>";
 		};
-		1C7EC04A2FA67A4000FBEB7D /* Products */ = {
+		5188949AEDBE6EB0975A320F /* Snorry */ = {
 			isa = PBXGroup;
 			children = (
-				1C7EC0492FA67A4000FBEB7D /* Snorry.app */,
-				1C7EC0582FA67A4200FBEB7D /* SnorryTests.xctest */,
-				1C7EC0622FA67A4200FBEB7D /* SnorryUITests.xctest */,
+				F7E9D3E4D483BE41918390A6 /* Contents.json */,
+				EBA71BB6DB21EBD47AF17F9A /* AppIcon.png */,
+				26DA08A7F2F357828EE93D90 /* Contents.json */,
+				E311ACF2ABDBCC1B453F2F33 /* Contents.json */,
+				4A03A690D2181A0F7355602F /* Contents.json */,
+				561F4542E356DF40A905FE37 /* HomeAppIcon.png */,
+				455FBB9E12AF91E48C08F0D7 /* ContentView.swift */,
+				B32091DC2B8034B37F8455EB /* AlertSettings.swift */,
+				F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */,
+				EC33EC45DDFD9E8E895030C2 /* SnoreEvent.swift */,
+				EFE39AA711F0B5E5D9F976D3 /* SnoreSession.swift */,
+				718076CEB0C1A73D98CC0A5C /* WaveformSample.swift */,
+				5A55EDDD2F1C197F6A297891 /* Bell.mp3 */,
+				CBAFF4958BCBF90A7F36F62B /* Birds 2.mp3 */,
+				C37029CCF29EF0BC50C6D96A /* Birds 3.mp3 */,
+				279BCEFABDD69D92780F30DE /* Birds.mp3 */,
+				C0E7F74222B44790C949159B /* Blades.mp3 */,
+				FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */,
+				C69F5F66A10D0D418B3D145B /* Copper_Light_at_Six.mp3 */,
+				7402D35EA4D4457C9981B2FF /* Cracks.mp3 */,
+				D478DD736616BB856D2F2D94 /* Double tones.mp3 */,
+				6B24745E7652D0A94B0D0744 /* Harpstrok.mp3 */,
+				A854F1BE96B16C0133B0B0CD /* Icecracks.mp3 */,
+				37F972562D70C58D2A242EE7 /* Indigo_Window.mp3 */,
+				0EE2C4964B91AB4720E8AFC3 /* Late_Night_Curb.mp3 */,
+				688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */,
+				B535260A902657556E2C94B2 /* Marimba.mp3 */,
+				49D488573FFBA9ADFCE1E490 /* Piano.mp3 */,
+				025A9DF44B0DFA8CA8921E2F /* Pianoarpeggio.mp3 */,
+				7765A74740F9C7B0312BA6FE /* Quiet_Found_Us.mp3 */,
+				CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */,
+				78A70941B37140F2EDDE04BA /* Rapid_Wake.mp3 */,
+				F8170BA25460F76D30A51269 /* Singball.mp3 */,
+				F9B7B29710F28E6010817EE4 /* SnoreGIFData.swift */,
+				E8752C417837145970A7AE3E /* Tornado.mp3 */,
+				F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */,
+				C3DF721CCFE5BF5EA3AF9F05 /* AlarmTonePlayer.swift */,
+				C47BD28A2BFED416769A000D /* AlertManager.swift */,
+				88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */,
+				7D62F5369622A86D30CFA65A /* ClipRecorder.swift */,
+				5A22F7770F71C072B638D91A /* NormalizingClipPlayer.swift */,
+				AF033425D8DA29B54123B2C1 /* NotificationManager.swift */,
+				03C900E57250862B011EE8C4 /* SessionStore.swift */,
+				847E52E3C320BA4F7714D0B6 /* SnoreClassifier.swift */,
+				02D05DF695906DB7AAF6107F /* SnoreEventDetector.swift */,
+				92B789E63D6E30A4F499CB1E /* SnorryApp.swift */,
+				0E1FD86195053E77F6425F9F /* AudioMath.swift */,
+				A0CC6D2C570ADD8994AFDE52 /* AudioSessionManager.swift */,
+				21AA62568AD509DB2EF3C867 /* LegalLinks.swift */,
+				2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */,
+				BF43A2D12306F7CD8D9E23C3 /* SnoreClipSpectralAnalyzer.swift */,
+				E0D7E4820D5B40D5D01D18D1 /* Theme.swift */,
+				1A95B0DD1AEC516E507C1B1B /* AnalyticsViewModel.swift */,
+				1EF584F086C55FF9542E4815 /* MonitorViewModel.swift */,
+				C97CCF1673CF0A8A9A928601 /* SessionDetailViewModel.swift */,
+				51A9F63FA957C465BB7935C9 /* SettingsViewModel.swift */,
+				BC3AAF0922B2A428E2CD2A6E /* AlertSetupSummaryCard.swift */,
+				E320C54E6B2C3B59E8B041C8 /* AnalyticsView.swift */,
+				A0C3E57FFA2899D2DBB53474 /* GIFView.swift */,
+				742A6FD9950680E53BE23A63 /* HelpCenterView.swift */,
+				799CEF95A14F0173040FE75B /* HomeView.swift */,
+				13777D4919BAC1C94B113483 /* MonitorView.swift */,
+				F3150F582F1A08C93632BD1E /* OnboardingView.swift */,
+				9DFCC2A41C477B067869FD2E /* PermissionsView.swift */,
+				CAF6A271B36245A9E88548DD /* SessionDetailView.swift */,
+				33D1DDE7F8E9E6DBA7BBDCA0 /* SessionsListView.swift */,
+				9DF99C03511A2D5234A814CD /* SettingsView.swift */,
+				69C2F7F64989DD486B79A682 /* SleepAnimationView.swift */,
+				A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */,
 			);
-			name = Products;
+			path = Snorry;
+			sourceTree = "<group>";
+		};
+		5E771653D29DCD96D48423FB /* SnorryUITests */ = {
+			isa = PBXGroup;
+			children = (
+				034D2D9AB10665B0C8CB1B9F /* SnorryUITests.swift */,
+				78777A59E97CCC64F50A8332 /* SnorryUITestsLaunchTests.swift */,
+			);
+			path = SnorryUITests;
+			sourceTree = "<group>";
+		};
+		CD6650B2EBB49A8A862F6614 /* SnorryTests */ = {
+			isa = PBXGroup;
+			children = (
+				6B0BF8FEF9DD4EF6084ACC6C /* AlertManagerTests.swift */,
+				AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */,
+				C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */,
+				6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */,
+				7CAA098990B7D477424D611E /* SnorryTests.swift */,
+			);
+			path = SnorryTests;
+			sourceTree = "<group>";
+		};
+		F3641713180FACFF70D87879 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2D30C36A91FB32014B844459 /* iOS */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1C7EC0482FA67A4000FBEB7D /* Snorry */ = {
+		49A6F22F5AA2164E0F24618F /* Snorry */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1C7EC06C2FA67A4200FBEB7D /* Build configuration list for PBXNativeTarget "Snorry" */;
+			buildConfigurationList = 9B376307E38692B8A62E726B /* Build configuration list for PBXNativeTarget "Snorry" */;
 			buildPhases = (
-				1C7EC0452FA67A4000FBEB7D /* Sources */,
-				1C7EC0462FA67A4000FBEB7D /* Frameworks */,
-				1C7EC0472FA67A4000FBEB7D /* Resources */,
+				1DB6EA40DCC737795401A2E1 /* Sources */,
+				645D52A07B25AD6AF919C57E /* Frameworks */,
+				6811E210917CC28648395239 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				1C7EC04B2FA67A4000FBEB7D /* Snorry */,
 			);
 			name = Snorry;
-			packageProductDependencies = (
-			);
 			productName = Snorry;
-			productReference = 1C7EC0492FA67A4000FBEB7D /* Snorry.app */;
+			productReference = A1C3C8E48A75DE8B17178BC1 /* Snorry.app */;
 			productType = "com.apple.product-type.application";
 		};
-		1C7EC0572FA67A4200FBEB7D /* SnorryTests */ = {
+		5F0D52C0EC8958FA376E0690 /* SnorryTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1C7EC06F2FA67A4200FBEB7D /* Build configuration list for PBXNativeTarget "SnorryTests" */;
+			buildConfigurationList = AC3AC2F5606AC4B913E88164 /* Build configuration list for PBXNativeTarget "SnorryTests" */;
 			buildPhases = (
-				1C7EC0542FA67A4200FBEB7D /* Sources */,
-				1C7EC0552FA67A4200FBEB7D /* Frameworks */,
-				1C7EC0562FA67A4200FBEB7D /* Resources */,
+				5F92247F98CA8415829CA10F /* Sources */,
+				F33B0DFC1915B28DACCB1D30 /* Frameworks */,
+				29663720B1F64A8A3835AE79 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				1C7EC05A2FA67A4200FBEB7D /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				1C7EC05B2FA67A4200FBEB7D /* SnorryTests */,
+				43A25C108FBD364575345A94 /* PBXTargetDependency */,
 			);
 			name = SnorryTests;
-			packageProductDependencies = (
-			);
 			productName = SnorryTests;
-			productReference = 1C7EC0582FA67A4200FBEB7D /* SnorryTests.xctest */;
+			productReference = DCE4FE625B3757CCE6D15E39 /* SnorryTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		1C7EC0612FA67A4200FBEB7D /* SnorryUITests */ = {
+		6EE72E3D24CDB44EE03D000C /* SnorryUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1C7EC0722FA67A4200FBEB7D /* Build configuration list for PBXNativeTarget "SnorryUITests" */;
+			buildConfigurationList = 1039CFEE3B2F0DC154A88EF6 /* Build configuration list for PBXNativeTarget "SnorryUITests" */;
 			buildPhases = (
-				1C7EC05E2FA67A4200FBEB7D /* Sources */,
-				1C7EC05F2FA67A4200FBEB7D /* Frameworks */,
-				1C7EC0602FA67A4200FBEB7D /* Resources */,
+				0282D5FC0C63750E7E2F85A4 /* Sources */,
+				90C5B7F7D34DD9EA978693B5 /* Frameworks */,
+				F3FE85B28B2F3A47B5C37722 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				1C7EC0642FA67A4200FBEB7D /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				1C7EC0652FA67A4200FBEB7D /* SnorryUITests */,
+				6E2663F6A34D24E2F44BFD3F /* PBXTargetDependency */,
 			);
 			name = SnorryUITests;
-			packageProductDependencies = (
-			);
 			productName = SnorryUITests;
-			productReference = 1C7EC0622FA67A4200FBEB7D /* SnorryUITests.xctest */;
+			productReference = 9034FB5F88CC6CE01A88F2B4 /* SnorryUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		1C7EC0412FA67A4000FBEB7D /* Project object */ = {
+		7363CB5C462D9CA35C25AE60 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
-					1C7EC0482FA67A4000FBEB7D = {
-						CreatedOnToolsVersion = 26.2;
+					49A6F22F5AA2164E0F24618F = {
+						DevelopmentTeam = L675KNV756;
+						ProvisioningStyle = Automatic;
 					};
-					1C7EC0572FA67A4200FBEB7D = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 1C7EC0482FA67A4000FBEB7D;
+					5F0D52C0EC8958FA376E0690 = {
+						DevelopmentTeam = L675KNV756;
+						ProvisioningStyle = Automatic;
 					};
-					1C7EC0612FA67A4200FBEB7D = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 1C7EC0482FA67A4000FBEB7D;
+					6EE72E3D24CDB44EE03D000C = {
+						DevelopmentTeam = L675KNV756;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
-			buildConfigurationList = 1C7EC0442FA67A4000FBEB7D /* Build configuration list for PBXProject "Snorry" */;
+			buildConfigurationList = 6595020B2AB442DB43027825 /* Build configuration list for PBXProject "Snorry" */;
+			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 1C7EC0402FA67A4000FBEB7D;
-			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
-			productRefGroup = 1C7EC04A2FA67A4000FBEB7D /* Products */;
+			mainGroup = 36823818A3F0AFEBB82E9507;
+			productRefGroup = 0B94D6212CAC6B31EDAC4ADE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1C7EC0482FA67A4000FBEB7D /* Snorry */,
-				1C7EC0572FA67A4200FBEB7D /* SnorryTests */,
-				1C7EC0612FA67A4200FBEB7D /* SnorryUITests */,
+				49A6F22F5AA2164E0F24618F /* Snorry */,
+				5F0D52C0EC8958FA376E0690 /* SnorryTests */,
+				6EE72E3D24CDB44EE03D000C /* SnorryUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		1C7EC0472FA67A4000FBEB7D /* Resources */ = {
+		29663720B1F64A8A3835AE79 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1C7EC0562FA67A4200FBEB7D /* Resources */ = {
+		6811E210917CC28648395239 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F99E01EECC541A8532285E9D /* AppIcon.png in Resources */,
+				5FE74C729D851388FB516A3A /* HomeAppIcon.png in Resources */,
+				9394A28B5E3B8350FD48D341 /* Bell.mp3 in Resources */,
+				7856D6CBD3BC3258C029264A /* Birds 2.mp3 in Resources */,
+				3FFFD31FADCB1FC67529C3CB /* Birds 3.mp3 in Resources */,
+				5B89E8165FC1A8B789037BD7 /* Birds.mp3 in Resources */,
+				EE7999D9F5A806F3EAFEAB07 /* Blades.mp3 in Resources */,
+				72E8F98FA654A60864C1AAFC /* Clock.mp3 in Resources */,
+				8C3549B2D2B451254FBB43DD /* Copper_Light_at_Six.mp3 in Resources */,
+				C8A2DCDBFCABCB28A1B95E8D /* Cracks.mp3 in Resources */,
+				EF96694FBC2893F5056D48FE /* Double tones.mp3 in Resources */,
+				860264A4FDF0BE7D93399EA1 /* Harpstrok.mp3 in Resources */,
+				8864456BE8BA204800BA2E1E /* Icecracks.mp3 in Resources */,
+				6E94C1B677C4DABD0B6E0F4F /* Indigo_Window.mp3 in Resources */,
+				CAB47A9FA3F1D262A22CD570 /* Late_Night_Curb.mp3 in Resources */,
+				A98E1AF9D24946D3969651DF /* Marimba intrumental.mp3 in Resources */,
+				E1A139FB4DFC69AB15BD8121 /* Marimba.mp3 in Resources */,
+				D88311DD24FD7FAA65EBFD70 /* Piano.mp3 in Resources */,
+				D8922993778F463A75C76C90 /* Pianoarpeggio.mp3 in Resources */,
+				8D4113C819EC1938C1CD7572 /* Quiet_Found_Us.mp3 in Resources */,
+				FBF5D5B5DD8B447E0C510FBE /* Raindrop.mp3 in Resources */,
+				65C469C1EF899DFC639AE675 /* Rapid_Wake.mp3 in Resources */,
+				7FC54D79C11431252C9A0281 /* Singball.mp3 in Resources */,
+				AC645F2038FE2E11B32BC934 /* Tornado.mp3 in Resources */,
+				4FE5C5B5A8628421E3FCF11E /* Windplay.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1C7EC0602FA67A4200FBEB7D /* Resources */ = {
+		F3FE85B28B2F3A47B5C37722 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -232,115 +495,121 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		1C7EC0452FA67A4000FBEB7D /* Sources */ = {
+		0282D5FC0C63750E7E2F85A4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE0F4514E2F40BFCBF9DC9EE /* SnorryUITests.swift in Sources */,
+				81268466B97DBFE5362212D0 /* SnorryUITestsLaunchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1C7EC0542FA67A4200FBEB7D /* Sources */ = {
+		1DB6EA40DCC737795401A2E1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A0E7EFDB09BB1215A6FCB19 /* ContentView.swift in Sources */,
+				9B36F38783F18604D068DB12 /* AlertSettings.swift in Sources */,
+				816A252C25E70F5AEA938D82 /* AlertSettingsChange.swift in Sources */,
+				0204F0527B08014F22F355E5 /* SnoreEvent.swift in Sources */,
+				73CF9829E4F68348FD3AA440 /* SnoreSession.swift in Sources */,
+				692538E70ED9525590726985 /* WaveformSample.swift in Sources */,
+				C449FA418A604F5FD8CFDB9D /* SnoreGIFData.swift in Sources */,
+				2E28E782D7B3045FB6F2F177 /* AlarmTonePlayer.swift in Sources */,
+				733C5279F76F30354CDA23D8 /* AlertManager.swift in Sources */,
+				619277A0FEAB50A31193F873 /* AudioMonitorService.swift in Sources */,
+				BC2665D2FF0AF7EA995045FB /* ClipRecorder.swift in Sources */,
+				867BFD246F3BE36AB5069DF5 /* NormalizingClipPlayer.swift in Sources */,
+				1277197B759EFC05E0B4695D /* NotificationManager.swift in Sources */,
+				B075C6C506A48FFCE98C30BA /* SessionStore.swift in Sources */,
+				19C900D5FA475B6B4D0BA767 /* SnoreClassifier.swift in Sources */,
+				D3F0BA1D9B15A737A7F58DFD /* SnoreEventDetector.swift in Sources */,
+				E897FC2C83E3A454C9FB91F4 /* SnorryApp.swift in Sources */,
+				676F52EF24FBBC3904445F24 /* AudioMath.swift in Sources */,
+				F6F9545BB9B8179202A70A85 /* AudioSessionManager.swift in Sources */,
+				FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */,
+				AF86D422BDA1C67CD7A9D9F3 /* LiveSpectrumAnalyzer.swift in Sources */,
+				EF5CC0251F040554878D0EBD /* SnoreClipSpectralAnalyzer.swift in Sources */,
+				5AE41B3C3FD7C95969F2831C /* Theme.swift in Sources */,
+				EE47D6282AEC20E24ACDB499 /* AnalyticsViewModel.swift in Sources */,
+				3035876B19288EDE9C61B092 /* MonitorViewModel.swift in Sources */,
+				28D85592CFB40755C5F689D7 /* SessionDetailViewModel.swift in Sources */,
+				37A803ABEE40E3C7971FA296 /* SettingsViewModel.swift in Sources */,
+				F9537C4A3F8A5E54F1AB8222 /* AlertSetupSummaryCard.swift in Sources */,
+				E297E9221819A5E9C632A273 /* AnalyticsView.swift in Sources */,
+				126EEBF382F3787E48EAA38B /* GIFView.swift in Sources */,
+				2F07F61077B2165A37B82697 /* HelpCenterView.swift in Sources */,
+				A4B0A49A1378A7721A654C36 /* HomeView.swift in Sources */,
+				DB7F36E374350C24D327A90A /* MonitorView.swift in Sources */,
+				67F2A7DBA071F9FB248CC060 /* OnboardingView.swift in Sources */,
+				879DD6FE5499994F27C23EC6 /* PermissionsView.swift in Sources */,
+				C784724E11F6B0A2E1CE2530 /* SessionDetailView.swift in Sources */,
+				D214018AD76AD8991A859992 /* SessionsListView.swift in Sources */,
+				D40D2F44182FA85C919E46D4 /* SettingsView.swift in Sources */,
+				462D2683E00D754D63ADE2AE /* SleepAnimationView.swift in Sources */,
+				25657F1F23E5AE334FB85ADB /* WaveformView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1C7EC05E2FA67A4200FBEB7D /* Sources */ = {
+		5F92247F98CA8415829CA10F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BD8650C6E292C580A1917E4C /* AlertManagerTests.swift in Sources */,
+				4F47721AC0740B9C1C3322C1 /* AudioMathTests.swift in Sources */,
+				204A3710F3EFE4F903D04FEC /* SnoreClipSpectralAnalyzerTests.swift in Sources */,
+				BA1ABF8B48D0F03CE67C68E9 /* SnoreEventDetectorTests.swift in Sources */,
+				DD9AEAE799E3D63F37D484D5 /* SnorryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		1C7EC05A2FA67A4200FBEB7D /* PBXTargetDependency */ = {
+		43A25C108FBD364575345A94 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1C7EC0482FA67A4000FBEB7D /* Snorry */;
-			targetProxy = 1C7EC0592FA67A4200FBEB7D /* PBXContainerItemProxy */;
+			name = Snorry;
+			target = 49A6F22F5AA2164E0F24618F /* Snorry */;
+			targetProxy = DE36677C68ECCCB7719E52EB /* PBXContainerItemProxy */;
 		};
-		1C7EC0642FA67A4200FBEB7D /* PBXTargetDependency */ = {
+		6E2663F6A34D24E2F44BFD3F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1C7EC0482FA67A4000FBEB7D /* Snorry */;
-			targetProxy = 1C7EC0632FA67A4200FBEB7D /* PBXContainerItemProxy */;
+			name = Snorry;
+			target = 49A6F22F5AA2164E0F24618F /* Snorry */;
+			targetProxy = CFCE65C24726562555C1F2C5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		1C7EC06A2FA67A4200FBEB7D /* Debug */ = {
+		0522BC5BAC297239C5A679E2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L675KNV756;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.SnorryUITests;
 				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Snorry;
 			};
 			name = Debug;
 		};
-		1C7EC06B2FA67A4200FBEB7D /* Release */ = {
+		1D85327BC422BB1BE5D33D92 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -368,11 +637,9 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -380,106 +647,110 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		57DB71C100758AE599B73F15 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		6FBF8AAAE78BC437140DB225 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L675KNV756;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.SnorryTests;
 				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Snorry.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Snorry";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
-		1C7EC06D2FA67A4200FBEB7D /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L675KNV756;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Snorry listens to your sleep to detect snoring and gently wake you.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UIBackgroundModes = audio;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		1C7EC06E2FA67A4200FBEB7D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L675KNV756;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Snorry listens to your sleep to detect snoring and gently wake you.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UIBackgroundModes = audio;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		1C7EC0702FA67A4200FBEB7D /* Debug */ = {
+		B4E7A33BD8A67C95E678CB31 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L675KNV756;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.SnorryTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -490,38 +761,17 @@
 			};
 			name = Debug;
 		};
-		1C7EC0712FA67A4200FBEB7D /* Release */ = {
+		D69798172D1E3F7C08C3087D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L675KNV756;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.SnorryTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Snorry.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Snorry";
-			};
-			name = Release;
-		};
-		1C7EC0732FA67A4200FBEB7D /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L675KNV756;
-				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.SnorryUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -529,69 +779,127 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Snorry;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E170D1C5156BC926B4370C26 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L675KNV756;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Snorry listens to your sleep to detect snoring and gently wake you.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIBackgroundModes = audio;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E8D633EEEB1B02C4FF4D2C13 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L675KNV756;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Snorry listens to your sleep to detect snoring and gently wake you.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIBackgroundModes = audio;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
-		};
-		1C7EC0742FA67A4200FBEB7D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = L675KNV756;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.SnorryUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = Snorry;
-			};
-			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1C7EC0442FA67A4000FBEB7D /* Build configuration list for PBXProject "Snorry" */ = {
+		1039CFEE3B2F0DC154A88EF6 /* Build configuration list for PBXNativeTarget "SnorryUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				1C7EC06A2FA67A4200FBEB7D /* Debug */,
-				1C7EC06B2FA67A4200FBEB7D /* Release */,
+				D69798172D1E3F7C08C3087D /* Release */,
+				0522BC5BAC297239C5A679E2 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1C7EC06C2FA67A4200FBEB7D /* Build configuration list for PBXNativeTarget "Snorry" */ = {
+		6595020B2AB442DB43027825 /* Build configuration list for PBXProject "Snorry" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				1C7EC06D2FA67A4200FBEB7D /* Debug */,
-				1C7EC06E2FA67A4200FBEB7D /* Release */,
+				57DB71C100758AE599B73F15 /* Debug */,
+				1D85327BC422BB1BE5D33D92 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1C7EC06F2FA67A4200FBEB7D /* Build configuration list for PBXNativeTarget "SnorryTests" */ = {
+		9B376307E38692B8A62E726B /* Build configuration list for PBXNativeTarget "Snorry" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				1C7EC0702FA67A4200FBEB7D /* Debug */,
-				1C7EC0712FA67A4200FBEB7D /* Release */,
+				E170D1C5156BC926B4370C26 /* Release */,
+				E8D633EEEB1B02C4FF4D2C13 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1C7EC0722FA67A4200FBEB7D /* Build configuration list for PBXNativeTarget "SnorryUITests" */ = {
+		AC3AC2F5606AC4B913E88164 /* Build configuration list for PBXNativeTarget "SnorryTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				1C7EC0732FA67A4200FBEB7D /* Debug */,
-				1C7EC0742FA67A4200FBEB7D /* Release */,
+				6FBF8AAAE78BC437140DB225 /* Release */,
+				B4E7A33BD8A67C95E678CB31 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 1C7EC0412FA67A4000FBEB7D /* Project object */;
+	rootObject = 7363CB5C462D9CA35C25AE60 /* Project object */;
 }
