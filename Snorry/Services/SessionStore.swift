@@ -48,13 +48,7 @@ final class SessionStore {
         guard let session = activeSession else { return }
         session.endDate = Date()
 
-        // Rollup stats
-        let completedEvents = session.events.filter { $0.endDate != nil }
-        session.eventCount = completedEvents.count
-        session.totalSnoreDuration = completedEvents.compactMap { $0.duration }.reduce(0, +)
-        let brpms = completedEvents.filter { $0.brpm > 0 }.map { $0.brpm }
-        session.avgBRPM = brpms.isEmpty ? 0 : brpms.reduce(0, +) / Double(brpms.count)
-        session.peakDB = completedEvents.map { $0.peakDB }.max() ?? -160
+        rollupStatistics(for: session)
 
         flushWaveformBuffer(to: session)
         saveContext()
@@ -63,6 +57,16 @@ final class SessionStore {
         activeSession = nil
         openEvents.removeAll()
         logger.info("Session finalized: \(session.id)")
+    }
+
+    /// Recomputes denormalized session fields from `events` (completed bouts only).
+    private func rollupStatistics(for session: SnoreSession) {
+        let completedEvents = session.events.filter { $0.endDate != nil }
+        session.eventCount = completedEvents.count
+        session.totalSnoreDuration = completedEvents.compactMap { $0.duration }.reduce(0, +)
+        let brpms = completedEvents.filter { $0.brpm > 0 }.map { $0.brpm }
+        session.avgBRPM = brpms.isEmpty ? 0 : brpms.reduce(0, +) / Double(brpms.count)
+        session.peakDB = completedEvents.map { $0.peakDB }.max() ?? -160
     }
 
     // MARK: Event lifecycle
@@ -176,11 +180,41 @@ final class SessionStore {
             predicate: #Predicate { $0.id == id }
         )
         if let orphan = try? context.fetch(descriptor).first {
-            orphan.endDate = Date()
+            let end = Date()
+            orphan.endDate = end
+            // Bouts still “open” at crash never got `endEvent` — close them so rollup matches the event log.
+            for event in orphan.events where event.endDate == nil {
+                event.endDate = end
+            }
+            rollupStatistics(for: orphan)
             saveContext()
             logger.info("Recovered orphaned session: \(id)")
         }
         UserDefaults.standard.removeObject(forKey: "currentSessionID")
+    }
+
+    /// Repairs denormalized stats for sessions saved before orphan rollup existed, or rows where `eventCount` drifted.
+    func reconcileEndedSessionsOnLaunch() {
+        let descriptor = FetchDescriptor<SnoreSession>()
+        guard let sessions = try? context.fetch(descriptor) else { return }
+        var anyChanged = false
+        for session in sessions {
+            guard let sessionEnd = session.endDate else { continue }
+            var touched = false
+            for event in session.events where event.endDate == nil {
+                event.endDate = sessionEnd
+                touched = true
+            }
+            let completed = session.events.filter { $0.endDate != nil }.count
+            if touched || completed != session.eventCount {
+                rollupStatistics(for: session)
+                anyChanged = true
+            }
+        }
+        if anyChanged {
+            saveContext()
+            logger.info("Reconciled session rollups for ended sessions")
+        }
     }
 
     // MARK: Private

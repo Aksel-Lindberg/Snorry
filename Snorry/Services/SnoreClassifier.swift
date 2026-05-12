@@ -35,7 +35,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     var confidenceThreshold: Float = 0.60
 
     /// Background RMS gate: higher dBFS = louder required → **less** sensitive than foreground ML.
-    private let energyFallbackThresholdDB: Float = -34
+    private let energyFallbackThresholdDB: Float = -36
 
     /// Only read/written on `analysisQueue` — true after `didEnterBackground`, false after `willEnterForeground`.
     private var useEnergyFallbackWhileBackground = false

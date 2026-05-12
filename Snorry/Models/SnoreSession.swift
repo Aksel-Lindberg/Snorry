@@ -55,6 +55,12 @@ final class SnoreSession {
         return min(1, totalSnoreDuration / dur)
     }
 
+    /// Number of `SnoreEvent` rows (matches the session detail list). Stored `eventCount` is kept in sync on finalize;
+    /// use this in UI so rows stay accurate if rollup was skipped (e.g. crash before `finalizeSession`).
+    var displayEventCount: Int {
+        events.count
+    }
+
     // MARK: Display strings (Monitor card + session detail — avoids spinning up `SessionDetailViewModel`)
 
     /// e.g. `"6h 57m"` or `"42m"`.
@@ -77,8 +83,9 @@ final class SnoreSession {
 
     /// Mean snore‑bout length across counted events.
     var displayAvgSnoreTimePerEvent: String {
-        guard eventCount > 0, totalSnoreDuration > 0 else { return "—" }
-        let avg = totalSnoreDuration / Double(eventCount)
+        let completed = events.filter { $0.endDate != nil }.count
+        guard completed > 0, totalSnoreDuration > 0 else { return "—" }
+        let avg = totalSnoreDuration / Double(completed)
         return Self.formatSnoreDuration(seconds: avg)
     }
 

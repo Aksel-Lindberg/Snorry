@@ -226,7 +226,7 @@ struct HomeView: View {
                     VStack(spacing: 6) {
                         HStack(spacing: 0) {
                             summaryItem(label: "Sleep duration", value: session.displayDurationSummary)
-                            summaryItem(label: "Events", value: "\(session.eventCount)")
+                            summaryItem(label: "Events", value: "\(session.displayEventCount)")
                             summaryItem(label: "Snoring", value: session.displaySnoringPercent)
                         }
                         HStack(spacing: 0) {
@@ -245,7 +245,7 @@ struct HomeView: View {
     private func lastSessionMetrics(session: SnoreSession) -> some View {
         HStack(spacing: 0) {
             summaryItem(label: "Sleep duration", value: session.displayDurationSummary)
-            summaryItem(label: "Events", value: "\(session.eventCount)")
+            summaryItem(label: "Events", value: "\(session.displayEventCount)")
             summaryItem(label: "Total snore", value: session.displayTotalSnoreTime)
             summaryItem(label: "Avg / event", value: session.displayAvgSnoreTimePerEvent)
             summaryItem(label: "Snoring", value: session.displaySnoringPercent)

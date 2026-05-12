@@ -110,7 +110,7 @@ private struct SessionRowView: View {
             HStack(spacing: 27) {
                 HStack(spacing: 4) {
                     Image(systemName: "waveform")
-                    Text("\(session.eventCount)")
+                    Text("\(session.displayEventCount)")
                         .fontWeight(.bold)
                         .frame(width: 24, alignment: .trailing)
                     Text("events")

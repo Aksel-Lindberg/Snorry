@@ -48,9 +48,9 @@ struct SnorryApp: App {
                 .environment(appEnv)
                 .preferredColorScheme(.dark)
                 .task {
-                    // Recover any session interrupted by a prior process kill
                     let store = SessionStore(context: sharedModelContainer.mainContext)
                     store.recoverOrphanedSession()
+                    store.reconcileEndedSessionsOnLaunch()
                 }
         }
         .modelContainer(sharedModelContainer)
