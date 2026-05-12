@@ -111,6 +111,7 @@ final class MonitorViewModel {
     /// Held only for removal in `deinit` (nonisolated) — tokens are thread-safe opaque handles.
     nonisolated(unsafe) private var lockScreenBGObserver: NSObjectProtocol?
     nonisolated(unsafe) private var lockScreenFGObserver: NSObjectProtocol?
+    nonisolated(unsafe) private var alertSettingsSaveObserver: NSObjectProtocol?
 
     private let modelContext: ModelContext
 
@@ -139,6 +140,16 @@ final class MonitorViewModel {
                 self?.restoreLockScreenDetectorTuning()
             }
         }
+
+        alertSettingsSaveObserver = nc.addObserver(
+            forName: .snorryAlertSettingsDidSave,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.reapplySnoreDetectionFromSavedSettings()
+            }
+        }
     }
 
     deinit {
@@ -147,6 +158,9 @@ final class MonitorViewModel {
         }
         if let lockScreenFGObserver {
             NotificationCenter.default.removeObserver(lockScreenFGObserver)
+        }
+        if let alertSettingsSaveObserver {
+            NotificationCenter.default.removeObserver(alertSettingsSaveObserver)
         }
     }
 
@@ -235,13 +249,25 @@ final class MonitorViewModel {
         // Alarm tone style for this session.
         alarmPlayer.setStyle(AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic)
 
-        // Sensitivity is fixed at Very High (blend = 1.0): lowest onset threshold, most sensitive
-        // classifier. blend=0 (low) → high thresholds; blend=1 (very high) → low thresholds.
-        let blend: Float = 1.0
-        detector.onsetThresholdDB        = (1 - blend) * 20.0 + blend * 2.0    // fixed at 2 dB
-        classifier.confidenceThreshold   = (1 - blend) * 0.75 + blend * 0.30   // fixed at 0.30
+        applySnoreDetectionTuning(sensitivity: settings.snoringDetectionSensitivity)
 
         startTasks()
+    }
+
+    /// Foreground: SoundAnalysis confidence + onset dB. Background / lock: RMS gate (`energyFallbackThresholdDB`).
+    private func applySnoreDetectionTuning(sensitivity: Double) {
+        SnoreDetectionTuning.apply(
+            sensitivityLevel: sensitivity,
+            classifier: classifier,
+            detector: detector
+        )
+    }
+
+    /// After Settings save while monitoring — keeps classifier + detector aligned with stored sensitivity.
+    private func reapplySnoreDetectionFromSavedSettings() {
+        guard isMonitoring else { return }
+        let settings = AlertSettings.load(context: modelContext)
+        applySnoreDetectionTuning(sensitivity: settings.snoringDetectionSensitivity)
     }
 
     func stopMonitoring() {

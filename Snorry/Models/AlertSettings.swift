@@ -14,8 +14,7 @@ final class AlertSettings {
     /// Master output level (0–1) used for sound alerts and style preview playback.
     var alarmVolume: Float
 
-    /// Snore detection sensitivity (1 = low, 5 = very high). Fixed at 5; stored for
-    /// potential future use but not exposed in the UI or read at runtime.
+    /// Snore detection sensitivity (1 = low, 5 = high). Default 3 matches prior factory tuning.
     var snoringDetectionSensitivity: Double
 
     /// Raw value of the selected `AlarmStyle` (stored as Int for SwiftData compatibility).
@@ -34,7 +33,7 @@ final class AlertSettings {
         notifyDelaySeconds        = 2
         soundAlarmAfterSeconds    = 10
         alarmVolume               = 0.50
-        snoringDetectionSensitivity = 5
+        snoringDetectionSensitivity = 3
         alarmStyleRaw             = AlarmStyle.marimbaIntrumental.rawValue
         pushNotificationEnabled   = true
         soundAlarmEnabled         = true

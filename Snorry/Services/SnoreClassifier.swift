@@ -35,7 +35,8 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     var confidenceThreshold: Float = 0.60
 
     /// Background RMS gate: higher dBFS = louder required → **less** sensitive than foreground ML.
-    private let energyFallbackThresholdDB: Float = -42
+    /// Adjusted with the user’s snore sensitivity setting together with `confidenceThreshold`.
+    var energyFallbackThresholdDB: Float = -42
 
     /// Only read/written on `analysisQueue` — true after `didEnterBackground`, false after `willEnterForeground`.
     private var useEnergyFallbackWhileBackground = false
@@ -194,5 +195,48 @@ extension SnoreClassifier: SNResultsObserving {
 
     func request(_ request: SNRequest, didFailWithError error: Error) {
         logger.error("Classifier error: \(error)")
+    }
+}
+
+// MARK: - Snore sensitivity → classifier + onset detector
+
+/// Maps the Settings slider (1…5) to foreground ML thresholds and the lock-screen RMS gate.
+/// Level **3** matches the historical fixed tuning (confidence 0.30, onset +2 dB, RMS −42 dBFS).
+enum SnoreDetectionTuning {
+
+    static func apply(
+        sensitivityLevel: Double,
+        classifier: SnoreClassifier,
+        detector: SnoreEventDetector
+    ) {
+        let level = max(1, min(5, Int(sensitivityLevel.rounded())))
+        let profile = profile(for: level)
+        classifier.confidenceThreshold = profile.confidenceThreshold
+        classifier.energyFallbackThresholdDB = profile.energyFallbackThresholdDB
+        detector.onsetThresholdDB = profile.onsetThresholdDB
+    }
+
+    private struct Profile {
+        let confidenceThreshold: Float
+        let onsetThresholdDB: Float
+        let energyFallbackThresholdDB: Float
+    }
+
+    private static func profile(for level: Int) -> Profile {
+        switch level {
+        case 1:
+            return Profile(confidenceThreshold: 0.75, onsetThresholdDB: 20, energyFallbackThresholdDB: -28)
+        case 2:
+            // Blend 0.5 of the historical low ↔ high curve (matches interpolated onset/confidence).
+            return Profile(confidenceThreshold: 0.525, onsetThresholdDB: 11, energyFallbackThresholdDB: -35)
+        case 3:
+            return Profile(confidenceThreshold: 0.30, onsetThresholdDB: 2, energyFallbackThresholdDB: -42)
+        case 4:
+            return Profile(confidenceThreshold: 0.22, onsetThresholdDB: 1.25, energyFallbackThresholdDB: -44)
+        case 5:
+            return Profile(confidenceThreshold: 0.15, onsetThresholdDB: 0.75, energyFallbackThresholdDB: -46)
+        default:
+            return profile(for: 3)
+        }
     }
 }

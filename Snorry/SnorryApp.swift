@@ -63,3 +63,8 @@ final class AppEnvironment {
     let notifications = NotificationManager.shared
     // Services that depend on SwiftData context are instantiated per-view-model.
 }
+
+extension Notification.Name {
+    /// Posted after Settings saves `AlertSettings` so monitoring can refresh snore tuning.
+    static let snorryAlertSettingsDidSave = Notification.Name("snorryAlertSettingsDidSave")
+}
