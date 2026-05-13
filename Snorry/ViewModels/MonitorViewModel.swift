@@ -138,6 +138,7 @@ final class MonitorViewModel {
         ) { [weak self] _ in
             Task { @MainActor in
                 self?.restoreLockScreenDetectorTuning()
+                await self?.syncNotificationAuthorizationFromSystem()
             }
         }
 
@@ -148,6 +149,7 @@ final class MonitorViewModel {
         ) { [weak self] _ in
             Task { @MainActor in
                 self?.reapplySnoreDetectionFromSavedSettings()
+                await self?.syncNotificationAuthorizationFromSystem()
             }
         }
     }
@@ -180,8 +182,9 @@ final class MonitorViewModel {
         microphonePermission = granted ? .granted : .denied
     }
 
-    func requestNotifications() async {
-        await notifications.requestAuthorization()
+    /// Reads notification permission from the system without prompting (prompt happens in Settings when enabling push).
+    func syncNotificationAuthorizationFromSystem() async {
+        await notifications.refreshAuthorizationState()
         notificationAuthorized = notifications.isAuthorized
     }
 

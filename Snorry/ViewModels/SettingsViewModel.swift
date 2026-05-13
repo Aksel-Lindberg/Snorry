@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UserNotifications
 
 @Observable
 @MainActor
@@ -12,7 +13,7 @@ final class SettingsViewModel {
     var soundAlarmAfter: Double = 10
     var alarmVolume: Float      = 0.50
 
-    var pushNotificationEnabled: Bool = true
+    var pushNotificationEnabled: Bool = false
     var soundAlarmEnabled: Bool       = true
     var pushRepeatEnabled: Bool       = true
     var pushRepeatInterval: Double    = 3
@@ -24,6 +25,9 @@ final class SettingsViewModel {
     var alarmStyle: AlarmStyle = .marimbaIntrumental
     /// Alarm style currently being previewed in Settings.
     private(set) var previewingAlarmStyle: AlarmStyle?
+
+    /// Shown when the user enables push but iOS notifications are denied (Settings app).
+    private(set) var pushNotificationsBlockedMessage: String?
 
     /// Set when bulk log deletion fails so the UI can show an alert.
     private(set) var deleteLogsFailedMessage: String?
@@ -168,6 +172,33 @@ final class SettingsViewModel {
 
     func clearDeleteLogsError() {
         deleteLogsFailedMessage = nil
+    }
+
+    func clearPushNotificationsBlockedMessage() {
+        pushNotificationsBlockedMessage = nil
+    }
+
+    /// Turning push off applies immediately. Turning on runs the system permission flow first.
+    func setPushNotificationEnabled(_ enabled: Bool) async {
+        if !enabled {
+            pushNotificationEnabled = false
+            pushNotificationsBlockedMessage = nil
+            return
+        }
+
+        let allowed = await NotificationManager.shared.ensureAlertDeliveryAuthorized()
+        if allowed {
+            pushNotificationEnabled = true
+            pushNotificationsBlockedMessage = nil
+            return
+        }
+
+        pushNotificationEnabled = false
+        let status = await NotificationManager.shared.checkAuthorisationStatus()
+        if status == .denied {
+            pushNotificationsBlockedMessage =
+                "Notifications are turned off for Snorry. Enable them in Settings to use push alerts."
+        }
     }
 
     // MARK: Alarm style preview

@@ -79,6 +79,9 @@ struct PermissionsView: View {
                 }
             }
             .navigationBarHidden(true)
+            .task {
+                await vm.syncNotificationAuthorizationFromSystem()
+            }
         }
     }
 }

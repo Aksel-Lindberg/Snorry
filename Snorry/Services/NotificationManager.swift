@@ -25,16 +25,44 @@ final class NotificationManager: NSObject, @unchecked Sendable {
 
     func requestAuthorization() async {
         do {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
-            isAuthorized = granted
-            logger.info("Notification authorisation granted: \(granted)")
+            _ = try await center.requestAuthorization(options: [.alert, .sound, .badge])
         } catch {
             logger.error("Notification auth error: \(error)")
         }
+        await refreshAuthorizationState()
+        logger.info("Notification authorisation after prompt: \(self.isAuthorized)")
     }
 
     func checkAuthorisationStatus() async -> UNAuthorizationStatus {
         await center.notificationSettings().authorizationStatus
+    }
+
+    /// Syncs `isAuthorized` from the system without presenting a permission prompt.
+    func refreshAuthorizationState() async {
+        let status = await checkAuthorisationStatus()
+        switch status {
+        case .authorized, .provisional, .ephemeral:
+            isAuthorized = true
+        default:
+            isAuthorized = false
+        }
+    }
+
+    /// Presents the system permission UI when needed; returns whether snore alerts may be scheduled.
+    func ensureAlertDeliveryAuthorized() async -> Bool {
+        var status = await checkAuthorisationStatus()
+        if status == .notDetermined {
+            await requestAuthorization()
+            status = await checkAuthorisationStatus()
+        }
+        switch status {
+        case .authorized, .provisional, .ephemeral:
+            isAuthorized = true
+            return true
+        default:
+            isAuthorized = false
+            return false
+        }
     }
 
     // MARK: Alert scheduling
@@ -57,7 +85,10 @@ final class NotificationManager: NSObject, @unchecked Sendable {
     private func scheduleDelivery(identifier: String) {
         center.getNotificationSettings { [weak self] settings in
             guard let self else { return }
-            guard settings.authorizationStatus == .authorized else {
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral:
+                break
+            default:
                 self.logger.warning("Skipping snoring alert — notifications not authorized")
                 return
             }

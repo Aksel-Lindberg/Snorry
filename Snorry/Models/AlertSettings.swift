@@ -35,7 +35,7 @@ final class AlertSettings {
         alarmVolume               = 0.50
         snoringDetectionSensitivity = 3
         alarmStyleRaw             = AlarmStyle.marimbaIntrumental.rawValue
-        pushNotificationEnabled   = true
+        pushNotificationEnabled   = false
         soundAlarmEnabled         = true
         pushRepeatEnabled         = true
         pushRepeatIntervalSeconds = 3

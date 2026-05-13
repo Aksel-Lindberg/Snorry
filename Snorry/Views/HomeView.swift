@@ -277,7 +277,7 @@ struct HomeView: View {
         guard vm == nil else { return }
         let newVM = MonitorViewModel(modelContext: context)
         vm = newVM
-        Task { await newVM.requestNotifications() }
+        Task { await newVM.syncNotificationAuthorizationFromSystem() }
     }
 
     private func handleStartTap(vm: MonitorViewModel) {

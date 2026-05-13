@@ -448,7 +448,7 @@ struct EventPlaybackRow: View {
             // Metric bars — shown when duration and/or other measurements were captured for this event.
             if durationFill != nil || event.brpm > 0 || event.avgDB > -160
                 || event.spectralPeakHz > 0 || event.rumbleFrequencyHz > 0 {
-                VStack(spacing: 5) {
+                VStack(spacing: 7) {
                     // Snore duration: mapped from 5 s (0%) to 10 min (100%).
                     if let durationFill {
                         EventMetricBar(
@@ -514,8 +514,45 @@ private struct EventMetricBar: View {
     let color: Color
     var systemImage: String? = nil
 
+    private let barHeight: CGFloat = 9
+
+    private var clampedFill: CGFloat {
+        CGFloat(max(0, min(1, fill)))
+    }
+
+    /// Soft track + a slightly richer fill (readability on dark UI).
+    private var trackFill: some View {
+        Capsule()
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Theme.surfaceSecondary.opacity(0.35),
+                        Theme.surfaceSecondary.opacity(0.22)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .overlay {
+                Capsule()
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
+            }
+    }
+
+    private var fillGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                color.opacity(0.42),
+                color.opacity(0.72),
+                color.opacity(0.92)
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 4) {
             if let systemImage {
                 Label(label, systemImage: systemImage)
                     .font(.caption2)
@@ -527,33 +564,34 @@ private struct EventMetricBar: View {
             }
 
             GeometryReader { geo in
+                let fillWidth = geo.size.width * clampedFill
+
                 ZStack {
-                    // Track
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(color.opacity(0.12))
+                    trackFill
 
-                    // Fill
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(
-                            LinearGradient(
-                                colors: [color.opacity(0.45), color.opacity(0.80)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: geo.size.width * CGFloat(max(0, min(1, fill))),
-                               height: geo.size.height)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(spacing: 0) {
+                        Capsule()
+                            .fill(fillGradient)
+                            .frame(width: fillWidth, height: barHeight)
+                            .overlay {
+                                Capsule()
+                                    .strokeBorder(color.opacity(0.22), lineWidth: 0.5)
+                            }
+                        Spacer(minLength: 0)
+                    }
+                    .frame(height: barHeight)
 
-                    // Value centred on the bar
                     Text(value)
-                        .font(Theme.monoDigit(size: 10))
-                        .foregroundStyle(.white.opacity(0.90))
+                        .font(Theme.monoDigit(size: 9, weight: .medium))
+                        .foregroundStyle(Color.white.opacity(0.92))
+                        .shadow(color: .black.opacity(0.45), radius: 1.2, y: 0.5)
+                        .minimumScaleFactor(0.85)
+                        .lineLimit(1)
                         .frame(maxWidth: .infinity)
                 }
             }
-            .frame(height: 16)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .frame(height: barHeight)
+            .clipShape(Capsule())
         }
     }
 }

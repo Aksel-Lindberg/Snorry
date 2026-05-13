@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 // MARK: - Alert threshold configuration
 struct SettingsView: View {
@@ -99,6 +100,23 @@ struct SettingsView: View {
         } message: {
             Text(vm.deleteLogsFailedMessage ?? "")
         }
+        .alert(
+            "Notifications",
+            isPresented: Binding(
+                get: { vm.pushNotificationsBlockedMessage != nil },
+                set: { if !$0 { vm.clearPushNotificationsBlockedMessage() } }
+            )
+        ) {
+            Button("Open Settings") {
+                vm.clearPushNotificationsBlockedMessage()
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("OK", role: .cancel) { vm.clearPushNotificationsBlockedMessage() }
+        } message: {
+            Text(vm.pushNotificationsBlockedMessage ?? "")
+        }
     }
 
     // MARK: Sections
@@ -166,7 +184,9 @@ struct SettingsView: View {
         Section {
             Toggle(isOn: Binding(
                 get: { vm.pushNotificationEnabled },
-                set: { vm.pushNotificationEnabled = $0 }
+                set: { newValue in
+                    Task { await vm.setPushNotificationEnabled(newValue) }
+                }
             )) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Push notifications")
@@ -211,6 +231,8 @@ struct SettingsView: View {
         } footer: {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Turn on one or both. With both on: push fires first, then sound after the configured delay. Sound-only skips push; push-only never plays sound.")
+                    .foregroundStyle(Theme.labelSecondary)
+                Text("The first time you turn on push, iOS asks whether Snorry may send notifications.")
                     .foregroundStyle(Theme.labelSecondary)
                 if !vm.pushNotificationEnabled && !vm.soundAlarmEnabled {
                     Text("No alerts will fire until you enable push and/or sound.")
