@@ -31,11 +31,14 @@ final class SettingsViewModel {
     private(set) var isDeletingLogs = false
 
     private let context: ModelContext
+    /// Used for bulk deletion off the main actor so the UI stays responsive with large histories.
+    private let modelContainer: ModelContainer
     private var settings: AlertSettings?
     private let alarmPreviewPlayer = AlarmTonePlayer()
 
     init(context: ModelContext) {
         self.context = context
+        self.modelContainer = context.container
         load()
     }
 
@@ -125,12 +128,11 @@ final class SettingsViewModel {
         stopAlarmStylePreview()
         deleteLogsFailedMessage = nil
 
-        Task { @MainActor in
-            isDeletingLogs = true
-            defer { isDeletingLogs = false }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
 
             // Prevent a debounced clip-path save (from monitoring) from firing after rows are deleted.
-            SessionStore.cancelPendingDebouncedSave(for: context)
+            SessionStore.cancelPendingDebouncedSave(for: self.context)
 
             do {
                 // Do not wipe rows while monitoring is active; that can leave live pipelines pointing
@@ -138,45 +140,28 @@ final class SettingsViewModel {
                 let activeDescriptor = FetchDescriptor<SnoreSession>(
                     predicate: #Predicate<SnoreSession> { $0.endDate == nil }
                 )
-                let hasActiveSession = try !context.fetch(activeDescriptor).isEmpty
+                let hasActiveSession = try !self.context.fetch(activeDescriptor).isEmpty
                 if hasActiveSession {
-                    deleteLogsFailedMessage = "Stop monitoring before deleting logs."
+                    self.deleteLogsFailedMessage = "Stop monitoring before deleting logs."
                     return
                 }
+            } catch {
+                self.deleteLogsFailedMessage = error.localizedDescription
+                return
+            }
 
-                let sessions = try context.fetch(FetchDescriptor<SnoreSession>())
-                var clipURLs: [URL] = []
-                clipURLs.reserveCapacity(sessions.count * 2)
+            self.isDeletingLogs = true
+            defer { self.isDeletingLogs = false }
 
-                for (index, session) in sessions.enumerated() {
-                    clipURLs.append(contentsOf: session.events.compactMap(\.audioURL))
-                    context.delete(session)
-
-                    // Batch flushes keep large deletions responsive.
-                    if index.isMultiple(of: 40) {
-                        try context.save()
-                        await Task.yield()
-                    }
-                }
-
-                let changes = try context.fetch(FetchDescriptor<AlertSettingsChange>())
-                for (index, change) in changes.enumerated() {
-                    context.delete(change)
-                    if index.isMultiple(of: 120) {
-                        try context.save()
-                        await Task.yield()
-                    }
-                }
-
-                // Avoid pointing at a deleted session if monitoring state was left in UserDefaults.
+            do {
+                let deleter = SleepLogsDeletionActor(modelContainer: self.modelContainer)
+                let clipURLs = try await deleter.deleteAllSessionsAndSettingsMarkers()
                 UserDefaults.standard.removeObject(forKey: "currentSessionID")
-                try context.save()
-
                 Task.detached(priority: .utility) {
                     Self.deleteClipFiles(urls: clipURLs)
                 }
             } catch {
-                deleteLogsFailedMessage = error.localizedDescription
+                self.deleteLogsFailedMessage = error.localizedDescription
             }
         }
     }

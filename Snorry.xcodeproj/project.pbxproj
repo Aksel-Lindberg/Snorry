@@ -23,9 +23,9 @@
 		462D2683E00D754D63ADE2AE /* SleepAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C2F7F64989DD486B79A682 /* SleepAnimationView.swift */; };
 		4F47721AC0740B9C1C3322C1 /* AudioMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */; };
 		4FE5C5B5A8628421E3FCF11E /* Windplay.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */; };
+		5A0E2D2F4C1745B890A1D3E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A0E2D2F4C1745B890A1D3E2 /* Assets.xcassets */; };
 		5AE41B3C3FD7C95969F2831C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0D7E4820D5B40D5D01D18D1 /* Theme.swift */; };
 		5B89E8165FC1A8B789037BD7 /* Birds.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 279BCEFABDD69D92780F30DE /* Birds.mp3 */; };
-		5A0E2D2F4C1745B890A1D3E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A0E2D2F4C1745B890A1D3E2 /* Assets.xcassets */; };
 		619277A0FEAB50A31193F873 /* AudioMonitorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */; };
 		65C469C1EF899DFC639AE675 /* Rapid_Wake.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 78A70941B37140F2EDDE04BA /* Rapid_Wake.mp3 */; };
 		676F52EF24FBBC3904445F24 /* AudioMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E1FD86195053E77F6425F9F /* AudioMath.swift */; };
@@ -54,6 +54,7 @@
 		AC645F2038FE2E11B32BC934 /* Tornado.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = E8752C417837145970A7AE3E /* Tornado.mp3 */; };
 		AF86D422BDA1C67CD7A9D9F3 /* LiveSpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */; };
 		B075C6C506A48FFCE98C30BA /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C900E57250862B011EE8C4 /* SessionStore.swift */; };
+		D99A00012EAA4B00C99A0006 /* SleepLogsDeletionActor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99A00012EAA4B00C99A0005 /* SleepLogsDeletionActor.swift */; };
 		BA1ABF8B48D0F03CE67C68E9 /* SnoreEventDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */; };
 		BC2665D2FF0AF7EA995045FB /* ClipRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D62F5369622A86D30CFA65A /* ClipRecorder.swift */; };
 		BD8650C6E292C580A1917E4C /* AlertManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0BF8FEF9DD4EF6084ACC6C /* AlertManagerTests.swift */; };
@@ -106,24 +107,22 @@
 		02D05DF695906DB7AAF6107F /* SnoreEventDetector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreEventDetector.swift; path = Services/SnoreEventDetector.swift; sourceTree = "<group>"; };
 		034D2D9AB10665B0C8CB1B9F /* SnorryUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnorryUITests.swift; path = SnorryUITests/SnorryUITests.swift; sourceTree = "<group>"; };
 		03C900E57250862B011EE8C4 /* SessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionStore.swift; path = Services/SessionStore.swift; sourceTree = "<group>"; };
+		D99A00012EAA4B00C99A0005 /* SleepLogsDeletionActor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepLogsDeletionActor.swift; path = Services/SleepLogsDeletionActor.swift; sourceTree = "<group>"; };
 		0E1FD86195053E77F6425F9F /* AudioMath.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioMath.swift; path = Utilities/AudioMath.swift; sourceTree = "<group>"; };
 		0EE2C4964B91AB4720E8AFC3 /* Late_Night_Curb.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Late_Night_Curb.mp3; path = Resources/Late_Night_Curb.mp3; sourceTree = "<group>"; };
 		13777D4919BAC1C94B113483 /* MonitorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitorView.swift; path = Views/MonitorView.swift; sourceTree = "<group>"; };
 		1A95B0DD1AEC516E507C1B1B /* AnalyticsViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AnalyticsViewModel.swift; path = ViewModels/AnalyticsViewModel.swift; sourceTree = "<group>"; };
 		1EF584F086C55FF9542E4815 /* MonitorViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitorViewModel.swift; path = ViewModels/MonitorViewModel.swift; sourceTree = "<group>"; };
 		21AA62568AD509DB2EF3C867 /* LegalLinks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LegalLinks.swift; path = Utilities/LegalLinks.swift; sourceTree = "<group>"; };
-		26DA08A7F2F357828EE93D90 /* Contents.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = Contents.json; path = Assets.xcassets/AppIcon.appiconset/Contents.json; sourceTree = "<group>"; };
 		279BCEFABDD69D92780F30DE /* Birds.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Birds.mp3; path = Resources/Birds.mp3; sourceTree = "<group>"; };
 		2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiveSpectrumAnalyzer.swift; path = Utilities/LiveSpectrumAnalyzer.swift; sourceTree = "<group>"; };
 		33D1DDE7F8E9E6DBA7BBDCA0 /* SessionsListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionsListView.swift; path = Views/SessionsListView.swift; sourceTree = "<group>"; };
 		35A1C94A9E4F4D3CA9B9E2A2 /* SupportView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SupportView.swift; path = Views/SupportView.swift; sourceTree = "<group>"; };
 		37F972562D70C58D2A242EE7 /* Indigo_Window.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Indigo_Window.mp3; path = Resources/Indigo_Window.mp3; sourceTree = "<group>"; };
-		455FBB9E12AF91E48C08F0D7 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		455FBB9E12AF91E48C08F0D7 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		49D488573FFBA9ADFCE1E490 /* Piano.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Piano.mp3; path = Resources/Piano.mp3; sourceTree = "<group>"; };
-		4A03A690D2181A0F7355602F /* Contents.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = Contents.json; path = Assets.xcassets/HomeAppIcon.imageset/Contents.json; sourceTree = "<group>"; };
 		51A9F63FA957C465BB7935C9 /* SettingsViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SettingsViewModel.swift; path = ViewModels/SettingsViewModel.swift; sourceTree = "<group>"; };
-		561F4542E356DF40A905FE37 /* HomeAppIcon.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = HomeAppIcon.png; path = Assets.xcassets/HomeAppIcon.imageset/HomeAppIcon.png; sourceTree = "<group>"; };
-		5A0E2D2F4C1745B890A1D3E2 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Assets.xcassets; sourceTree = "<group>"; };
+		5A0E2D2F4C1745B890A1D3E2 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5A22F7770F71C072B638D91A /* NormalizingClipPlayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NormalizingClipPlayer.swift; path = Services/NormalizingClipPlayer.swift; sourceTree = "<group>"; };
 		5A55EDDD2F1C197F6A297891 /* Bell.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Bell.mp3; path = Resources/Bell.mp3; sourceTree = "<group>"; };
 		688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Marimba intrumental.mp3"; path = "Resources/Marimba intrumental.mp3"; sourceTree = "<group>"; };
@@ -143,9 +142,7 @@
 		847E52E3C320BA4F7714D0B6 /* SnoreClassifier.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreClassifier.swift; path = Services/SnoreClassifier.swift; sourceTree = "<group>"; };
 		88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioMonitorService.swift; path = Services/AudioMonitorService.swift; sourceTree = "<group>"; };
 		9034FB5F88CC6CE01A88F2B4 /* SnorryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnorryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		92B789E63D6E30A4F499CB1E /* SnorryApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnorryApp.swift; path = SnorryApp.swift; sourceTree = "<group>"; };
-		C99A00012EAA4B00C99A0001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C99A00012EAA4B00C99A0002 /* Snorry.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Snorry.entitlements; sourceTree = "<group>"; };
+		92B789E63D6E30A4F499CB1E /* SnorryApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnorryApp.swift; sourceTree = "<group>"; };
 		9DF99C03511A2D5234A814CD /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SettingsView.swift; path = Views/SettingsView.swift; sourceTree = "<group>"; };
 		9DFCC2A41C477B067869FD2E /* PermissionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PermissionsView.swift; path = Views/PermissionsView.swift; sourceTree = "<group>"; };
 		A0C3E57FFA2899D2DBB53474 /* GIFView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GIFView.swift; path = Views/GIFView.swift; sourceTree = "<group>"; };
@@ -166,23 +163,22 @@
 		C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreClipSpectralAnalyzerTests.swift; path = SnorryTests/SnoreClipSpectralAnalyzerTests.swift; sourceTree = "<group>"; };
 		C69F5F66A10D0D418B3D145B /* Copper_Light_at_Six.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Copper_Light_at_Six.mp3; path = Resources/Copper_Light_at_Six.mp3; sourceTree = "<group>"; };
 		C97CCF1673CF0A8A9A928601 /* SessionDetailViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionDetailViewModel.swift; path = ViewModels/SessionDetailViewModel.swift; sourceTree = "<group>"; };
+		C99A00012EAA4B00C99A0001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C99A00012EAA4B00C99A0002 /* Snorry.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Snorry.entitlements; sourceTree = "<group>"; };
 		CAF6A271B36245A9E88548DD /* SessionDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionDetailView.swift; path = Views/SessionDetailView.swift; sourceTree = "<group>"; };
 		CBAFF4958BCBF90A7F36F62B /* Birds 2.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Birds 2.mp3"; path = "Resources/Birds 2.mp3"; sourceTree = "<group>"; };
 		CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Raindrop.mp3; path = Resources/Raindrop.mp3; sourceTree = "<group>"; };
 		D478DD736616BB856D2F2D94 /* Double tones.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Double tones.mp3"; path = "Resources/Double tones.mp3"; sourceTree = "<group>"; };
 		DCE4FE625B3757CCE6D15E39 /* SnorryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnorryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0D7E4820D5B40D5D01D18D1 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Theme.swift; path = Utilities/Theme.swift; sourceTree = "<group>"; };
-		E311ACF2ABDBCC1B453F2F33 /* Contents.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = Contents.json; path = Assets.xcassets/Contents.json; sourceTree = "<group>"; };
 		E320C54E6B2C3B59E8B041C8 /* AnalyticsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AnalyticsView.swift; path = Views/AnalyticsView.swift; sourceTree = "<group>"; };
 		E8752C417837145970A7AE3E /* Tornado.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Tornado.mp3; path = Resources/Tornado.mp3; sourceTree = "<group>"; };
-		EBA71BB6DB21EBD47AF17F9A /* AppIcon.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = AppIcon.png; path = Assets.xcassets/AppIcon.appiconset/AppIcon.png; sourceTree = "<group>"; };
 		EC33EC45DDFD9E8E895030C2 /* SnoreEvent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreEvent.swift; path = Models/SnoreEvent.swift; sourceTree = "<group>"; };
 		ED084ECB6E38A5EFA3D92D5D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		EFE39AA711F0B5E5D9F976D3 /* SnoreSession.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreSession.swift; path = Models/SnoreSession.swift; sourceTree = "<group>"; };
 		F3150F582F1A08C93632BD1E /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OnboardingView.swift; path = Views/OnboardingView.swift; sourceTree = "<group>"; };
 		F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Windplay.mp3; path = Resources/Windplay.mp3; sourceTree = "<group>"; };
 		F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSettingsChange.swift; path = Models/AlertSettingsChange.swift; sourceTree = "<group>"; };
-		F7E9D3E4D483BE41918390A6 /* Contents.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = Contents.json; path = Assets.xcassets/AccentColor.colorset/Contents.json; sourceTree = "<group>"; };
 		F8170BA25460F76D30A51269 /* Singball.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Singball.mp3; path = Resources/Singball.mp3; sourceTree = "<group>"; };
 		F9B7B29710F28E6010817EE4 /* SnoreGIFData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreGIFData.swift; path = Resources/SnoreGIFData.swift; sourceTree = "<group>"; };
 		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
@@ -286,6 +282,7 @@
 				5A22F7770F71C072B638D91A /* NormalizingClipPlayer.swift */,
 				AF033425D8DA29B54123B2C1 /* NotificationManager.swift */,
 				03C900E57250862B011EE8C4 /* SessionStore.swift */,
+				D99A00012EAA4B00C99A0005 /* SleepLogsDeletionActor.swift */,
 				847E52E3C320BA4F7714D0B6 /* SnoreClassifier.swift */,
 				02D05DF695906DB7AAF6107F /* SnoreEventDetector.swift */,
 				92B789E63D6E30A4F499CB1E /* SnorryApp.swift */,
@@ -523,6 +520,7 @@
 				867BFD246F3BE36AB5069DF5 /* NormalizingClipPlayer.swift in Sources */,
 				1277197B759EFC05E0B4695D /* NotificationManager.swift in Sources */,
 				B075C6C506A48FFCE98C30BA /* SessionStore.swift in Sources */,
+				D99A00012EAA4B00C99A0006 /* SleepLogsDeletionActor.swift in Sources */,
 				19C900D5FA475B6B4D0BA767 /* SnoreClassifier.swift in Sources */,
 				D3F0BA1D9B15A737A7F58DFD /* SnoreEventDetector.swift in Sources */,
 				E897FC2C83E3A454C9FB91F4 /* SnorryApp.swift in Sources */,
@@ -798,6 +796,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Snorry/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Snorry;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Snorry listens to your sleep to detect snoring and gently wake you.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -838,6 +837,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Snorry/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Snorry;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Snorry listens to your sleep to detect snoring and gently wake you.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
