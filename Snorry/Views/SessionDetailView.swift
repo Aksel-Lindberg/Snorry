@@ -175,21 +175,20 @@ struct SessionDetailView: View {
 
 // MARK: - Snore watch face
 
-/// Draws a 12-hour clock face with red arc segments on the bezel for each snore event.
-/// Arc *position* encodes the real wall-clock start time; arc *length* encodes event duration.
+/// Draws a 12-hour clock face with arc segments on the bezel for each snore event.
+/// Arc *position* encodes the real wall-clock start time; arc *length* encodes event duration
+/// as a fraction of one 12-hour dial turn (same scale as the hour hand).
 private struct SnoreWatchFace: View {
 
     let events: [SnoreEvent]
 
-    /// Seconds in a full 12-hour dial rotation.
+    /// Seconds represented by one full revolution of the 12-hour dial.
     private static let dialSeconds: Double = 12 * 3600
-    /// Minimum visible sweep so very short events still appear as small arcs.
-    private static let minSweepDeg: Double = 4.0
 
     var body: some View {
-        // Pre-compute arc geometry outside the Canvas closure so we only
+        // Pre-compute start angles + durations outside the Canvas closure so we only
         // capture plain value types (avoids Sendable issues with SwiftData models).
-        let arcData: [(startDeg: Double, sweepDeg: Double)] = events.compactMap { event in
+        let arcData: [(startDeg: Double, duration: TimeInterval)] = events.compactMap { event in
             guard let duration = event.duration, duration > 0 else { return nil }
             let comps = Calendar.current.dateComponents([.hour, .minute, .second],
                                                         from: event.startDate)
@@ -198,8 +197,7 @@ private struct SnoreWatchFace: View {
                          + Double(comps.minute ?? 0) * 60
                          + Double(comps.second ?? 0)
             let startDeg = (totalSec / Self.dialSeconds) * 360.0
-            let sweepDeg = max(Self.minSweepDeg, (duration / Self.dialSeconds) * 360.0)
-            return (startDeg, sweepDeg)
+            return (startDeg, duration)
         }
 
         let snoringColor = Theme.snoring   // capture before entering @Sendable closure
@@ -271,19 +269,21 @@ private struct SnoreWatchFace: View {
             ctx.fill(dot, with: .color(.white.opacity(0.40)))
 
             // — Snore event arcs —
-            // Each arc starts at the event's real clock position and sweeps clockwise
-            // proportional to the event's duration. Wrap-around near 12/0° is handled
-            // automatically because Path.addArc accepts angles beyond 360°.
+            // Sweep angle is strictly proportional to duration / 12h (no minimum sweep:
+            // a 4° floor made 2s snores look like ~8 minutes). Butt caps keep thick strokes
+            // from extending past the true angle the way round caps do.
             for arc in arcData {
+                let sweepDeg = (arc.duration / Self.dialSeconds) * 360.0
+                guard sweepDeg > 1e-6 else { continue }
                 var p = Path()
                 p.addArc(center: CGPoint(x: cx, y: cy),
                          radius: arcR,
                          startAngle: .degrees(arc.startDeg - 90.0),
-                         endAngle:   .degrees(arc.startDeg - 90.0 + arc.sweepDeg),
+                         endAngle:   .degrees(arc.startDeg - 90.0 + sweepDeg),
                          clockwise: false)
                 ctx.stroke(p,
                            with: .color(snoringColor.opacity(0.88)),
-                           style: StrokeStyle(lineWidth: arcW, lineCap: .round))
+                           style: StrokeStyle(lineWidth: arcW, lineCap: .butt))
             }
         }
     }

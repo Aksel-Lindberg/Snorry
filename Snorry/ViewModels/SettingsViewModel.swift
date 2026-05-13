@@ -14,7 +14,7 @@ final class SettingsViewModel {
     var alarmVolume: Float      = 0.50
 
     var pushNotificationEnabled: Bool = false
-    var soundAlarmEnabled: Bool       = true
+    var soundAlarmEnabled: Bool       = false
     var pushRepeatEnabled: Bool       = true
     var pushRepeatInterval: Double    = 3
 
