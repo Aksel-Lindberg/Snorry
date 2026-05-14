@@ -102,21 +102,45 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     }
 
     private static func makeRequest() -> SNClassifySoundRequest {
-        let mlConfig = MLModelConfiguration()
-        mlConfig.computeUnits = .cpuOnly
+        let windowDuration = CMTime(
+            seconds: 1.0,
+            preferredTimescale: CMTimeScale(AudioMonitorService.targetSampleRate)
+        )
+        let overlapFactor = 0.5
 
-        let modelURL = URL(fileURLWithPath:
-            "/System/Library/Frameworks/SoundAnalysis.framework/SNSoundClassifierVersion1Model.mlmodelc")
+        func applyWindowing(_ req: SNClassifySoundRequest) {
+            req.windowDuration = windowDuration
+            req.overlapFactor = overlapFactor
+        }
 
+        // On device, load the framework’s compiled model with CPU-only to avoid Metal while foreground
+        // (background path still avoids calling the analyzer). The Simulator does not ship this file.
+        let modelPath =
+            "/System/Library/Frameworks/SoundAnalysis.framework/SNSoundClassifierVersion1Model.mlmodelc"
+
+        if FileManager.default.fileExists(atPath: modelPath) {
+            let mlConfig = MLModelConfiguration()
+            mlConfig.computeUnits = .cpuOnly
+            let modelURL = URL(fileURLWithPath: modelPath)
+            do {
+                let mlModel = try MLModel(contentsOf: modelURL, configuration: mlConfig)
+                let req = try SNClassifySoundRequest(mlModel: mlModel)
+                applyWindowing(req)
+                return req
+            } catch {
+                fatalError("SnoreClassifier: system SoundAnalysis model failed to load (CPU): \(error)")
+            }
+        }
+
+        // Simulator (and any host missing the on-disk `.mlmodelc`): use Apple’s identifier API.
+        // On device we prefer loading the compiled model with `.cpuOnly` (see comment above); this
+        // initializer may allow GPU/ANE and is avoided there when the system model file exists.
         do {
-            let mlModel = try MLModel(contentsOf: modelURL, configuration: mlConfig)
-            let req = try SNClassifySoundRequest(mlModel: mlModel)
-            req.windowDuration = CMTime(seconds: 1.0,
-                                        preferredTimescale: CMTimeScale(AudioMonitorService.targetSampleRate))
-            req.overlapFactor = 0.5
+            let req = try SNClassifySoundRequest(classifierIdentifier: .version1)
+            applyWindowing(req)
             return req
         } catch {
-            fatalError("SnoreClassifier: could not load bundled SoundAnalysis model (CPU): \(error)")
+            fatalError("SnoreClassifier: could not create SNClassifySoundRequest(.version1): \(error)")
         }
     }
 

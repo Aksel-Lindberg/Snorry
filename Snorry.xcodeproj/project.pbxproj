@@ -54,7 +54,6 @@
 		AC645F2038FE2E11B32BC934 /* Tornado.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = E8752C417837145970A7AE3E /* Tornado.mp3 */; };
 		AF86D422BDA1C67CD7A9D9F3 /* LiveSpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */; };
 		B075C6C506A48FFCE98C30BA /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C900E57250862B011EE8C4 /* SessionStore.swift */; };
-		D99A00012EAA4B00C99A0006 /* SleepLogsDeletionActor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99A00012EAA4B00C99A0005 /* SleepLogsDeletionActor.swift */; };
 		BA1ABF8B48D0F03CE67C68E9 /* SnoreEventDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */; };
 		BC2665D2FF0AF7EA995045FB /* ClipRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D62F5369622A86D30CFA65A /* ClipRecorder.swift */; };
 		BD8650C6E292C580A1917E4C /* AlertManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B0BF8FEF9DD4EF6084ACC6C /* AlertManagerTests.swift */; };
@@ -69,6 +68,7 @@
 		D873A3BE9BB26C1E786825FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ED084ECB6E38A5EFA3D92D5D /* Foundation.framework */; };
 		D88311DD24FD7FAA65EBFD70 /* Piano.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 49D488573FFBA9ADFCE1E490 /* Piano.mp3 */; };
 		D8922993778F463A75C76C90 /* Pianoarpeggio.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 025A9DF44B0DFA8CA8921E2F /* Pianoarpeggio.mp3 */; };
+		D99A00012EAA4B00C99A0006 /* SleepLogsDeletionActor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99A00012EAA4B00C99A0005 /* SleepLogsDeletionActor.swift */; };
 		DB7F36E374350C24D327A90A /* MonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13777D4919BAC1C94B113483 /* MonitorView.swift */; };
 		DD9AEAE799E3D63F37D484D5 /* SnorryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAA098990B7D477424D611E /* SnorryTests.swift */; };
 		E1A139FB4DFC69AB15BD8121 /* Marimba.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = B535260A902657556E2C94B2 /* Marimba.mp3 */; };
@@ -107,7 +107,6 @@
 		02D05DF695906DB7AAF6107F /* SnoreEventDetector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreEventDetector.swift; path = Services/SnoreEventDetector.swift; sourceTree = "<group>"; };
 		034D2D9AB10665B0C8CB1B9F /* SnorryUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnorryUITests.swift; path = SnorryUITests/SnorryUITests.swift; sourceTree = "<group>"; };
 		03C900E57250862B011EE8C4 /* SessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionStore.swift; path = Services/SessionStore.swift; sourceTree = "<group>"; };
-		D99A00012EAA4B00C99A0005 /* SleepLogsDeletionActor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepLogsDeletionActor.swift; path = Services/SleepLogsDeletionActor.swift; sourceTree = "<group>"; };
 		0E1FD86195053E77F6425F9F /* AudioMath.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioMath.swift; path = Utilities/AudioMath.swift; sourceTree = "<group>"; };
 		0EE2C4964B91AB4720E8AFC3 /* Late_Night_Curb.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Late_Night_Curb.mp3; path = Resources/Late_Night_Curb.mp3; sourceTree = "<group>"; };
 		13777D4919BAC1C94B113483 /* MonitorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitorView.swift; path = Views/MonitorView.swift; sourceTree = "<group>"; };
@@ -169,6 +168,7 @@
 		CBAFF4958BCBF90A7F36F62B /* Birds 2.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Birds 2.mp3"; path = "Resources/Birds 2.mp3"; sourceTree = "<group>"; };
 		CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Raindrop.mp3; path = Resources/Raindrop.mp3; sourceTree = "<group>"; };
 		D478DD736616BB856D2F2D94 /* Double tones.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Double tones.mp3"; path = "Resources/Double tones.mp3"; sourceTree = "<group>"; };
+		D99A00012EAA4B00C99A0005 /* SleepLogsDeletionActor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepLogsDeletionActor.swift; path = Services/SleepLogsDeletionActor.swift; sourceTree = "<group>"; };
 		DCE4FE625B3757CCE6D15E39 /* SnorryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnorryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0D7E4820D5B40D5D01D18D1 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Theme.swift; path = Utilities/Theme.swift; sourceTree = "<group>"; };
 		E320C54E6B2C3B59E8B041C8 /* AnalyticsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AnalyticsView.swift; path = Views/AnalyticsView.swift; sourceTree = "<group>"; };
@@ -791,7 +791,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -832,7 +832,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
