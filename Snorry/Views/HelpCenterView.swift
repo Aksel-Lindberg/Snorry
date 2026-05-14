@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Help & How-To (presented from Monitor home)
+// MARK: - Help & How-To (Monitor tab toolbar sheet)
 
 struct HelpCenterView: View {
 
@@ -22,23 +22,23 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .gettingStarted,
                             title: "First launch & privacy",
-                            subtitle: "Onboarding, microphone, and notifications",
+                            subtitle: "Onboarding, microphone, notifications, legal",
                             systemImage: "sparkles"
                         ) {
                             HelpBullet(
                                 icon: "hand.wave.fill",
                                 title: "Welcome flow",
-                                detail: "The first time you open Snorry, you’ll see a short introduction and consent step. Complete it to reach the main tabs."
+                                detail: "First launch is a two-page onboarding flow: Welcome, then Before You Start (microphone + notifications explained, legal links, charger tip). Tap Allow & Continue to request iOS permissions and reach the main tabs."
                             )
                             HelpBullet(
                                 icon: "mic.fill",
                                 title: "Microphone",
-                                detail: "Snorry listens for audio patterns associated with snoring. Without microphone access, monitoring cannot run—you’ll see a prompt on the Monitor tab."
+                                detail: "Snorry analyses audio on-device to detect snoring-like patterns. Monitoring cannot run without access—if permission is still pending or denied, the Monitor tab shows a short prompt; undetermined access opens a permissions sheet when you tap Start."
                             )
                             HelpBullet(
                                 icon: "bell.badge.fill",
                                 title: "Notifications",
-                                detail: "Optional alerts use local notifications on this iPhone. You can refine behaviour later under Settings."
+                                detail: "Snore alerts use standard local notifications on this iPhone (they can mirror to a paired watch like any iOS alert). Onboarding requests notification permission together with the microphone; later you can enable or disable push alerts in Settings."
                             )
                         }
 
@@ -51,34 +51,34 @@ struct HelpCenterView: View {
                             tabChip(icon: "waveform", name: "Monitor", hint: "Start sessions and see your latest summary.")
                             tabChip(icon: "clock.arrow.circlepath", name: "History", hint: "Browse past nights and open session details.")
                             tabChip(icon: "chart.line.uptrend.xyaxis", name: "Analytics", hint: "Trends, charts, and how settings relate to snore duration.")
-                            tabChip(icon: "gearshape.fill", name: "Settings", hint: "Alerts, timings, alarm style, volume, and legal links.")
+                            tabChip(icon: "gearshape", name: "Settings", hint: "Alert channels and timings, alarm style, support, reset/delete logs, and legal links.")
                         }
 
                         helpAccordion(
                             section: .monitorHome,
                             title: "Monitor tab (home)",
-                            subtitle: "Start button, alert summary, last session",
+                            subtitle: "Start control, alert summary, last session",
                             systemImage: "waveform"
                         ) {
                             HelpBullet(
                                 icon: "play.circle.fill",
                                 title: "Start monitoring",
-                                detail: "Tap the animated moon control to begin. If permission is needed, Snorry walks you through microphone access first."
+                                detail: "Tap the large sleep animation (moon and waves) to begin. If the microphone is not yet allowed, a permissions sheet appears first; if iOS access was denied, the same tap opens the system Settings app so you can enable the mic."
                             )
                             HelpBullet(
                                 icon: "slider.horizontal.3",
                                 title: "Alert setup summary",
-                                detail: "The card shows push vs sound alarm choices and timings that will apply to your next session—aligned with Settings."
+                                detail: "The card mirrors your saved choices: push on/off, sound alarm on/off, fixed 2 s push delay, your sound-alarm delay, and repeat-push interval (1–10 s) when push is enabled—exactly what Settings will apply to the next session."
                             )
                             HelpBullet(
                                 icon: "clock.fill",
                                 title: "Last Session",
-                                detail: "Quick stats from your most recent night: sleep duration, snore events, and total snore duration."
+                                detail: "When you have completed nights, the card summarises the most recent session: sleep duration, snore event count, and total snore time (counts confirmed snoring, not other sound categories)."
                             )
                             HelpBullet(
                                 icon: "lock.fill",
                                 title: "Overnight & locked iPhone",
-                                detail: "Start monitoring, then lock your phone. Background audio keeps the mic on for that session only while monitoring runs."
+                                detail: "Start monitoring, then lock your phone. Background audio keeps capture running for that session. While locked, Snorry uses a lighter-weight detection path; after you stop, it may re-classify saved clips so History labels stay trustworthy."
                             )
                             HelpBullet(
                                 icon: "applewatch",
@@ -97,32 +97,32 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "circle.fill",
                                 title: "Status",
-                                detail: "Quiet → detecting pattern → snoring detected. Colours mirror calm vs attention vs active snoring."
+                                detail: "The badge steps through Quiet, Detecting Pattern…, then Snoring Detected once a bout is confirmed. Push and sound alarms only arm after confirmation so a single stray noise does not wake you."
                             )
                             HelpBullet(
                                 icon: "chart.xyaxis.line",
                                 title: "Live power spectrum",
-                                detail: "Shows frequency energy while you sleep; harmonic emphasis helps highlight breath-related rhythm when snoring is confirmed."
+                                detail: "Log-scaled band energy from 45 Hz up to the Nyquist frequency; red highlights mark the breath-tempo harmonic when a bout is confirmed—same idea as the rumble marker stored on each event."
                             )
                             HelpBullet(
                                 icon: "lungs.fill",
                                 title: "dBFS, BRPM, Events",
-                                detail: "Approximate loudness, estimated breaths per minute when available, and a running count of snore-related events."
+                                detail: "dBFS shows input loudness (— when extremely quiet). BRPM appears once tempo is estimated for the current bout. Events counts completed snore bouts, not every classifier frame."
                             )
                             HelpBullet(
                                 icon: "bell.and.waves.left.and.right.fill",
                                 title: "Alert phases",
-                                detail: "When thresholds are met, you may see push notification and/or in-app alarm phases depending on Settings—until snoring clears."
+                                detail: "When enabled in Settings, you’ll see in-app states such as “Push notification sent”, “Alarm active” (tone ramps in steps), and “Alert cleared” when snoring has stopped long enough. On a locked phone the sound alarm stops automatically after five seconds so it does not drone indefinitely; silence thresholds also relax while locked so alerts can clear."
                             )
                             HelpBullet(
                                 icon: "chart.line.uptrend.xyaxis",
                                 title: "Live timeline",
-                                detail: "A rolling view of recent audio activity so you can see how the night evolves."
+                                detail: "Charts roughly the last ten minutes of loudness with snoring stretches emphasised so you can see recent dynamics at a glance."
                             )
                             HelpBullet(
                                 icon: "stop.circle.fill",
                                 title: "Stop monitoring",
-                                detail: "Ends the session, saves results to History, and returns you to the Monitor home."
+                                detail: "Tears down audio, saves the session to Sleep History, and dismisses this screen. A short overlay can appear while clips finish encoding; if the night included locked or background recording, you may briefly see a “classifying sounds” step before returning home."
                             )
                         }
 
@@ -135,17 +135,17 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "list.bullet",
                                 title: "Session rows",
-                                detail: "Each row shows date, duration, event count, and total snore duration with a compact visual bar."
+                                detail: "The tab is titled Sleep History. Each row shows the session start, sleep duration, snoring event count, total snore time, and a bar scaled to the longest snore-duration night currently in the list."
                             )
                             HelpBullet(
                                 icon: "hand.draw.fill",
                                 title: "Swipe to delete",
-                                detail: "Remove a session you no longer need. This frees storage used by that night’s data."
+                                detail: "Swipe left on a row to delete that night’s session, waveform samples, and clips from storage."
                             )
                             HelpBullet(
                                 icon: "chevron.right.circle.fill",
                                 title: "Session detail",
-                                detail: "Opens stats, Snore Clock (when events exist), session timeline chart, and a list of events—tap an event to replay its clip when audio was captured."
+                                detail: "Shows duration stats, Snore Clock (snoring bouts only), a Session Timeline chart from saved waveform samples, and a Sound Events list. After nights with background recording, each event may be labelled Snoring, Sleep Talking, or Environment; tap a row with playback available to hear its AAC clip."
                             )
                         }
 
@@ -163,60 +163,65 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "timer",
                                 title: "Summary pills",
-                                detail: "Average snore minutes per day, number of sessions, and days with data in the selected window."
+                                detail: "Avg min/day (snore time), session count, and distinct days with data in the selected window."
                             )
                             HelpBullet(
                                 icon: "chart.bar.fill",
                                 title: "Snore duration trend",
-                                detail: "Daily totals for snore events and snore duration plotted side-by-side so you can spot improvement or rough patches."
+                                detail: "The Snore duration card plots daily snore minutes and event counts for the selected window, with optional numbered markers when alert settings were saved."
                             )
                             HelpBullet(
                                 icon: "mappin.and.ellipse",
                                 title: "Settings change markers",
-                                detail: "When you save Push or Alarm settings, numbered markers can appear on the chart—expand the legend to see what changed and when."
+                                detail: "Expand the legend under the chart to read each saved change; you can also remove individual markers from analytics without touching your current Settings values."
                             )
                             HelpBullet(
                                 icon: "chart.bar.xaxis",
                                 title: "Alert type vs snore duration",
-                                detail: "Compares average snore duration under different alert configurations in the period—useful context, not a medical diagnosis."
+                                detail: "The Alert Type vs Snore duration card averages snore minutes per alert configuration profile in the period—the footer reminds you this is correlation, not causation or medical advice."
                             )
                         }
 
                         helpAccordion(
                             section: .settings,
                             title: "Settings tab",
-                            subtitle: "Alerts, sound, data & legal",
+                            subtitle: "Alerts, sound, support, data & legal",
                             systemImage: "gearshape.fill"
                         ) {
                             HelpBullet(
                                 icon: "bell.badge.fill",
                                 title: "Alert channels",
-                                detail: "Enable push notifications on this iPhone, sound alarm in the app, or both. Repeat interval adjusts how often push can remind you."
+                                detail: "Turn on push notifications, the in-app sound alarm, or both. With both enabled, push is sent first, then the tone after your chosen sound delay. While a push alert is active and snoring continues, Snorry can repeat the notification on the interval you set (1–10 s)."
                             )
                             HelpBullet(
                                 icon: "timer",
                                 title: "Alert timings",
-                                detail: "Push fires after a short fixed delay; sound alarm delay is configurable. Alerts ease when snoring stops."
+                                detail: "Push is sent after a fixed 2 s of continuous snoring. The sound alarm fires after the delay you choose on its slider. Alerts clear once snoring has stayed off for a few seconds (timing adapts slightly if the phone is locked during the session)."
                             )
                             HelpBullet(
                                 icon: "speaker.wave.3.fill",
                                 title: "Alarm style",
-                                detail: "Choose a tone character you notice easily; preview with Play/Stop. Alarms and previews use full playback level."
+                                detail: "Pick the alarm character you notice best and use Play / Stop to preview the selected style."
+                            )
+                            HelpBullet(
+                                icon: "lifepreserver.fill",
+                                title: "Support",
+                                detail: "Open Support for contact options and common troubleshooting topics."
                             )
                             HelpBullet(
                                 icon: "arrow.counterclockwise",
                                 title: "Reset & delete logs",
-                                detail: "Reset restores defaults. Delete All removes saved sessions and analytics history—your current slider values stay until you change them."
+                                detail: "Reset to Defaults recreates alert preferences. Delete All Sleep & Settings Logs removes every session, clip, waveform, and analytics marker row—you must stop monitoring first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
                             )
                             HelpBullet(
                                 icon: "doc.text.fill",
                                 title: "Legal",
-                                detail: "Terms and Privacy open in Safari so you can review policies anytime."
+                                detail: "Terms of Use and Privacy Policy links open in Safari."
                             )
                             HelpBullet(
                                 icon: "xmark.circle.fill",
                                 title: "Cancel / Save",
-                                detail: "Cancel discards edits this visit; Save writes alert preferences for upcoming nights."
+                                detail: "Cancel reloads the last saved values; Save persists changes and posts them to the next monitoring session (and to the summary cards on Monitor and session detail)."
                             )
                         }
 
@@ -279,7 +284,7 @@ struct HelpCenterView: View {
                     Text("Snorry at a glance")
                         .font(.title3.bold())
                         .foregroundStyle(Theme.labelPrimary)
-                    Text("Sleep snore alerts & gentle tracking")
+                    Text("Sleep Snore Alert & Tracking")
                         .font(.subheadline)
                         .foregroundStyle(Theme.labelSecondary)
                 }
