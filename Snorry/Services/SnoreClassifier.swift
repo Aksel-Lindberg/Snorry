@@ -31,11 +31,11 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     private let energyFallbackVoteThreshold = 4
 
     /// Minimum classifier confidence to count a frame as snoring.
-    /// Derived from the user-facing sensitivity setting (lower → more sensitive).
+    /// Set from ``SnoreDetectionTuning`` using the saved sensitivity level (app default: maximum).
     var confidenceThreshold: Float = 0.60
 
     /// Background RMS gate: higher dBFS = louder required → **less** sensitive than foreground ML.
-    /// Adjusted with the user’s snore sensitivity setting together with `confidenceThreshold`.
+    /// Set from ``SnoreDetectionTuning`` together with `confidenceThreshold`.
     var energyFallbackThresholdDB: Float = -42
 
     /// Only read/written on `analysisQueue` — true after `didEnterBackground`, false after `willEnterForeground`.
@@ -224,8 +224,8 @@ extension SnoreClassifier: SNResultsObserving {
 
 // MARK: - Snore sensitivity → classifier + onset detector
 
-/// Maps the Settings slider (1…5) to foreground ML thresholds and the lock-screen RMS gate.
-/// Level **3** matches the historical fixed tuning (confidence 0.30, onset +2 dB, RMS −42 dBFS).
+/// Maps stored snore sensitivity (1…5) to foreground ML thresholds and the lock-screen RMS gate.
+/// The app persists maximum sensitivity (5); level **3** matches historical fixed tuning.
 enum SnoreDetectionTuning {
 
     static func apply(

@@ -200,8 +200,8 @@ struct HelpCenterView: View {
                             )
                             HelpBullet(
                                 icon: "speaker.wave.3.fill",
-                                title: "Alarm style & volume",
-                                detail: "Choose a tone character you notice easily; preview with Play/Stop. Master volume affects alarms and previews."
+                                title: "Alarm style",
+                                detail: "Choose a tone character you notice easily; preview with Play/Stop. Alarms and previews use full playback level."
                             )
                             HelpBullet(
                                 icon: "arrow.counterclockwise",

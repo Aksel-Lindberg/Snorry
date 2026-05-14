@@ -203,6 +203,12 @@ private struct SnoreDailyBarsChart: View {
     let eventCountYMax: Double
     let selectedRange: AnalyticsRange
 
+    /// Fixed width for trailing Y-axis tick labels so both charts’ plot areas share the same horizontal inset.
+    private enum Layout {
+        static let trailingYLabelWidth: CGFloat = 42
+        static let chartSubtitleHeight: CGFloat = 16
+    }
+
     var body: some View {
         VStack(spacing: 12) {
             // Events chart
@@ -212,6 +218,7 @@ private struct SnoreDailyBarsChart: View {
                     .foregroundStyle(Theme.snoring)
                     .textCase(.uppercase)
                     .tracking(0.4)
+                    .frame(maxWidth: .infinity, minHeight: Layout.chartSubtitleHeight, alignment: .leading)
                 Chart {
                     eventBars
                     changeRules(yMax: eventCountYMax)
@@ -219,7 +226,7 @@ private struct SnoreDailyBarsChart: View {
                 .chartXScale(domain: cutoffDate...Date())
                 .chartYScale(domain: 0...eventCountYMax)
                 .chartXAxis { xAxisContent }
-                .chartYAxis { intYAxisContent(max: eventCountYMax) }
+                .chartYAxis { intYAxisContent() }
                 .frame(height: 110)
             }
 
@@ -230,6 +237,7 @@ private struct SnoreDailyBarsChart: View {
                     .foregroundStyle(Theme.accent)
                     .textCase(.uppercase)
                     .tracking(0.4)
+                    .frame(maxWidth: .infinity, minHeight: Layout.chartSubtitleHeight, alignment: .leading)
                 Chart {
                     durationBars
                     changeRules(yMax: snoreMinutesYMax)
@@ -237,7 +245,7 @@ private struct SnoreDailyBarsChart: View {
                 .chartXScale(domain: cutoffDate...Date())
                 .chartYScale(domain: 0...snoreMinutesYMax)
                 .chartXAxis { xAxisContent }
-                .chartYAxis { minuteYAxisContent(max: snoreMinutesYMax) }
+                .chartYAxis { minuteYAxisContent() }
                 .frame(height: 110)
             }
         }
@@ -308,31 +316,48 @@ private struct SnoreDailyBarsChart: View {
     }
 
     @AxisContentBuilder
-    private func intYAxisContent(max: Double) -> some AxisContent {
-        AxisMarks(preset: .automatic, values: .automatic(desiredCount: 4)) { value in
+    private func intYAxisContent() -> some AxisContent {
+        AxisMarks(
+            preset: .automatic,
+            position: .trailing,
+            values: .automatic(desiredCount: 4)
+        ) { value in
             AxisGridLine().foregroundStyle(Theme.surfaceSecondary.opacity(0.6))
             AxisValueLabel {
-                if let v = value.as(Int.self) {
-                    Text("\(v)")
-                        .font(.caption2)
+                if let n = yAxisInt(from: value) {
+                    Text("\(n)")
+                        .font(Theme.monoDigit(size: 11))
                         .foregroundStyle(Theme.labelTertiary)
+                        .frame(width: Layout.trailingYLabelWidth, alignment: .trailing)
                 }
             }
         }
     }
 
     @AxisContentBuilder
-    private func minuteYAxisContent(max: Double) -> some AxisContent {
-        AxisMarks(preset: .automatic, values: .automatic(desiredCount: 4)) { value in
+    private func minuteYAxisContent() -> some AxisContent {
+        AxisMarks(
+            preset: .automatic,
+            position: .trailing,
+            values: .automatic(desiredCount: 4)
+        ) { value in
             AxisGridLine().foregroundStyle(Theme.surfaceSecondary.opacity(0.6))
             AxisValueLabel {
                 if let v = value.as(Double.self) {
                     Text("\(Int(v))m")
-                        .font(.caption2)
+                        .font(Theme.monoDigit(size: 11))
                         .foregroundStyle(Theme.labelTertiary)
+                        .frame(width: Layout.trailingYLabelWidth, alignment: .trailing)
                 }
             }
         }
+    }
+
+    /// Axis mark values use `Double` for numeric domains; normalise so labels always render with stable width.
+    private func yAxisInt(from value: Charts.AxisValue) -> Int? {
+        if let v = value.as(Int.self) { return v }
+        if let v = value.as(Double.self) { return Int(v.rounded()) }
+        return nil
     }
 
     private var xAxisMarkCount: Int {

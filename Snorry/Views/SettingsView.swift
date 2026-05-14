@@ -61,10 +61,8 @@ struct SettingsView: View {
 
     private func settingsContent(vm: SettingsViewModel) -> some View {
         List {
-            snoreSensitivitySection(vm: vm)
             alertChannelsSection(vm: vm)
             alertTimingsSection(vm: vm)
-            volumeSection(vm: vm)
             alarmStyleSection(vm: vm)
             actionsSection(vm: vm)
             supportSection()
@@ -120,65 +118,6 @@ struct SettingsView: View {
     }
 
     // MARK: Sections
-
-    private func snoreSensitivitySection(vm: SettingsViewModel) -> some View {
-        Section {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Snore sensitivity")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.labelPrimary)
-                    Spacer()
-                    Text(sensitivityLabel(for: vm.snoringDetectionSensitivity))
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Theme.accent)
-                }
-                Slider(
-                    value: Binding(
-                        get: { vm.snoringDetectionSensitivity },
-                        set: { vm.snoringDetectionSensitivity = $0 }
-                    ),
-                    in: 1...5,
-                    step: 1
-                )
-                .tint(Theme.accent)
-                HStack {
-                    Text("Less sensitive")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.labelTertiary)
-                    Spacer()
-                    Text("More sensitive")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.labelTertiary)
-                }
-            }
-            .padding(.vertical, 4)
-        } header: {
-            Text("Snore detection")
-                .foregroundStyle(Theme.labelSecondary)
-        } footer: {
-            Text(
-                "Center (3) matches the default tuning. Lower values reduce alerts from quiet sounds; " +
-                "higher values catch softer snores. Applies to on-screen detection and lock-screen audio."
-            )
-            .foregroundStyle(Theme.labelSecondary)
-            .font(.caption)
-        }
-        .listRowBackground(Theme.surface)
-    }
-
-    /// Short label for the discrete 1…5 sensitivity step.
-    private func sensitivityLabel(for value: Double) -> String {
-        let level = Int(value.rounded())
-        switch level {
-        case 1: return "Low"
-        case 2: return "Low+"
-        case 3: return "Balanced"
-        case 4: return "High"
-        case 5: return "Very high"
-        default: return "\(level)"
-        }
-    }
 
     private func alertChannelsSection(vm: SettingsViewModel) -> some View {
         Section {
@@ -323,24 +262,6 @@ struct SettingsView: View {
         .listRowBackground(Theme.surface)
     }
 
-    private func volumeSection(vm: SettingsViewModel) -> some View {
-        Section {
-            VolumeRow(label: "Master volume",
-                      value: Binding(get: { Double(vm.alarmVolume) },
-                                     set: { vm.alarmVolume = Float($0) }))
-        } header: {
-            Text("Sound Alert")
-                .foregroundStyle(Theme.labelSecondary)
-        } footer: {
-            Text("Controls alert playback volume and style preview volume.")
-                .foregroundStyle(Theme.labelSecondary)
-                .font(.caption)
-        }
-        .opacity(vm.soundAlarmEnabled ? 1 : 0.45)
-        .disabled(!vm.soundAlarmEnabled)
-        .listRowBackground(Theme.surface)
-    }
-
     private func actionsSection(vm: SettingsViewModel) -> some View {
         Section {
             Button("Reset to Defaults") {
@@ -460,28 +381,6 @@ private struct TimingInfoRow: View {
             Text(value)
                 .font(Theme.monoDigit(size: 13))
                 .foregroundStyle(Theme.accent)
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-private struct VolumeRow: View {
-    let label: String
-    @Binding var value: Double
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(label)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.labelPrimary)
-                Spacer()
-                Text(String(format: "%.0f%%", value * 100))
-                    .font(Theme.monoDigit(size: 13))
-                    .foregroundStyle(Theme.accent)
-            }
-            Slider(value: $value, in: 0.10...1.0, step: 0.05)
-                .tint(Theme.accent)
         }
         .padding(.vertical, 4)
     }

@@ -135,8 +135,7 @@ struct AlertSetupSummaryCard: View {
             return "Off"
         }
         let delay = Int(settings.soundAlarmAfterSeconds)
-        let pct = Int((settings.alarmVolume * 100).rounded())
-        return "On · starts after \(delay) s · volume \(pct)%"
+        return "On · starts after \(delay) s"
     }
 
     private static func alarmSoundFootnote(for style: AlarmStyle) -> String {

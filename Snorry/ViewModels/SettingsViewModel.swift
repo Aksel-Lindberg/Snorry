@@ -7,19 +7,14 @@ import UserNotifications
 final class SettingsViewModel {
 
     private static let timingRange: ClosedRange<Double> = 1...10
-    private static let sensitivityRange: ClosedRange<Double> = 1...5
 
     var notifyDelay: Double     = 2
     var soundAlarmAfter: Double = 10
-    var alarmVolume: Float      = 0.50
 
     var pushNotificationEnabled: Bool = false
     var soundAlarmEnabled: Bool       = false
     var pushRepeatEnabled: Bool       = true
     var pushRepeatInterval: Double    = 3
-
-    /// Snore detection sensitivity level (1–5). 3 = factory default.
-    var snoringDetectionSensitivity: Double = 3
 
     /// Selected alarm tone style.
     var alarmStyle: AlarmStyle = .marimbaIntrumental
@@ -53,13 +48,11 @@ final class SettingsViewModel {
         settings = stored
         notifyDelay                   = Self.clampTiming(stored.notifyDelaySeconds)
         soundAlarmAfter               = Self.clampTiming(stored.soundAlarmAfterSeconds)
-        alarmVolume                   = Self.clampAlarmVolume(stored.alarmVolume)
         pushNotificationEnabled       = stored.pushNotificationEnabled
         soundAlarmEnabled             = stored.soundAlarmEnabled
         // Repeat push notifications are now always enabled; only interval is user-configurable.
         pushRepeatEnabled             = true
         pushRepeatInterval            = Self.clampTiming(stored.pushRepeatIntervalSeconds)
-        snoringDetectionSensitivity   = Self.clampSensitivity(stored.snoringDetectionSensitivity)
         alarmStyle                    = AlarmStyle(rawValue: stored.alarmStyleRaw) ?? .classic
     }
 
@@ -71,8 +64,6 @@ final class SettingsViewModel {
         notifyDelay = Self.clampTiming(notifyDelay)
         soundAlarmAfter = Self.clampTiming(soundAlarmAfter)
         pushRepeatInterval = Self.clampTiming(pushRepeatInterval)
-        alarmVolume = Self.clampAlarmVolume(alarmVolume)
-        snoringDetectionSensitivity = Self.clampSensitivity(snoringDetectionSensitivity)
 
         // Record a change snapshot before writing if any tracked push/alarm field changed.
         let hasChanged = stored.pushNotificationEnabled    != pushNotificationEnabled
@@ -80,18 +71,17 @@ final class SettingsViewModel {
             || stored.pushRepeatEnabled                    != true
             || stored.notifyDelaySeconds                   != notifyDelay
             || stored.soundAlarmAfterSeconds               != soundAlarmAfter
-            || stored.alarmVolume                          != alarmVolume
             || stored.pushRepeatIntervalSeconds            != pushRepeatInterval
             || stored.alarmStyleRaw                        != alarmStyle.rawValue
 
         stored.notifyDelaySeconds              = notifyDelay
         stored.soundAlarmAfterSeconds          = soundAlarmAfter
-        stored.alarmVolume                     = alarmVolume
+        stored.alarmVolume                     = 1.0
         stored.pushNotificationEnabled         = pushNotificationEnabled
         stored.soundAlarmEnabled               = soundAlarmEnabled
         stored.pushRepeatEnabled               = true
         stored.pushRepeatIntervalSeconds       = pushRepeatInterval
-        stored.snoringDetectionSensitivity     = snoringDetectionSensitivity
+        stored.snoringDetectionSensitivity     = 5
         stored.alarmStyleRaw                   = alarmStyle.rawValue
 
         if hasChanged {
@@ -230,19 +220,11 @@ final class SettingsViewModel {
         }
         previewingAlarmStyle = style
         alarmPreviewPlayer.setStyle(style)
-        alarmPreviewPlayer.play(volume: alarmVolume)
+        alarmPreviewPlayer.play(volume: 1.0)
     }
 
     private static func clampTiming(_ value: Double) -> Double {
         min(max(value, timingRange.lowerBound), timingRange.upperBound)
-    }
-
-    private static func clampAlarmVolume(_ value: Float) -> Float {
-        min(max(value, 0.10), 1.0)
-    }
-
-    private static func clampSensitivity(_ value: Double) -> Double {
-        min(max(value, sensitivityRange.lowerBound), sensitivityRange.upperBound)
     }
 
     /// Best-effort background cleanup for persisted clip files after DB rows are removed.

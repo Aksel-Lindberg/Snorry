@@ -73,13 +73,15 @@ struct SessionDetailView: View {
 
     private func statsCards(vm: SessionDetailViewModel) -> some View {
         HStack(spacing: 12) {
-            StatCard(label: "Duration",       value: vm.durationString,              icon: "clock")
-            StatCard(label: "Events",         value: "\(vm.snoreEvents.count)",       icon: "waveform.badge.exclamationmark")
-            StatCard(label: "Snore duration", value: session.displayTotalSnoreTime,   icon: "zzz")
+            StatCard(label: "Sleep duration", value: vm.durationString, icon: "clock")
+            StatCard(label: "Snore events", value: "\(vm.snoreEvents.count)", icon: "waveform.badge.exclamationmark")
+            StatCard(label: "Snore duration", value: session.displayTotalSnoreTime, icon: "zzz")
             if session.avgBRPM > 0 {
-                StatCard(label: "Avg BRPM",
-                         value: String(format: "%.0f", session.avgBRPM),
-                         icon: "lungs")
+                StatCard(
+                    label: "Average BRPM",
+                    value: String(format: "%.0f", session.avgBRPM),
+                    icon: "lungs"
+                )
             }
         }
     }
@@ -308,6 +310,10 @@ private struct StatCard: View {
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(Theme.labelTertiary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                // Same label footprint for every card so row height stays uniform when a label wraps.
+                .frame(maxWidth: .infinity, minHeight: 30, alignment: .top)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)

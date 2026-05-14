@@ -49,7 +49,7 @@ final class SnoreEventDetector: @unchecked Sendable {
 
     /// dB above the ambient baseline required to register a breath onset.
     /// Lower values make the detector more sensitive to quieter snores.
-    /// Derived from the user-facing sensitivity setting.
+    /// Set from ``SnoreDetectionTuning`` using the saved sensitivity level.
     var onsetThresholdDB: Float = 12.0
 
     // MARK: Session-level flag
