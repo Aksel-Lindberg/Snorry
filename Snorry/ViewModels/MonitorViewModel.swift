@@ -23,6 +23,8 @@ final class MonitorViewModel {
     var snoreEventCount = 0
     /// True while tearing down audio pipelines and finalizing SwiftData — UI shows a blocking overlay.
     var isStoppingMonitoring = false
+    /// Short status shown in the stopping overlay; changes during classification phase.
+    var stoppingStatusMessage: String = "Finishing audio and storing events."
 
     /// Three-state detection status for the UI status badge.
     enum DetectionPhase { case quiet, detecting, confirmed }
@@ -128,6 +130,7 @@ final class MonitorViewModel {
             queue: nil
         ) { [weak self] _ in
             Task { @MainActor in
+                self?.markBackgroundRecordingPeriodIfNeeded()
                 self?.applyLockScreenDetectorTuning()
             }
         }
@@ -273,9 +276,20 @@ final class MonitorViewModel {
         applySnoreDetectionTuning(sensitivity: settings.snoringDetectionSensitivity)
     }
 
+    /// Synchronous teardown — used by crash/orphan recovery paths.
+    /// Does not run post-stop classification; call `stopMonitoringAsync()` from the UI instead.
     func stopMonitoring() {
         guard isMonitoring else { return }
 
+        teardownPipelines()
+        sessionStore?.finalizeSession()
+        resetMonitoringState()
+    }
+
+    // MARK: Private stop helpers
+
+    /// Stops all active audio pipelines, tasks, and notification state.
+    private func teardownPipelines() {
         // Close any per-event AAC file and close the SwiftData row if monitoring stops mid-snore.
         finalizeOpenClipAndEventIfInterrupted()
 
@@ -287,8 +301,10 @@ final class MonitorViewModel {
         alertManager.stop()
         alarmPlayer.stop()
         notifications.cancelSnoringAlert()
+    }
 
-        sessionStore?.finalizeSession()
+    /// Clears live-monitoring published state after teardown + finalize.
+    private func resetMonitoringState() {
         activeSession = nil
         activeEventID = nil
 
@@ -302,13 +318,36 @@ final class MonitorViewModel {
         UIApplication.shared.isIdleTimerDisabled = false
     }
 
-    /// Lets SwiftUI paint a “Saving session…” overlay before heavy teardown + SwiftData finalize.
+    /// Async stop invoked by the Stop Monitoring button.
+    /// Tears down pipelines, classifies clips on background-recorded nights, then finalizes.
     func stopMonitoringAsync() async {
         guard isMonitoring, !isStoppingMonitoring else { return }
         isStoppingMonitoring = true
+        stoppingStatusMessage = "Finishing audio and storing events."
         await Task.yield()
         defer { isStoppingMonitoring = false }
-        stopMonitoring()
+
+        teardownPipelines()
+
+        // Classify clips when the device was locked/backgrounded at any point this session.
+        if let session = activeSession,
+           session.hadBackgroundRecordingPeriod == true {
+            let completedEvents = session.events.filter { $0.endDate != nil }
+            if !completedEvents.isEmpty {
+                stoppingStatusMessage = "Classifying sounds…"
+                await Task.yield()
+                let support = FileManager.default.urls(
+                    for: .applicationSupportDirectory, in: .userDomainMask
+                ).first!
+                await SessionClipSoundClassifier.classifyAll(
+                    events: completedEvents,
+                    applicationSupport: support
+                )
+            }
+        }
+
+        sessionStore?.finalizeSession()
+        resetMonitoringState()
     }
 
     // MARK: Async pipelines
@@ -509,6 +548,13 @@ final class MonitorViewModel {
     private func updateAlertSnoringState() {
         let sustainedForAlerts = isEpisodeConfirmed && isSnoring
         alertManager.update(isSnoring: sustainedForAlerts, at: Date())
+    }
+
+    /// Records that the device went to the background during an active session.
+    /// This triggers post-stop SoundAnalysis re-classification of recorded clips.
+    private func markBackgroundRecordingPeriodIfNeeded() {
+        guard isMonitoring, let session = activeSession else { return }
+        session.hadBackgroundRecordingPeriod = true
     }
 
     /// Bout-end tuning while locked; also uses a **5 s** silence window before alerts clear (matches lock-screen alarm cap default).

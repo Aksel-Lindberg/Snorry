@@ -1,6 +1,32 @@
 import Foundation
 import SwiftData
 
+// MARK: - Sound category for a detected bout
+/// Used to distinguish confirmed snoring from background noise and sleep talking
+/// when the session included a lock/background recording period.
+/// Defaults to `.snoring` so foreground-only sessions and legacy rows are unchanged.
+enum SoundEventKind: Int, Codable, Sendable {
+    case snoring     = 0
+    case sleepTalking = 1
+    case environment = 2
+
+    var displayName: String {
+        switch self {
+        case .snoring:      return "Snoring"
+        case .sleepTalking: return "Sleep Talking"
+        case .environment:  return "Environment"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .snoring:      return "zzz"
+        case .sleepTalking: return "bubble.left"
+        case .environment:  return "waveform"
+        }
+    }
+}
+
 // MARK: - A single continuous snoring episode within a session
 @Model
 final class SnoreEvent {
@@ -23,9 +49,18 @@ final class SnoreEvent {
     var spectralPeakHz: Double
     /// Relative path to the AAC clip file under Application Support/SnoreClips/.
     var audioRelativePath: String?
+    /// Raw storage for `SoundEventKind` — set to `.snoring` by default so existing rows
+    /// and foreground-only sessions require no migration.
+    var soundKindRaw: Int
 
     @Relationship(inverse: \SnoreSession.events)
     var session: SnoreSession?
+
+    /// Typed accessor; writes through `soundKindRaw`.
+    var soundKind: SoundEventKind {
+        get { SoundEventKind(rawValue: soundKindRaw) ?? .snoring }
+        set { soundKindRaw = newValue.rawValue }
+    }
 
     init(id: UUID = UUID(), startDate: Date = Date()) {
         self.id = id
@@ -35,6 +70,7 @@ final class SnoreEvent {
         self.avgDB = -160
         self.rumbleFrequencyHz = 0
         self.spectralPeakHz = 0
+        self.soundKindRaw = SoundEventKind.snoring.rawValue
     }
 
     var duration: TimeInterval? {

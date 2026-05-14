@@ -74,7 +74,8 @@ struct SessionDetailView: View {
     private func statsCards(vm: SessionDetailViewModel) -> some View {
         HStack(spacing: 12) {
             StatCard(label: "Sleep duration", value: vm.durationString, icon: "clock")
-            StatCard(label: "Snore events", value: "\(vm.snoreEvents.count)", icon: "waveform.badge.exclamationmark")
+            // Snore events / duration use snoring-only counts from the session rollup.
+            StatCard(label: "Snore events", value: "\(session.displayEventCount)", icon: "waveform.badge.exclamationmark")
             StatCard(label: "Snore duration", value: session.displayTotalSnoreTime, icon: "zzz")
             if session.avgBRPM > 0 {
                 StatCard(
@@ -144,17 +145,25 @@ struct SessionDetailView: View {
 
     private func eventsList(vm: SessionDetailViewModel) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Snore Events (\(vm.snoreEvents.count))")
-                .font(.caption.bold())
-                .foregroundStyle(Theme.labelSecondary)
+            HStack(alignment: .firstTextBaseline) {
+                Text("Sound Events (\(vm.allCompletedEvents.count))")
+                    .font(.caption.bold())
+                    .foregroundStyle(Theme.labelSecondary)
+                Spacer()
+                if vm.allCompletedEvents.count > vm.snoreEvents.count {
+                    Text("\(vm.snoreEvents.count) snoring")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.labelTertiary)
+                }
+            }
 
-            if vm.snoreEvents.isEmpty {
-                Text("No snore events detected this session.")
+            if vm.allCompletedEvents.isEmpty {
+                Text("No sound events detected this session.")
                     .font(.caption)
                     .foregroundStyle(Theme.labelTertiary)
                     .padding(.vertical, 8)
             } else {
-                ForEach(vm.snoreEvents) { event in
+                ForEach(vm.allCompletedEvents) { event in
                     EventPlaybackRow(
                         event: event,
                         isPlaying: vm.playingEventID == event.id,
@@ -438,10 +447,11 @@ struct EventPlaybackRow: View {
                 .disabled(!canReplay)
                 .opacity(canReplay ? 1.0 : 0.3)
 
-                HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(timeString)
                         .font(.subheadline.bold())
                         .foregroundStyle(Theme.labelPrimary)
+                    SoundKindBadge(kind: event.soundKind)
                 }
 
                 Spacer()
@@ -508,6 +518,36 @@ struct EventPlaybackRow: View {
             }
         }
         .padding(.vertical, 6)
+    }
+}
+
+// MARK: - Sound kind badge
+
+/// Small inline label showing the classification category for a detected bout.
+/// Hidden when the kind is `.snoring` and the session had no background period,
+/// so foreground-only nights look identical to pre-feature behaviour.
+private struct SoundKindBadge: View {
+
+    let kind: SoundEventKind
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: kind.systemImage)
+            Text(kind.displayName)
+        }
+        .font(.caption2.weight(.medium))
+        .foregroundStyle(foregroundColor)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(foregroundColor.opacity(0.12), in: Capsule())
+    }
+
+    private var foregroundColor: Color {
+        switch kind {
+        case .snoring:      return Theme.snoring
+        case .sleepTalking: return Theme.accent
+        case .environment:  return Theme.labelTertiary
+        }
     }
 }
 

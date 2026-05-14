@@ -244,10 +244,11 @@ struct MonitorView: View {
                 Text("Saving session…")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.labelPrimary)
-                Text("Finishing audio and storing events.")
+                Text(vm.stoppingStatusMessage)
                     .font(.caption)
                     .foregroundStyle(Theme.labelSecondary)
                     .multilineTextAlignment(.center)
+                    .animation(.easeInOut, value: vm.stoppingStatusMessage)
             }
             .padding(26)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))

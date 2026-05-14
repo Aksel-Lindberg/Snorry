@@ -30,6 +30,11 @@ final class SessionDetailViewModel {
 
     /// Downsampled waveform — avoids rendering tens of thousands of `AreaMark`s.
     private(set) var chartTimelinePoints: [TimelineChartPoint] = []
+
+    /// All completed bouts, regardless of kind — shown (with labels) in the playback list.
+    private(set) var allCompletedEvents: [SnoreEvent] = []
+
+    /// Snoring-classified bouts only — used for Snore Clock, stats, timeline rule marks.
     private(set) var snoreEvents: [SnoreEvent] = []
 
     // Playback state
@@ -51,9 +56,11 @@ final class SessionDetailViewModel {
 
     private init(session: SnoreSession) {
         self.session = session
-        snoreEvents = session.events
+        let completed = session.events
             .filter { $0.endDate != nil }
             .sorted { $0.startDate < $1.startDate }
+        allCompletedEvents = completed
+        snoreEvents = completed.filter { $0.soundKind == .snoring }
     }
 
     private func buildTimeline(from context: ModelContext) async {

@@ -59,14 +59,16 @@ final class SessionStore {
         logger.info("Session finalized: \(session.id)")
     }
 
-    /// Recomputes denormalized session fields from `events` (completed bouts only).
+    /// Recomputes denormalized session fields from `events`, counting only confirmed snoring bouts.
+    /// Sleep-talking and environment events are stored in the `events` relationship but excluded
+    /// from all snore-statistics fields so the Analytics / History / Home screens stay snoring-centric.
     private func rollupStatistics(for session: SnoreSession) {
-        let completedEvents = session.events.filter { $0.endDate != nil }
-        session.eventCount = completedEvents.count
-        session.totalSnoreDuration = completedEvents.compactMap { $0.duration }.reduce(0, +)
-        let brpms = completedEvents.filter { $0.brpm > 0 }.map { $0.brpm }
+        let snoringEvents = session.events.filter { $0.endDate != nil && $0.soundKind == .snoring }
+        session.eventCount = snoringEvents.count
+        session.totalSnoreDuration = snoringEvents.compactMap { $0.duration }.reduce(0, +)
+        let brpms = snoringEvents.filter { $0.brpm > 0 }.map { $0.brpm }
         session.avgBRPM = brpms.isEmpty ? 0 : brpms.reduce(0, +) / Double(brpms.count)
-        session.peakDB = completedEvents.map { $0.peakDB }.max() ?? -160
+        session.peakDB = snoringEvents.map { $0.peakDB }.max() ?? -160
     }
 
     // MARK: Event lifecycle

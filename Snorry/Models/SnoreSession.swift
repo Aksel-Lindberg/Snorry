@@ -26,6 +26,11 @@ final class SnoreSession {
     /// Raw value of `AlarmStyle` active when monitoring began.
     var snapshotAlarmStyleRaw: Int?
 
+    /// True when the device was locked or the app was backgrounded at any point
+    /// during this session — triggers post-stop SoundAnalysis clip classification.
+    /// Nil on legacy rows (treated the same as false: no reclassification).
+    var hadBackgroundRecordingPeriod: Bool?
+
     @Relationship(deleteRule: .cascade)
     var events: [SnoreEvent]
 
@@ -55,10 +60,11 @@ final class SnoreSession {
         return min(1, totalSnoreDuration / dur)
     }
 
-    /// Number of `SnoreEvent` rows (matches the session detail list). Stored `eventCount` is kept in sync on finalize;
-    /// use this in UI so rows stay accurate if rollup was skipped (e.g. crash before `finalizeSession`).
+    /// Number of confirmed snoring events (snoring-only, matches rolled-up `eventCount`).
+    /// The `events` relationship may also contain sleep-talking / environment bouts that are
+    /// excluded from snore statistics — use this whenever showing a "Snore events" figure.
     var displayEventCount: Int {
-        events.count
+        eventCount
     }
 
     // MARK: Display strings (Monitor card + session detail — avoids spinning up `SessionDetailViewModel`)
@@ -81,11 +87,11 @@ final class SnoreSession {
         Self.formatSnoreDuration(seconds: totalSnoreDuration)
     }
 
-    /// Mean snore‑bout length across counted events.
+    /// Mean snore‑bout length across snoring-classified completed events.
     var displayAvgSnoreTimePerEvent: String {
-        let completed = events.filter { $0.endDate != nil }.count
-        guard completed > 0, totalSnoreDuration > 0 else { return "—" }
-        let avg = totalSnoreDuration / Double(completed)
+        // `eventCount` is the snoring-only count kept in sync by rollupStatistics.
+        guard eventCount > 0, totalSnoreDuration > 0 else { return "—" }
+        let avg = totalSnoreDuration / Double(eventCount)
         return Self.formatSnoreDuration(seconds: avg)
     }
 
