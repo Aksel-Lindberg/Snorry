@@ -24,8 +24,10 @@ struct DailySnorePoint: Identifiable {
     let id = UUID()
     /// Start-of-day date in the local calendar.
     let date: Date
-    /// Average snore percentage across all completed sessions that day (0–100).
-    let snorePercent: Double
+    /// Total snore duration across all completed sessions that day, in minutes.
+    let snoreMinutes: Double
+    /// Total snore event count across all completed sessions that day.
+    let eventCount: Int
 }
 
 // MARK: - One alert-profile bucket for the correlation chart
@@ -33,8 +35,8 @@ struct AlertProfilePoint: Identifiable {
     let id = UUID()
     /// Short, human-readable label for this profile (e.g. "Push · Classic").
     let label: String
-    /// Average snore percentage across sessions with this profile (0–100).
-    let avgSnorePercent: Double
+    /// Average snore duration per session with this profile, in minutes.
+    let avgSnoreMinutes: Double
     /// Number of sessions in this bucket.
     let sessionCount: Int
     /// True when sessionCount is small enough that the average may not be representative.
@@ -90,17 +92,34 @@ final class AnalyticsViewModel {
         Calendar.current.date(byAdding: .day, value: -selectedRange.days, to: Date()) ?? Date()
     }
 
-    /// Average snore % across all daily points in the window.
-    var averageSnorePercent: Double {
+    /// Mean daily snore minutes across days that have data.
+    var averageDailySnoreMinutes: Double {
         guard !dailyPoints.isEmpty else { return 0 }
-        return dailyPoints.map(\.snorePercent).reduce(0, +) / Double(dailyPoints.count)
+        return dailyPoints.map(\.snoreMinutes).reduce(0, +) / Double(dailyPoints.count)
     }
 
-    /// Y-axis ceiling: rounds up to the nearest 25 % above the peak, minimum 25.
-    var yAxisMax: Double {
-        let peak = dailyPoints.map(\.snorePercent).max() ?? 0
-        guard peak > 0 else { return 100 }
-        return min(100, ceil((peak + 5) / 25) * 25)
+    /// Y-axis ceiling for the daily snore-minutes chart, rounded up to a clean step.
+    var snoreMinutesYMax: Double {
+        let peak = dailyPoints.map(\.snoreMinutes).max() ?? 0
+        guard peak > 0 else { return 10 }
+        let step: Double = peak < 15 ? 5 : peak < 60 ? 10 : 30
+        return ceil((peak + step * 0.2) / step) * step
+    }
+
+    /// Y-axis ceiling for the daily event-count chart.
+    var eventCountYMax: Double {
+        let peak = Double(dailyPoints.map(\.eventCount).max() ?? 0)
+        guard peak > 0 else { return 5 }
+        let step: Double = peak < 10 ? 2 : peak < 30 ? 5 : 10
+        return ceil((peak + step * 0.2) / step) * step
+    }
+
+    /// X-axis ceiling for the alert-correlation chart, in minutes.
+    var alertChartXMax: Double {
+        let peak = alertProfilePoints.map(\.avgSnoreMinutes).max() ?? 0
+        guard peak > 0 else { return 10 }
+        let step: Double = peak < 15 ? 5 : peak < 60 ? 10 : 30
+        return ceil((peak + step * 0.2) / step) * step
     }
 
     // MARK: Private helpers
@@ -112,18 +131,23 @@ final class AnalyticsViewModel {
         )
         let sessions = (try? context.fetch(descriptor)) ?? []
 
-        // Group completed sessions by start-of-day and collect snore fractions
-        var grouped: [Date: [Double]] = [:]
+        // Group completed sessions by start-of-day, summing duration and event count.
+        var durationByDay: [Date: Double] = [:]
+        var eventsByDay:   [Date: Int]    = [:]
+        var totalSessions = 0
         for session in sessions where session.endDate != nil {
             let day = calendar.startOfDay(for: session.startDate)
-            grouped[day, default: []].append(session.snoreFraction * 100)
+            durationByDay[day, default: 0] += session.totalSnoreDuration / 60.0
+            eventsByDay[day, default: 0]   += session.displayEventCount
+            totalSessions += 1
         }
 
-        sessionCount = grouped.values.reduce(0) { $0 + $1.count }
-        dailyPoints = grouped
-            .map { day, values in
+        sessionCount = totalSessions
+        dailyPoints = durationByDay.keys
+            .map { day in
                 DailySnorePoint(date: day,
-                                snorePercent: values.reduce(0, +) / Double(values.count))
+                                snoreMinutes: durationByDay[day] ?? 0,
+                                eventCount: eventsByDay[day] ?? 0)
             }
             .sorted { $0.date < $1.date }
     }
@@ -151,7 +175,7 @@ final class AnalyticsViewModel {
             s.snapshotAlarmStyleRaw != nil
         }
 
-        // Group by profile label, then average snore %.
+        // Group by profile label, then average snore duration (minutes).
         var buckets: [String: [Double]] = [:]
         for s in qualified {
             let label = Self.profileLabel(
@@ -159,18 +183,18 @@ final class AnalyticsViewModel {
                 sound: s.snapshotSoundEnabled!,
                 styleRaw: s.snapshotAlarmStyleRaw!
             )
-            buckets[label, default: []].append(s.snoreFraction * 100)
+            buckets[label, default: []].append(s.totalSnoreDuration / 60.0)
         }
 
         alertProfilePoints = buckets
             .map { label, values in
                 AlertProfilePoint(
                     label: label,
-                    avgSnorePercent: values.reduce(0, +) / Double(values.count),
+                    avgSnoreMinutes: values.reduce(0, +) / Double(values.count),
                     sessionCount: values.count
                 )
             }
-            .sorted { $0.avgSnorePercent < $1.avgSnorePercent }
+            .sorted { $0.avgSnoreMinutes < $1.avgSnoreMinutes }
     }
 
     /// Derives a concise profile label from snapshot flags.

@@ -50,7 +50,7 @@ struct HelpCenterView: View {
                         ) {
                             tabChip(icon: "waveform", name: "Monitor", hint: "Start sessions and see your latest summary.")
                             tabChip(icon: "clock.arrow.circlepath", name: "History", hint: "Browse past nights and open session details.")
-                            tabChip(icon: "chart.line.uptrend.xyaxis", name: "Analytics", hint: "Trends, charts, and how settings relate to snore percentage.")
+                            tabChip(icon: "chart.line.uptrend.xyaxis", name: "Analytics", hint: "Trends, charts, and how settings relate to snore duration.")
                             tabChip(icon: "gearshape.fill", name: "Settings", hint: "Alerts, timings, alarm style, volume, and legal links.")
                         }
 
@@ -73,7 +73,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "clock.fill",
                                 title: "Last Session",
-                                detail: "Quick stats from your most recent night: duration, snore events, breathing rate (BRPM) average, and snoring percentage."
+                                detail: "Quick stats from your most recent night: sleep duration, snore events, and total snore duration."
                             )
                             HelpBullet(
                                 icon: "lock.fill",
@@ -135,7 +135,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "list.bullet",
                                 title: "Session rows",
-                                detail: "Each row shows date, duration, event count, and snoring percentage with a compact visual bar."
+                                detail: "Each row shows date, duration, event count, and total snore duration with a compact visual bar."
                             )
                             HelpBullet(
                                 icon: "hand.draw.fill",
@@ -161,14 +161,14 @@ struct HelpCenterView: View {
                                 detail: "Pick week, month, or three months to focus the charts and summary pills."
                             )
                             HelpBullet(
-                                icon: "percent",
+                                icon: "timer",
                                 title: "Summary pills",
-                                detail: "Average snore percentage, number of sessions, and days with data in the selected window."
+                                detail: "Average snore minutes per day, number of sessions, and days with data in the selected window."
                             )
                             HelpBullet(
-                                icon: "chart.area.fill",
-                                title: "Snore percentage trend",
-                                detail: "Daily averages plotted over time so you can spot improvement or rough patches."
+                                icon: "chart.bar.fill",
+                                title: "Snore duration trend",
+                                detail: "Daily totals for snore events and snore duration plotted side-by-side so you can spot improvement or rough patches."
                             )
                             HelpBullet(
                                 icon: "mappin.and.ellipse",
@@ -177,8 +177,8 @@ struct HelpCenterView: View {
                             )
                             HelpBullet(
                                 icon: "chart.bar.xaxis",
-                                title: "Alert type vs snore %",
-                                detail: "Compares average snoring under different alert configurations in the period—useful context, not a medical diagnosis."
+                                title: "Alert type vs snore duration",
+                                detail: "Compares average snore duration under different alert configurations in the period—useful context, not a medical diagnosis."
                             )
                         }
 

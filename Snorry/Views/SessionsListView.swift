@@ -32,9 +32,10 @@ struct SessionsListView: View {
                 emptyState
             } else {
                 List {
+                    let maxSnore = sessions.map(\.totalSnoreDuration).max() ?? 0
                     ForEach(sessions) { session in
                         NavigationLink(destination: SessionDetailView(session: session)) {
-                            SessionRowView(session: session)
+                            SessionRowView(session: session, maxSnoreDuration: maxSnore)
                         }
                         .listRowBackground(Theme.surface)
                         .listRowSeparatorTint(Theme.surfaceSecondary)
@@ -77,6 +78,8 @@ struct SessionsListView: View {
 private struct SessionRowView: View {
 
     let session: SnoreSession
+    /// Maximum `totalSnoreDuration` across all visible sessions, used to normalise the bar.
+    let maxSnoreDuration: Double
     private let miniBarWidth: CGFloat = 116
 
     private var dateString: String {
@@ -90,9 +93,11 @@ private struct SessionRowView: View {
         return h > 0 ? "\(h)h \(m)m" : "\(m)m"
     }
 
-    private var snoringPercentString: String {
-        let percent = Int((session.snoreFraction * 100).rounded())
-        return "\(percent)%"
+    private var snoreDurationString: String { session.displayTotalSnoreTime }
+
+    private var barFill: CGFloat {
+        guard maxSnoreDuration > 0 else { return 0 }
+        return min(1, CGFloat(session.totalSnoreDuration / maxSnoreDuration))
     }
 
     var body: some View {
@@ -121,7 +126,7 @@ private struct SessionRowView: View {
                 HStack(spacing: 0) {
                     HStack(spacing: 4) {
                         Image(systemName: "zzz")
-                        Text(snoringPercentString)
+                        Text(snoreDurationString)
                             .font(Theme.monoDigit(size: 12))
                             .fontWeight(.bold)
                     }
@@ -130,24 +135,24 @@ private struct SessionRowView: View {
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
 
-                    snoreFractionBar
+                    snoreDurationBar
                         .padding(.leading, 10)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Snoring \(snoringPercentString)")
+                .accessibilityLabel("Snore duration \(snoreDurationString)")
             }
         }
         .padding(.vertical, 4)
     }
 
-    private var snoreFractionBar: some View {
+    private var snoreDurationBar: some View {
         ZStack(alignment: .leading) {
             RoundedRectangle(cornerRadius: 3)
                 .fill(Theme.surfaceSecondary)
                 .frame(width: miniBarWidth, height: 6)
             RoundedRectangle(cornerRadius: 3)
                 .fill(Theme.snoringGradient)
-                .frame(width: miniBarWidth * CGFloat(session.snoreFraction), height: 6)
+                .frame(width: miniBarWidth * barFill, height: 6)
         }
     }
 }

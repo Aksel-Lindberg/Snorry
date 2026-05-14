@@ -185,6 +185,4 @@ final class SessionDetailViewModel {
     // MARK: Summary helpers
 
     var durationString: String { session.displayDurationSummary }
-
-    var snorePercentString: String { session.displaySnoringPercent }
 }

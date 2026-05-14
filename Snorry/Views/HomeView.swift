@@ -220,35 +220,18 @@ struct HomeView: View {
                     .font(.caption.bold())
                     .foregroundStyle(Theme.labelSecondary)
 
-                if horizontalSizeClass == .regular {
-                    lastSessionMetrics(session: session)
-                } else {
-                    VStack(spacing: 6) {
-                        HStack(spacing: 0) {
-                            summaryItem(label: "Sleep duration", value: session.displayDurationSummary)
-                            summaryItem(label: "Events", value: "\(session.displayEventCount)")
-                            summaryItem(label: "Snoring", value: session.displaySnoringPercent)
-                        }
-                        HStack(spacing: 0) {
-                            summaryItem(label: "Total snore", value: session.displayTotalSnoreTime)
-                            summaryItem(label: "Avg / event", value: session.displayAvgSnoreTimePerEvent)
-                        }
-                    }
-                }
+                lastSessionMetrics(session: session)
             }
             .padding(cardPadding)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
         }
     }
 
-    /// Single-row metric strip for iPad / wide Monitor layout.
     private func lastSessionMetrics(session: SnoreSession) -> some View {
         HStack(spacing: 0) {
             summaryItem(label: "Sleep duration", value: session.displayDurationSummary)
-            summaryItem(label: "Events", value: "\(session.displayEventCount)")
-            summaryItem(label: "Total snore", value: session.displayTotalSnoreTime)
-            summaryItem(label: "Avg / event", value: session.displayAvgSnoreTimePerEvent)
-            summaryItem(label: "Snoring", value: session.displaySnoringPercent)
+            summaryItem(label: "Snore events", value: "\(session.displayEventCount)")
+            summaryItem(label: "Total snore duration", value: session.displayTotalSnoreTime)
         }
     }
 

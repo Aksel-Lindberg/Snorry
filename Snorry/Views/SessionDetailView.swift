@@ -73,9 +73,9 @@ struct SessionDetailView: View {
 
     private func statsCards(vm: SessionDetailViewModel) -> some View {
         HStack(spacing: 12) {
-            StatCard(label: "Duration",    value: vm.durationString,    icon: "clock")
-            StatCard(label: "Events",      value: "\(vm.snoreEvents.count)", icon: "waveform.badge.exclamationmark")
-            StatCard(label: "Snoring",     value: vm.snorePercentString, icon: "zzz")
+            StatCard(label: "Duration",       value: vm.durationString,              icon: "clock")
+            StatCard(label: "Events",         value: "\(vm.snoreEvents.count)",       icon: "waveform.badge.exclamationmark")
+            StatCard(label: "Snore duration", value: session.displayTotalSnoreTime,   icon: "zzz")
             if session.avgBRPM > 0 {
                 StatCard(label: "Avg BRPM",
                          value: String(format: "%.0f", session.avgBRPM),

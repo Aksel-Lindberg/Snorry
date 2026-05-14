@@ -54,7 +54,7 @@ private struct AnalyticsContent: View {
                     )
                 }
                 if vm.settingsChanges.isEmpty { markerInfoNote }
-                AlertCorrelationCard(points: vm.alertProfilePoints)
+                AlertCorrelationCard(points: vm.alertProfilePoints, xMax: vm.alertChartXMax)
             }
             .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
             .padding(.bottom, 40)
@@ -80,10 +80,17 @@ private struct AnalyticsContent: View {
 
     private var summaryRow: some View {
         HStack(spacing: 12) {
-            statPill("Avg Snore",    String(format: "%.0f%%", vm.averageSnorePercent), Theme.snoring)
-            statPill("Sessions",     "\(vm.sessionCount)",                             Theme.accent)
-            statPill("Days Tracked", "\(vm.dailyPoints.count)",                        Theme.good)
+            statPill("Avg min/day", avgSnoreLabel, Theme.snoring)
+            statPill("Sessions",   "\(vm.sessionCount)", Theme.accent)
+            statPill("Days",       "\(vm.dailyPoints.count)", Theme.good)
         }
+    }
+
+    private var avgSnoreLabel: String {
+        let m = vm.averageDailySnoreMinutes
+        guard m > 0 else { return "—" }
+        if m < 1 { return "<1m" }
+        return "\(Int(m.rounded()))m"
     }
 
     private func statPill(_ title: String, _ value: String, _ color: Color) -> some View {
@@ -110,11 +117,12 @@ private struct AnalyticsContent: View {
             if vm.dailyPoints.isEmpty {
                 emptyChartState
             } else {
-                SnoreTrendChart(
+                SnoreDailyBarsChart(
                     dailyPoints: vm.dailyPoints,
                     settingsChanges: vm.settingsChanges,
                     cutoffDate: vm.cutoffDate,
-                    yAxisMax: vm.yAxisMax,
+                    snoreMinutesYMax: vm.snoreMinutesYMax,
+                    eventCountYMax: vm.eventCountYMax,
                     selectedRange: vm.selectedRange
                 )
             }
@@ -126,10 +134,10 @@ private struct AnalyticsContent: View {
     private var cardHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Snore Percentage")
+                Text("Snore duration")
                     .font(.headline)
                     .foregroundStyle(Theme.labelPrimary)
-                Text("Daily average · \(vm.selectedRange.rawValue.lowercased())")
+                Text("Daily totals · \(vm.selectedRange.rawValue.lowercased())")
                     .font(.caption)
                     .foregroundStyle(Theme.labelTertiary)
             }
@@ -174,7 +182,7 @@ private struct AnalyticsContent: View {
             Text(
                 "Settings change markers will appear on the chart once you save changes in " +
                 "Settings. This lets you track which Push Notification or Alarm settings " +
-                "affected your snore percentage."
+                "affected your snore duration and event count."
             )
             .font(.caption)
             .foregroundStyle(Theme.labelTertiary)
@@ -185,80 +193,98 @@ private struct AnalyticsContent: View {
     }
 }
 
-// MARK: - Snore trendline chart
-private struct SnoreTrendChart: View {
+// MARK: - Dual daily bar chart (snore events + snore duration)
+private struct SnoreDailyBarsChart: View {
 
     let dailyPoints: [DailySnorePoint]
     let settingsChanges: [AlertSettingsChange]
     let cutoffDate: Date
-    let yAxisMax: Double
+    let snoreMinutesYMax: Double
+    let eventCountYMax: Double
     let selectedRange: AnalyticsRange
 
     var body: some View {
-        Chart {
-            areaMarks
-            lineMarks
-            pointMarks
-            changeRules
-        }
-        .chartXScale(domain: cutoffDate...Date())
-        .chartYScale(domain: 0...yAxisMax)
-        .chartXAxis { xAxisContent }
-        .chartYAxis { yAxisContent }
-        .frame(height: 240)
-    }
+        VStack(spacing: 12) {
+            // Events chart
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Snore events")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Theme.snoring)
+                    .textCase(.uppercase)
+                    .tracking(0.4)
+                Chart {
+                    eventBars
+                    changeRules(yMax: eventCountYMax)
+                }
+                .chartXScale(domain: cutoffDate...Date())
+                .chartYScale(domain: 0...eventCountYMax)
+                .chartXAxis { xAxisContent }
+                .chartYAxis { intYAxisContent(max: eventCountYMax) }
+                .frame(height: 110)
+            }
 
-    // MARK: Chart marks
-
-    @ChartContentBuilder
-    private var areaMarks: some ChartContent {
-        ForEach(dailyPoints) { point in
-            AreaMark(
-                x: .value("Date", point.date, unit: .day),
-                y: .value("Snore %", point.snorePercent)
-            )
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [Theme.snoring.opacity(0.45), Theme.snoring.opacity(0.04)],
-                    startPoint: .top, endPoint: .bottom
-                )
-            )
-            .interpolationMethod(.catmullRom)
-        }
-    }
-
-    @ChartContentBuilder
-    private var lineMarks: some ChartContent {
-        ForEach(dailyPoints) { point in
-            LineMark(
-                x: .value("Date", point.date, unit: .day),
-                y: .value("Snore %", point.snorePercent)
-            )
-            .foregroundStyle(Theme.snoring)
-            .lineStyle(StrokeStyle(lineWidth: 2.5))
-            .interpolationMethod(.catmullRom)
+            // Snore duration chart
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Snore duration (min)")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .textCase(.uppercase)
+                    .tracking(0.4)
+                Chart {
+                    durationBars
+                    changeRules(yMax: snoreMinutesYMax)
+                }
+                .chartXScale(domain: cutoffDate...Date())
+                .chartYScale(domain: 0...snoreMinutesYMax)
+                .chartXAxis { xAxisContent }
+                .chartYAxis { minuteYAxisContent(max: snoreMinutesYMax) }
+                .frame(height: 110)
+            }
         }
     }
 
+    // MARK: Bar marks
+
     @ChartContentBuilder
-    private var pointMarks: some ChartContent {
+    private var eventBars: some ChartContent {
         ForEach(dailyPoints) { point in
-            PointMark(
+            BarMark(
                 x: .value("Date", point.date, unit: .day),
-                y: .value("Snore %", point.snorePercent)
+                y: .value("Events", point.eventCount)
             )
-            .foregroundStyle(Theme.snoring)
-            .symbolSize(35)
-            .annotation(position: .top, spacing: 4) {
-                Text(String(format: "%.0f%%", point.snorePercent))
-                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Theme.labelSecondary)
+            .foregroundStyle(Theme.snoring.opacity(0.85))
+            .cornerRadius(4)
+            .annotation(position: .top, spacing: 2) {
+                if point.eventCount > 0 {
+                    Text("\(point.eventCount)")
+                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Theme.labelSecondary)
+                }
             }
         }
     }
 
     @ChartContentBuilder
-    private var changeRules: some ChartContent {
+    private var durationBars: some ChartContent {
+        ForEach(dailyPoints) { point in
+            BarMark(
+                x: .value("Date", point.date, unit: .day),
+                y: .value("Snore min", point.snoreMinutes)
+            )
+            .foregroundStyle(Theme.accent.opacity(0.85))
+            .cornerRadius(4)
+            .annotation(position: .top, spacing: 2) {
+                if point.snoreMinutes > 0 {
+                    Text(minuteLabel(point.snoreMinutes))
+                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Theme.labelSecondary)
+                }
+            }
+        }
+    }
+
+    @ChartContentBuilder
+    private func changeRules(yMax: Double) -> some ChartContent {
         ForEach(Array(settingsChanges.enumerated()), id: \.offset) { index, change in
             RuleMark(x: .value("Settings changed", change.timestamp))
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
@@ -269,7 +295,7 @@ private struct SnoreTrendChart: View {
         }
     }
 
-    // MARK: Axis content
+    // MARK: Axis helpers
 
     @AxisContentBuilder
     private var xAxisContent: some AxisContent {
@@ -282,12 +308,12 @@ private struct SnoreTrendChart: View {
     }
 
     @AxisContentBuilder
-    private var yAxisContent: some AxisContent {
-        AxisMarks(preset: .automatic, values: yAxisTickValues) { value in
+    private func intYAxisContent(max: Double) -> some AxisContent {
+        AxisMarks(preset: .automatic, values: .automatic(desiredCount: 4)) { value in
             AxisGridLine().foregroundStyle(Theme.surfaceSecondary.opacity(0.6))
             AxisValueLabel {
-                if let pct = value.as(Double.self) {
-                    Text("\(Int(pct))%")
+                if let v = value.as(Int.self) {
+                    Text("\(v)")
                         .font(.caption2)
                         .foregroundStyle(Theme.labelTertiary)
                 }
@@ -295,7 +321,19 @@ private struct SnoreTrendChart: View {
         }
     }
 
-    // MARK: Axis helpers
+    @AxisContentBuilder
+    private func minuteYAxisContent(max: Double) -> some AxisContent {
+        AxisMarks(preset: .automatic, values: .automatic(desiredCount: 4)) { value in
+            AxisGridLine().foregroundStyle(Theme.surfaceSecondary.opacity(0.6))
+            AxisValueLabel {
+                if let v = value.as(Double.self) {
+                    Text("\(Int(v))m")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.labelTertiary)
+                }
+            }
+        }
+    }
 
     private var xAxisMarkCount: Int {
         switch selectedRange {
@@ -313,11 +351,10 @@ private struct SnoreTrendChart: View {
         }
     }
 
-    private var yAxisTickValues: [Double] {
-        [0, 25, 50, 75, 100].filter { $0 <= yAxisMax }
+    private func minuteLabel(_ minutes: Double) -> String {
+        if minutes < 1 { return "<1m" }
+        return "\(Int(minutes.rounded()))m"
     }
-
-    // MARK: Marker badge
 
     private func markerBadge(number: Int) -> some View {
         Text("\(number)")
@@ -408,10 +445,11 @@ private struct SettingsChangeLegend: View {
     }
 }
 
-// MARK: - Alert configuration vs snore % card
+// MARK: - Alert configuration vs snore duration card
 private struct AlertCorrelationCard: View {
 
     let points: [AlertProfilePoint]
+    let xMax: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -419,7 +457,7 @@ private struct AlertCorrelationCard: View {
             if points.isEmpty {
                 emptyState
             } else {
-                AlertCorrelationChart(points: points)
+                AlertCorrelationChart(points: points, xMax: xMax)
                 disclaimer
             }
         }
@@ -429,7 +467,7 @@ private struct AlertCorrelationCard: View {
 
     private var cardHeader: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("Alert Type vs Snore %")
+            Text("Alert Type vs Snore duration")
                 .font(.headline)
                 .foregroundStyle(Theme.labelPrimary)
             Text("Average per alert configuration · sessions in this period")
@@ -446,7 +484,7 @@ private struct AlertCorrelationCard: View {
             Text("No data yet")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(Theme.labelSecondary)
-            Text("Complete a monitoring session to see how your alert settings correlate with snore percentage.")
+            Text("Complete a monitoring session to see how your alert settings correlate with snore duration.")
                 .font(.caption)
                 .foregroundStyle(Theme.labelTertiary)
                 .multilineTextAlignment(.center)
@@ -457,21 +495,22 @@ private struct AlertCorrelationCard: View {
     }
 
     private var disclaimer: some View {
-        Text("Lower is better. Correlation only — not a causal measure.")
+        Text("Shorter is better. Correlation only — not a causal measure.")
             .font(.caption2)
             .foregroundStyle(Theme.labelTertiary)
             .padding(.top, 2)
     }
 }
 
-// MARK: - Horizontal bar chart
+// MARK: - Horizontal bar chart (snore duration per alert profile)
 private struct AlertCorrelationChart: View {
 
     let points: [AlertProfilePoint]
+    let xMax: Double
 
-    /// Colour for a bar: green at 0 %, red at 100 %.
-    private func barColor(for percent: Double) -> Color {
-        let t = min(max(percent / 100.0, 0), 1)
+    /// Colour gradient: green at 0, red at xMax.
+    private func barColor(for minutes: Double) -> Color {
+        let t = min(max(xMax > 0 ? minutes / xMax : 0, 0), 1)
         return Color(
             red:   0.25 + 0.55 * t,
             green: 0.75 - 0.45 * t,
@@ -479,17 +518,25 @@ private struct AlertCorrelationChart: View {
         )
     }
 
+    private func minuteLabel(_ minutes: Double) -> String {
+        if minutes < 1 { return "<1m" }
+        let total = Int(minutes.rounded())
+        let h = total / 60
+        let m = total % 60
+        return h > 0 ? (m > 0 ? "\(h)h \(m)m" : "\(h)h") : "\(m)m"
+    }
+
     var body: some View {
         Chart(points) { point in
             BarMark(
-                x: .value("Avg Snore %", point.avgSnorePercent),
+                x: .value("Avg snore (min)", point.avgSnoreMinutes),
                 y: .value("Profile", point.label)
             )
-            .foregroundStyle(barColor(for: point.avgSnorePercent))
+            .foregroundStyle(barColor(for: point.avgSnoreMinutes))
             .cornerRadius(6)
             .annotation(position: .trailing, alignment: .leading, spacing: 6) {
                 HStack(spacing: 4) {
-                    Text(String(format: "%.0f%%", point.avgSnorePercent))
+                    Text(minuteLabel(point.avgSnoreMinutes))
                         .font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundStyle(Theme.labelPrimary)
                     Text("n=\(point.sessionCount)")
@@ -503,8 +550,8 @@ private struct AlertCorrelationChart: View {
             AxisMarks(values: xTicks) { value in
                 AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
                 AxisValueLabel {
-                    if let pct = value.as(Double.self) {
-                        Text("\(Int(pct))%")
+                    if let v = value.as(Double.self) {
+                        Text("\(Int(v))m")
                             .font(.caption2)
                             .foregroundStyle(Theme.labelTertiary)
                     }
@@ -521,14 +568,7 @@ private struct AlertCorrelationChart: View {
         .frame(height: max(56, CGFloat(points.count) * 52))
     }
 
-    /// X-axis ceiling rounded up to the nearest 25, minimum 25.
-    private var xMax: Double {
-        let peak = points.map(\.avgSnorePercent).max() ?? 0
-        guard peak > 0 else { return 100 }
-        return min(100, ceil((peak + 5) / 25) * 25)
-    }
-
     private var xTicks: [Double] {
-        [0, 25, 50, 75, 100].filter { $0 <= xMax }
+        stride(from: 0, through: xMax, by: max(1, xMax / 4).rounded()).map { $0 }
     }
 }
