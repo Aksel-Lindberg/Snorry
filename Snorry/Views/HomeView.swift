@@ -228,10 +228,10 @@ struct HomeView: View {
     }
 
     private func lastSessionMetrics(session: SnoreSession) -> some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .top, spacing: 0) {
             summaryItem(label: "Sleep duration", value: session.displayDurationSummary)
             summaryItem(label: "Snore events", value: "\(session.displayEventCount)")
-            summaryItem(label: "Total snore duration", value: session.displayTotalSnoreTime)
+            summaryItem(label: "Snore duration", value: session.displayTotalSnoreTime)
         }
     }
 
