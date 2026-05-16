@@ -10,6 +10,25 @@ struct MonitorView: View {
 
     @State private var pulseAnimation = false
 
+    /// Even gap between Live Timeline and Stop Monitoring (iPhone).
+    private var stopButtonTopGap: CGFloat {
+        horizontalSizeClass == .regular ? 24 : 26
+    }
+
+    /// Matching gap between Stop Monitoring and the tab bar (iPhone).
+    private var stopButtonBottomGap: CGFloat {
+        horizontalSizeClass == .regular ? 24 : 26
+    }
+
+    /// Scroll padding below the stop button so it clears the floating tab bar.
+    private var monitorTabBarReserve: CGFloat {
+        horizontalSizeClass == .regular ? 52 : 50
+    }
+
+    private var monitorBottomClearance: CGFloat {
+        stopButtonBottomGap + monitorTabBarReserve
+    }
+
     var body: some View {
         ZStack {
             Theme.nightGradient.ignoresSafeArea()
@@ -20,15 +39,16 @@ struct MonitorView: View {
                     spectrumCard
                     metricsRow
                     alertPhaseCard
-                    timelineCard
-                    stopButton
+                    timelineAndStopSection
                 }
                 .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
                 .padding(.top, 12)
-                .padding(.bottom, 40)
+                .padding(.bottom, monitorBottomClearance)
                 .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
                 .frame(maxWidth: .infinity)
             }
+            .scrollIndicators(.hidden)
+            .contentMargins(.bottom, horizontalSizeClass == .regular ? 12 : 8, for: .scrollContent)
             .allowsHitTesting(!vm.isStoppingMonitoring)
 
             if vm.isStoppingMonitoring {
@@ -194,6 +214,18 @@ struct MonitorView: View {
             }
         }
         .animation(.spring(duration: 0.4), value: vm.alertPhase)
+    }
+
+    /// Live timeline + stop control — equal gap above and below the stop button (iPhone).
+    private var timelineAndStopSection: some View {
+        VStack(spacing: 0) {
+            timelineCard
+
+            Color.clear
+                .frame(height: stopButtonTopGap)
+
+            stopButton
+        }
     }
 
     @ViewBuilder

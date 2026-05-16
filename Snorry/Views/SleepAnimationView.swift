@@ -11,13 +11,18 @@ struct SleepAnimationView: View {
     }
 
     var presentation: Presentation = .standalone
+    /// Circle size — use a smaller value on iPad portrait so cards fit above the tab bar.
+    var diameter: CGFloat = 172
+
+    /// Scales inner artwork relative to the default 172pt START control.
+    private var startLayoutScale: CGFloat {
+        guard presentation == .startButton else { return 1 }
+        return diameter / 172
+    }
 
     @State private var glowPulse  = false
     @State private var moonFloat  = false
     @State private var barPhase   = false
-
-    /// Home START control — slightly smaller than standalone hero so Monitor fits above the tab bar.
-    private let diameter: CGFloat = 172
 
     var body: some View {
         Group {
@@ -56,32 +61,36 @@ struct SleepAnimationView: View {
     // MARK: Start button (accent disk + animation + START label)
 
     private var startButtonBody: some View {
-        ZStack {
+        let scale = startLayoutScale
+        let edgeInset = 22 * scale
+        let labelSpacing = 8 * scale
+
+        return ZStack {
             outerGlowStartButton
             Circle()
                 .fill(Theme.accentGradient)
                 .frame(width: diameter, height: diameter)
                 .overlay(
                     Circle()
-                        .strokeBorder(Color.white.opacity(0.28), lineWidth: 2)
+                        .strokeBorder(Color.white.opacity(0.28), lineWidth: max(1, 2 * scale))
                 )
-                .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
+                .shadow(color: .black.opacity(0.35), radius: 12 * scale, y: 6 * scale)
 
             VStack(spacing: 0) {
-                Spacer(minLength: 22)
+                Spacer(minLength: edgeInset)
                 moonIconStartButton
-                Spacer(minLength: 4)
+                Spacer(minLength: 4 * scale)
                 audioWaveBarsLight
-                    .padding(.bottom, 8)
-                HStack(spacing: 8) {
+                    .padding(.bottom, 8 * scale)
+                HStack(spacing: labelSpacing) {
                     Image(systemName: "mic.fill")
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.system(size: 19 * scale, weight: .semibold))
                     Text("START")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.system(size: 15 * scale, weight: .bold, design: .rounded))
                         .tracking(3)
                 }
                 .foregroundStyle(.white)
-                Spacer(minLength: 22)
+                Spacer(minLength: edgeInset)
             }
             .frame(width: diameter, height: diameter)
 
@@ -105,14 +114,16 @@ struct SleepAnimationView: View {
     }
 
     private var outerGlowStartButton: some View {
-        Circle()
+        let scale = startLayoutScale
+        return Circle()
             .fill(
                 RadialGradient(
                     colors: [Color.white.opacity(0.22), Color.clear],
                     center: .center,
-                    startRadius: 70, endRadius: 118
+                    startRadius: 70 * scale, endRadius: 118 * scale
                 )
             )
+            .frame(width: diameter, height: diameter)
             .scaleEffect(glowPulse ? 1.14 : 0.94)
     }
 
@@ -159,7 +170,7 @@ struct SleepAnimationView: View {
 
     private var moonIconStartButton: some View {
         Image(systemName: "moon.zzz.fill")
-            .font(.system(size: 54, weight: .ultraLight))
+            .font(.system(size: 54 * startLayoutScale, weight: .ultraLight))
             .foregroundStyle(
                 LinearGradient(
                     colors: [Color.white.opacity(0.98),
@@ -188,15 +199,16 @@ struct SleepAnimationView: View {
     }
 
     private var floatingZsLight: some View {
-        TimelineView(.animation) { context in
+        let scale = startLayoutScale
+        return TimelineView(.animation) { context in
             let elapsed = context.date.timeIntervalSinceReferenceDate
             ZStack {
                 zParticle(elapsed: elapsed, phaseOffset: 0.00,
-                          xOffset: 36, fontSize: 13, letter: "z", style: .light)
+                          xOffset: 36 * scale, fontSize: 13 * scale, letter: "z", style: .light)
                 zParticle(elapsed: elapsed, phaseOffset: 0.38,
-                          xOffset: 54, fontSize: 18, letter: "Z", style: .light)
+                          xOffset: 54 * scale, fontSize: 18 * scale, letter: "Z", style: .light)
                 zParticle(elapsed: elapsed, phaseOffset: 0.70,
-                          xOffset: 24, fontSize: 10, letter: "z", style: .light)
+                          xOffset: 24 * scale, fontSize: 10 * scale, letter: "z", style: .light)
             }
         }
     }
@@ -213,7 +225,7 @@ struct SleepAnimationView: View {
     ) -> some View {
         let cycle = 2.6
         let raw   = (elapsed / cycle + phaseOffset).truncatingRemainder(dividingBy: 1.0)
-        let yDrop: CGFloat = 50
+        let yDrop: CGFloat = presentation == .startButton ? 50 * startLayoutScale : 50
 
         let opacity: Double = {
             switch style {
@@ -271,7 +283,7 @@ struct SleepAnimationView: View {
         gradientTop: Color,
         gradientBottom: Color
     ) -> some View {
-        let maxH: CGFloat = presentation == .startButton ? 14 : 16
+        let maxH: CGFloat = presentation == .startButton ? 14 * startLayoutScale : 16
         let delay = relativeHeight * 0.3
 
         return Capsule()

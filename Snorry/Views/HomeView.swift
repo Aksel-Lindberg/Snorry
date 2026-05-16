@@ -5,8 +5,15 @@ import SwiftData
 // MARK: - Home screen with big start button
 struct HomeView: View {
 
+    private enum ScrollTarget: String {
+        case alertSetup
+        case lastSession
+        case scrollEnd
+    }
+
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Query private var alertSettingsRows: [AlertSettings]
     /// Completed sessions only — stays valid when rows are deleted (avoids stale `SnoreSession` references).
     @Query(
@@ -19,6 +26,37 @@ struct HomeView: View {
     @State private var showMonitor = false
     @State private var showPermissions = false
     @State private var showHelp = false
+    @State private var scrollAlertIntoView = false
+
+    /// Visible gap between the Last Session card and the tab bar (iPad portrait).
+    private let padTabBarGap: CGFloat = 32
+
+    /// Height reserved at the bottom of the screen for the floating tab bar (iPad portrait).
+    private let padTabBarClearance: CGFloat = 92
+
+    /// Extra scroll padding below cards when content overflows.
+    private let padScrollBottomPadding: CGFloat = 24
+
+    /// START button diameter on iPad portrait (default phone size is 172).
+    private let padStartButtonDiameter: CGFloat = 118
+
+    /// Lifts the Monitor column on iPad portrait (uses top whitespace).
+    private let padContentLift: CGFloat = 20
+
+    /// Extra scroll inset when content overflows.
+    private var tabBarScrollInset: CGFloat {
+        horizontalSizeClass == .regular ? 16 : 28
+    }
+
+    /// Side-by-side start + cards only in iPad landscape — portrait stacks vertically to avoid tab-bar overlap.
+    private var usePadSideBySideLayout: Bool {
+        horizontalSizeClass == .regular && verticalSizeClass == .compact
+    }
+
+    /// Tighter Monitor home on iPad portrait so Last Session stays above the tab bar.
+    private var usesCompressedPadLayout: Bool {
+        horizontalSizeClass == .regular && !usePadSideBySideLayout
+    }
 
     var body: some View {
         NavigationStack {
@@ -27,6 +65,7 @@ struct HomeView: View {
 
                 if let vm {
                     mainContent(vm: vm)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .navigationDestination(isPresented: $showMonitor) {
                             MonitorView(vm: vm)
                         }
@@ -82,101 +121,193 @@ struct HomeView: View {
         }
     }
 
-    /// iPhone / compact split — original vertical stack.
+    /// iPhone / compact — scrollable so cards clear the floating tab bar.
     private func compactMonitorLayout(vm: MonitorViewModel) -> some View {
+        monitorScrollView(vm: vm) {
+            VStack(spacing: 0) {
+                headerSection
+                    .padding(.top, 28)
+
+                startButtonSection(vm: vm)
+                    .padding(.top, 12)
+
+                monitorBottomCards(vm: vm)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
+        }
+    }
+
+    /// iPad — portrait uses a height-bounded scroll column; landscape is side-by-side.
+    @ViewBuilder
+    private func padMonitorLayout(vm: MonitorViewModel) -> some View {
+        if usesCompressedPadLayout {
+            padPortraitMonitorLayout(vm: vm)
+        } else {
+            monitorScrollView(vm: vm) {
+                VStack(spacing: 0) {
+                    headerSection
+                        .padding(.top, 28)
+                    padLandscapeContent(vm: vm)
+                    scrollEndSpacer
+                }
+                .padding(.bottom, 24)
+            }
+        }
+    }
+
+    /// iPad portrait — scroll view height stops above the tab bar so Last Session is never covered.
+    private func padPortraitMonitorLayout(vm: MonitorViewModel) -> some View {
+        GeometryReader { geometry in
+            let contentHeight = max(0, geometry.size.height - padTabBarClearance)
+
+            monitorScrollView(vm: vm) {
+                VStack(spacing: 0) {
+                    headerSection
+                        .padding(.top, 4)
+
+                    padPortraitContent(vm: vm)
+
+                    Color.clear
+                        .frame(height: padScrollBottomPadding)
+                        .id(ScrollTarget.scrollEnd)
+                }
+                .padding(.bottom, padTabBarGap)
+                .offset(y: -padContentLift)
+            }
+            .frame(width: geometry.size.width, height: contentHeight, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+    }
+
+    private func monitorScrollView<Content: View>(
+        vm: MonitorViewModel,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                content()
+            }
+            .scrollIndicators(.hidden)
+            .contentMargins(.bottom, tabBarScrollInset, for: .scrollContent)
+            .onChange(of: scrollAlertIntoView) { _, shouldScroll in
+                guard shouldScroll else { return }
+                scrollExpandedAlertCard(proxy: proxy)
+                scrollAlertIntoView = false
+            }
+        }
+    }
+
+    /// Scrolls the expanded alert card into view above the tab bar.
+    private func scrollExpandedAlertCard(proxy: ScrollViewProxy) {
+        // Let the disclosure animation lay out before scrolling.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            withAnimation(.easeInOut(duration: 0.4)) {
+                proxy.scrollTo(ScrollTarget.alertSetup, anchor: UnitPoint(x: 0.5, y: 0.06))
+            }
+        }
+    }
+
+    private var scrollEndSpacer: some View {
+        Color.clear
+            .frame(height: usesCompressedPadLayout ? 20 : 1)
+            .id(ScrollTarget.scrollEnd)
+    }
+
+    private func padPortraitContent(vm: MonitorViewModel) -> some View {
         VStack(spacing: 0) {
-            headerSection
-                .padding(.top, 28)
-
             startButtonSection(vm: vm)
-                .padding(.top, 12)
+                .padding(.top, 8)
 
+            monitorBottomCards(vm: vm)
+                .padding(.horizontal, 40)
+                .padding(.top, 10)
+                .frame(maxWidth: 680)
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    private func padLandscapeContent(vm: MonitorViewModel) -> some View {
+        HStack(alignment: .top, spacing: 40) {
+            VStack(spacing: 20) {
+                startButtonSection(vm: vm)
+            }
+            .frame(minWidth: 260)
+
+            monitorBottomCards(vm: vm)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 44)
+        .padding(.top, 28)
+        .frame(maxWidth: 1100)
+        .frame(maxWidth: .infinity)
+    }
+
+    /// Alert setup (collapsed by default) and last session — shared by phone and iPad layouts.
+    private func monitorBottomCards(vm: MonitorViewModel) -> some View {
+        VStack(alignment: .leading, spacing: usesCompressedPadLayout ? 10 : 16) {
             if let settings = alertSettingsRows.first {
                 AlertSetupSummaryCard(
                     settings: settings,
                     notificationsAuthorized: vm.notificationAuthorized,
                     caption: "Used for the next monitoring session",
-                    compact: true
+                    compact: true,
+                    collapsible: true,
+                    startsCollapsed: true,
+                    onExpandedChange: { expanded in
+                        if expanded {
+                            scrollAlertIntoView = true
+                        }
+                    }
                 )
-                .padding(.top, 10)
+                .id(ScrollTarget.alertSetup)
             }
-
-            Spacer(minLength: 6)
 
             recentSessionCard()
-                .padding(.bottom, 24)
+                .id(ScrollTarget.lastSession)
         }
-        .padding(.horizontal, 24)
-    }
-
-    /// iPad / regular width — uses horizontal space without stretching a single narrow column.
-    private func padMonitorLayout(vm: MonitorViewModel) -> some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                headerSection
-                    .padding(.top, 28)
-
-                HStack(alignment: .top, spacing: 40) {
-                    VStack(spacing: 20) {
-                        startButtonSection(vm: vm)
-                    }
-                    .frame(minWidth: 260)
-
-                    VStack(alignment: .leading, spacing: 16) {
-                        if let settings = alertSettingsRows.first {
-                            AlertSetupSummaryCard(
-                                settings: settings,
-                                notificationsAuthorized: vm.notificationAuthorized,
-                                caption: "Used for the next monitoring session",
-                                compact: true
-                            )
-                        }
-                        recentSessionCard()
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .padding(.horizontal, 44)
-                .padding(.top, 28)
-                .frame(maxWidth: 1100)
-                .frame(maxWidth: .infinity)
-
-                Color.clear.frame(height: 28)
-            }
-        }
+        .padding(.top, usesCompressedPadLayout ? 6 : 10)
     }
 
     // MARK: Header
 
     private var headerSection: some View {
         VStack(spacing: 0) {
-            // App wordmark
             Text("Snorry")
-                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .font(.system(
+                    size: usesCompressedPadLayout ? 34 : 40,
+                    weight: .bold,
+                    design: .rounded
+                ))
                 .foregroundStyle(Theme.labelPrimary)
 
-            // Handwritten tagline with gradient shimmer
             Text("Sleep Snore Alert & Tracking")
-                .font(Theme.handwritten(size: 19))
+                .font(Theme.handwritten(size: usesCompressedPadLayout ? 17 : 19))
                 .foregroundStyle(Theme.handwrittenGradient)
-                .padding(.top, 5)
+                .padding(.top, usesCompressedPadLayout ? 3 : 5)
 
-            // Watch hint — lighter handwritten italic
             Text("Connect your watch · get Snore alerts on your wrist")
-                .font(Theme.handwritten(size: 13, bold: false))
+                .font(Theme.handwritten(size: usesCompressedPadLayout ? 12 : 13, bold: false))
                 .italic()
                 .foregroundStyle(Color.white.opacity(0.52))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
-                .padding(.top, 6)
+                .padding(.top, usesCompressedPadLayout ? 4 : 6)
         }
     }
 
     private func startButtonSection(vm: MonitorViewModel) -> some View {
-        VStack(spacing: 14) {
+        let buttonSize: CGFloat = {
+            if usesCompressedPadLayout { return padStartButtonDiameter }
+            if horizontalSizeClass == .regular { return 160 }
+            return 172
+        }()
+
+        return VStack(spacing: usesCompressedPadLayout ? 8 : 14) {
             Button {
                 handleStartTap(vm: vm)
             } label: {
-                SleepAnimationView(presentation: .startButton)
+                SleepAnimationView(presentation: .startButton, diameter: buttonSize)
                     .accessibilityLabel("Start monitoring")
                     .accessibilityHint("Begins snore detection using the microphone")
             }
@@ -214,8 +345,8 @@ struct HomeView: View {
     @ViewBuilder
     private func recentSessionCard() -> some View {
         if let session = completedSessions.first {
-            let cardPadding: CGFloat = horizontalSizeClass == .regular ? 14 : 12
-            VStack(alignment: .leading, spacing: horizontalSizeClass == .regular ? 8 : 6) {
+            let cardPadding: CGFloat = usesCompressedPadLayout ? 12 : (horizontalSizeClass == .regular ? 14 : 12)
+            VStack(alignment: .leading, spacing: usesCompressedPadLayout ? 6 : (horizontalSizeClass == .regular ? 8 : 6)) {
                 Label("Last Session", systemImage: "clock")
                     .font(.caption.bold())
                     .foregroundStyle(Theme.labelSecondary)
@@ -236,7 +367,7 @@ struct HomeView: View {
     }
 
     private func summaryItem(label: String, value: String) -> some View {
-        let valueSize: CGFloat = horizontalSizeClass == .regular ? 17 : 15
+        let valueSize: CGFloat = usesCompressedPadLayout ? 16 : (horizontalSizeClass == .regular ? 17 : 15)
         return VStack(spacing: 1) {
             Text(value)
                 .font(Theme.monoDigit(size: valueSize))

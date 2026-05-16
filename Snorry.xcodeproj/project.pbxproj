@@ -11,7 +11,6 @@
 		126EEBF382F3787E48EAA38B /* GIFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C3E57FFA2899D2DBB53474 /* GIFView.swift */; };
 		1277197B759EFC05E0B4695D /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF033425D8DA29B54123B2C1 /* NotificationManager.swift */; };
 		19C900D5FA475B6B4D0BA767 /* SnoreClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847E52E3C320BA4F7714D0B6 /* SnoreClassifier.swift */; };
-		A1B2C3D4E5F60002A1B2C3D4 /* SessionClipSoundClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001A1B2C3D4 /* SessionClipSoundClassifier.swift */; };
 		204A3710F3EFE4F903D04FEC /* SnoreClipSpectralAnalyzerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */; };
 		25657F1F23E5AE334FB85ADB /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */; };
 		28D85592CFB40755C5F689D7 /* SessionDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97CCF1673CF0A8A9A928601 /* SessionDetailViewModel.swift */; };
@@ -23,7 +22,6 @@
 		3FFFD31FADCB1FC67529C3CB /* Birds 3.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C37029CCF29EF0BC50C6D96A /* Birds 3.mp3 */; };
 		462D2683E00D754D63ADE2AE /* SleepAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C2F7F64989DD486B79A682 /* SleepAnimationView.swift */; };
 		4F47721AC0740B9C1C3322C1 /* AudioMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */; };
-		A1B2C3D4E5F60004A1B2C3D4 /* SoundClassificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */; };
 		4FE5C5B5A8628421E3FCF11E /* Windplay.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */; };
 		5A0E2D2F4C1745B890A1D3E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A0E2D2F4C1745B890A1D3E2 /* Assets.xcassets */; };
 		5AE41B3C3FD7C95969F2831C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0D7E4820D5B40D5D01D18D1 /* Theme.swift */; };
@@ -51,6 +49,8 @@
 		8D4113C819EC1938C1CD7572 /* Quiet_Found_Us.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 7765A74740F9C7B0312BA6FE /* Quiet_Found_Us.mp3 */; };
 		9394A28B5E3B8350FD48D341 /* Bell.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 5A55EDDD2F1C197F6A297891 /* Bell.mp3 */; };
 		9B36F38783F18604D068DB12 /* AlertSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32091DC2B8034B37F8455EB /* AlertSettings.swift */; };
+		A1B2C3D4E5F60002A1B2C3D4 /* SessionClipSoundClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001A1B2C3D4 /* SessionClipSoundClassifier.swift */; };
+		A1B2C3D4E5F60004A1B2C3D4 /* SoundClassificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */; };
 		A4B0A49A1378A7721A654C36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 799CEF95A14F0173040FE75B /* HomeView.swift */; };
 		A98E1AF9D24946D3969651DF /* Marimba intrumental.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */; };
 		AC645F2038FE2E11B32BC934 /* Tornado.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = E8752C417837145970A7AE3E /* Tornado.mp3 */; };
@@ -128,9 +128,9 @@
 		5A55EDDD2F1C197F6A297891 /* Bell.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Bell.mp3; path = Resources/Bell.mp3; sourceTree = "<group>"; };
 		688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Marimba intrumental.mp3"; path = "Resources/Marimba intrumental.mp3"; sourceTree = "<group>"; };
 		69C2F7F64989DD486B79A682 /* SleepAnimationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepAnimationView.swift; path = Views/SleepAnimationView.swift; sourceTree = "<group>"; };
-		6B0BF8FEF9DD4EF6084ACC6C /* AlertManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertManagerTests.swift; path = AlertManagerTests.swift; sourceTree = "<group>"; };
+		6B0BF8FEF9DD4EF6084ACC6C /* AlertManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlertManagerTests.swift; sourceTree = "<group>"; };
 		6B24745E7652D0A94B0D0744 /* Harpstrok.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Harpstrok.mp3; path = Resources/Harpstrok.mp3; sourceTree = "<group>"; };
-		6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreEventDetectorTests.swift; path = SnoreEventDetectorTests.swift; sourceTree = "<group>"; };
+		6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnoreEventDetectorTests.swift; sourceTree = "<group>"; };
 		718076CEB0C1A73D98CC0A5C /* WaveformSample.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WaveformSample.swift; path = Models/WaveformSample.swift; sourceTree = "<group>"; };
 		7402D35EA4D4457C9981B2FF /* Cracks.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Cracks.mp3; path = Resources/Cracks.mp3; sourceTree = "<group>"; };
 		742A6FD9950680E53BE23A63 /* HelpCenterView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HelpCenterView.swift; path = Views/HelpCenterView.swift; sourceTree = "<group>"; };
@@ -138,10 +138,9 @@
 		78777A59E97CCC64F50A8332 /* SnorryUITestsLaunchTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnorryUITestsLaunchTests.swift; path = SnorryUITests/SnorryUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		78A70941B37140F2EDDE04BA /* Rapid_Wake.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Rapid_Wake.mp3; path = Resources/Rapid_Wake.mp3; sourceTree = "<group>"; };
 		799CEF95A14F0173040FE75B /* HomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HomeView.swift; path = Views/HomeView.swift; sourceTree = "<group>"; };
-		7CAA098990B7D477424D611E /* SnorryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnorryTests.swift; path = SnorryTests.swift; sourceTree = "<group>"; };
+		7CAA098990B7D477424D611E /* SnorryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnorryTests.swift; sourceTree = "<group>"; };
 		7D62F5369622A86D30CFA65A /* ClipRecorder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ClipRecorder.swift; path = Services/ClipRecorder.swift; sourceTree = "<group>"; };
 		847E52E3C320BA4F7714D0B6 /* SnoreClassifier.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreClassifier.swift; path = Services/SnoreClassifier.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F60001A1B2C3D4 /* SessionClipSoundClassifier.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionClipSoundClassifier.swift; path = Services/SessionClipSoundClassifier.swift; sourceTree = "<group>"; };
 		88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioMonitorService.swift; path = Services/AudioMonitorService.swift; sourceTree = "<group>"; };
 		9034FB5F88CC6CE01A88F2B4 /* SnorryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnorryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		92B789E63D6E30A4F499CB1E /* SnorryApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnorryApp.swift; sourceTree = "<group>"; };
@@ -149,11 +148,12 @@
 		9DFCC2A41C477B067869FD2E /* PermissionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PermissionsView.swift; path = Views/PermissionsView.swift; sourceTree = "<group>"; };
 		A0C3E57FFA2899D2DBB53474 /* GIFView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GIFView.swift; path = Views/GIFView.swift; sourceTree = "<group>"; };
 		A0CC6D2C570ADD8994AFDE52 /* AudioSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioSessionManager.swift; path = Utilities/AudioSessionManager.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001A1B2C3D4 /* SessionClipSoundClassifier.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionClipSoundClassifier.swift; path = Services/SessionClipSoundClassifier.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundClassificationTests.swift; sourceTree = "<group>"; };
 		A1C3C8E48A75DE8B17178BC1 /* Snorry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Snorry.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WaveformView.swift; path = Views/WaveformView.swift; sourceTree = "<group>"; };
 		A854F1BE96B16C0133B0B0CD /* Icecracks.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Icecracks.mp3; path = Resources/Icecracks.mp3; sourceTree = "<group>"; };
-		AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AudioMathTests.swift; path = AudioMathTests.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SoundClassificationTests.swift; path = SoundClassificationTests.swift; sourceTree = "<group>"; };
+		AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AudioMathTests.swift; sourceTree = "<group>"; };
 		AF033425D8DA29B54123B2C1 /* NotificationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NotificationManager.swift; path = Services/NotificationManager.swift; sourceTree = "<group>"; };
 		B32091DC2B8034B37F8455EB /* AlertSettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSettings.swift; path = Models/AlertSettings.swift; sourceTree = "<group>"; };
 		B535260A902657556E2C94B2 /* Marimba.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Marimba.mp3; path = Resources/Marimba.mp3; sourceTree = "<group>"; };
@@ -163,7 +163,7 @@
 		C37029CCF29EF0BC50C6D96A /* Birds 3.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Birds 3.mp3"; path = "Resources/Birds 3.mp3"; sourceTree = "<group>"; };
 		C3DF721CCFE5BF5EA3AF9F05 /* AlarmTonePlayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlarmTonePlayer.swift; path = Services/AlarmTonePlayer.swift; sourceTree = "<group>"; };
 		C47BD28A2BFED416769A000D /* AlertManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertManager.swift; path = Services/AlertManager.swift; sourceTree = "<group>"; };
-		C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreClipSpectralAnalyzerTests.swift; path = SnoreClipSpectralAnalyzerTests.swift; sourceTree = "<group>"; };
+		C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnoreClipSpectralAnalyzerTests.swift; sourceTree = "<group>"; };
 		C69F5F66A10D0D418B3D145B /* Copper_Light_at_Six.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Copper_Light_at_Six.mp3; path = Resources/Copper_Light_at_Six.mp3; sourceTree = "<group>"; };
 		C97CCF1673CF0A8A9A928601 /* SessionDetailViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionDetailViewModel.swift; path = ViewModels/SessionDetailViewModel.swift; sourceTree = "<group>"; };
 		C99A00012EAA4B00C99A0001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -799,7 +799,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -840,7 +840,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
