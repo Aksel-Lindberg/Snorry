@@ -10,19 +10,24 @@ struct MonitorView: View {
 
     @State private var pulseAnimation = false
 
-    /// Even gap between Live Timeline and Stop Monitoring (iPhone).
-    private var stopButtonTopGap: CGFloat {
-        horizontalSizeClass == .regular ? 24 : 26
+    /// Vertical gap between status, spectrum, metrics, and timeline cards.
+    private var cardStackSpacing: CGFloat {
+        horizontalSizeClass == .regular ? 20 : 12
     }
 
-    /// Matching gap between Stop Monitoring and the tab bar (iPhone).
+    /// Gap between Live Timeline and Stop Monitoring.
+    private var stopButtonTopGap: CGFloat {
+        horizontalSizeClass == .regular ? 24 : 14
+    }
+
+    /// Visible gap between Stop Monitoring and the tab bar.
     private var stopButtonBottomGap: CGFloat {
-        horizontalSizeClass == .regular ? 24 : 26
+        horizontalSizeClass == .regular ? 24 : 24
     }
 
     /// Scroll padding below the stop button so it clears the floating tab bar.
     private var monitorTabBarReserve: CGFloat {
-        horizontalSizeClass == .regular ? 52 : 50
+        horizontalSizeClass == .regular ? 52 : 70
     }
 
     private var monitorBottomClearance: CGFloat {
@@ -34,7 +39,7 @@ struct MonitorView: View {
             Theme.nightGradient.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: cardStackSpacing) {
                     statusBadge
                     spectrumCard
                     metricsRow
