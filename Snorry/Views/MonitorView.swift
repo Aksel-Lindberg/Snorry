@@ -22,16 +22,7 @@ struct MonitorView: View {
 
     /// Visible gap between Stop Monitoring and the tab bar.
     private var stopButtonBottomGap: CGFloat {
-        horizontalSizeClass == .regular ? 24 : 24
-    }
-
-    /// Scroll padding below the stop button so it clears the floating tab bar.
-    private var monitorTabBarReserve: CGFloat {
-        horizontalSizeClass == .regular ? 52 : 70
-    }
-
-    private var monitorBottomClearance: CGFloat {
-        stopButtonBottomGap + monitorTabBarReserve
+        horizontalSizeClass == .regular ? 20 : 24
     }
 
     var body: some View {
@@ -48,12 +39,12 @@ struct MonitorView: View {
                 }
                 .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
                 .padding(.top, 12)
-                .padding(.bottom, monitorBottomClearance)
+                .padding(.bottom, stopButtonBottomGap)
                 .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
                 .frame(maxWidth: .infinity)
             }
             .scrollIndicators(.hidden)
-            .contentMargins(.bottom, horizontalSizeClass == .regular ? 12 : 8, for: .scrollContent)
+            .clearsFloatingTabBar()
             .allowsHitTesting(!vm.isStoppingMonitoring)
 
             if vm.isStoppingMonitoring {

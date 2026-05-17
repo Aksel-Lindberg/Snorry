@@ -70,6 +70,7 @@ struct SettingsView: View {
         }
         .scrollContentBackground(.hidden)
         .listStyle(.insetGrouped)
+        .clearsFloatingTabBar()
         .frame(maxWidth: horizontalSizeClass == .regular ? 820 : .infinity)
         .frame(maxWidth: .infinity)
         .confirmationDialog(

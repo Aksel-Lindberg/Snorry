@@ -86,3 +86,59 @@ enum Theme {
             .blur(radius: 20)
     }
 }
+
+// MARK: - iPad floating tab bar clearance
+
+enum TabBarLayout {
+
+    /// Bottom scroll inset so content stays above the tab bar on iPad (regular width).
+    static func scrollContentBottomMargin(
+        horizontalSizeClass: UserInterfaceSizeClass?,
+        safeAreaBottom: CGFloat
+    ) -> CGFloat {
+        guard horizontalSizeClass == .regular else { return 28 }
+        return max(safeAreaBottom, 20) + 64
+    }
+}
+
+private struct SafeAreaBottomPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
+extension View {
+
+    /// Keeps scroll content above the floating tab bar on iPad.
+    func clearsFloatingTabBar() -> some View {
+        modifier(FloatingTabBarClearanceModifier())
+    }
+}
+
+private struct FloatingTabBarClearanceModifier: ViewModifier {
+
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var safeAreaBottom: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                GeometryReader { geometry in
+                    Color.clear.preference(
+                        key: SafeAreaBottomPreferenceKey.self,
+                        value: geometry.safeAreaInsets.bottom
+                    )
+                }
+            }
+            .onPreferenceChange(SafeAreaBottomPreferenceKey.self) { safeAreaBottom = $0 }
+            .contentMargins(
+                .bottom,
+                TabBarLayout.scrollContentBottomMargin(
+                    horizontalSizeClass: horizontalSizeClass,
+                    safeAreaBottom: safeAreaBottom
+                ),
+                for: .scrollContent
+            )
+    }
+}

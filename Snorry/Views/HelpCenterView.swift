@@ -233,6 +233,7 @@ struct HelpCenterView: View {
                     .frame(maxWidth: horizontalSizeClass == .regular ? 720 : .infinity)
                     .frame(maxWidth: .infinity)
                 }
+                .clearsFloatingTabBar()
             }
             .navigationTitle("Help & How-To")
             .navigationBarTitleDisplayMode(.large)

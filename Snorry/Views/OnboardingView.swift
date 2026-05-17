@@ -7,18 +7,28 @@ struct OnboardingView: View {
     /// Called after the user completes the flow so RootView can clear the gate.
     var onComplete: () -> Void
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var page = 0
     @State private var isRequestingPermissions = false
+
+    /// Extra space so page dots and CTAs do not overlap on iPad.
+    private var pageBottomInset: CGFloat {
+        horizontalSizeClass == .regular ? 88 : 56
+    }
 
     var body: some View {
         ZStack {
             Theme.nightGradient.ignoresSafeArea()
 
             TabView(selection: $page) {
-                WelcomePage(onNext: { withAnimation { page = 1 } })
-                    .tag(0)
+                WelcomePage(
+                    bottomInset: pageBottomInset,
+                    onNext: { withAnimation { page = 1 } }
+                )
+                .tag(0)
 
                 ConsentPage(
+                    bottomInset: pageBottomInset,
                     isRequestingPermissions: $isRequestingPermissions,
                     onComplete: onComplete
                 )
@@ -35,6 +45,7 @@ struct OnboardingView: View {
 
 private struct WelcomePage: View {
 
+    var bottomInset: CGFloat
     var onNext: () -> Void
 
     var body: some View {
@@ -113,7 +124,7 @@ private struct WelcomePage: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 36)
-                .padding(.bottom, 56)
+                .padding(.bottom, bottomInset)
             }
         }
     }
@@ -123,6 +134,7 @@ private struct WelcomePage: View {
 
 private struct ConsentPage: View {
 
+    var bottomInset: CGFloat
     @Binding var isRequestingPermissions: Bool
     var onComplete: () -> Void
 
@@ -203,7 +215,7 @@ private struct ConsentPage: View {
                         .foregroundStyle(Theme.labelTertiary)
                         .multilineTextAlignment(.center)
                 }
-                .padding(.bottom, 56)
+                .padding(.bottom, bottomInset)
             }
             .padding(.horizontal, 24)
         }

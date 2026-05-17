@@ -44,6 +44,7 @@ struct SessionsListView: View {
                 }
                 .scrollContentBackground(.hidden)
                 .listStyle(.insetGrouped)
+                .clearsFloatingTabBar()
             }
         }
         .frame(maxWidth: horizontalSizeClass == .regular ? 840 : .infinity)

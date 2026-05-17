@@ -28,25 +28,8 @@ struct HomeView: View {
     @State private var showHelp = false
     @State private var scrollAlertIntoView = false
 
-    /// Visible gap between the Last Session card and the tab bar (iPad portrait).
-    private let padTabBarGap: CGFloat = 32
-
-    /// Height reserved at the bottom of the screen for the floating tab bar (iPad portrait).
-    private let padTabBarClearance: CGFloat = 92
-
-    /// Extra scroll padding below cards when content overflows.
-    private let padScrollBottomPadding: CGFloat = 24
-
     /// START button diameter on iPad portrait (default phone size is 172).
     private let padStartButtonDiameter: CGFloat = 118
-
-    /// Lifts the Monitor column on iPad portrait (uses top whitespace).
-    private let padContentLift: CGFloat = 20
-
-    /// Extra scroll inset when content overflows.
-    private var tabBarScrollInset: CGFloat {
-        horizontalSizeClass == .regular ? 16 : 28
-    }
 
     /// Side-by-side start + cards only in iPad landscape — portrait stacks vertically to avoid tab-bar overlap.
     private var usePadSideBySideLayout: Bool {
@@ -138,45 +121,22 @@ struct HomeView: View {
         }
     }
 
-    /// iPad — portrait uses a height-bounded scroll column; landscape is side-by-side.
-    @ViewBuilder
+    /// iPad — portrait stacks vertically; landscape places start button beside cards.
     private func padMonitorLayout(vm: MonitorViewModel) -> some View {
-        if usesCompressedPadLayout {
-            padPortraitMonitorLayout(vm: vm)
-        } else {
-            monitorScrollView(vm: vm) {
-                VStack(spacing: 0) {
-                    headerSection
-                        .padding(.top, 28)
+        monitorScrollView(vm: vm) {
+            VStack(spacing: 0) {
+                headerSection
+                    .padding(.top, usesCompressedPadLayout ? 12 : 28)
+
+                if usePadSideBySideLayout {
                     padLandscapeContent(vm: vm)
-                    scrollEndSpacer
-                }
-                .padding(.bottom, 24)
-            }
-        }
-    }
-
-    /// iPad portrait — scroll view height stops above the tab bar so Last Session is never covered.
-    private func padPortraitMonitorLayout(vm: MonitorViewModel) -> some View {
-        GeometryReader { geometry in
-            let contentHeight = max(0, geometry.size.height - padTabBarClearance)
-
-            monitorScrollView(vm: vm) {
-                VStack(spacing: 0) {
-                    headerSection
-                        .padding(.top, 4)
-
+                } else {
                     padPortraitContent(vm: vm)
-
-                    Color.clear
-                        .frame(height: padScrollBottomPadding)
-                        .id(ScrollTarget.scrollEnd)
                 }
-                .padding(.bottom, padTabBarGap)
-                .offset(y: -padContentLift)
+
+                scrollEndSpacer
             }
-            .frame(width: geometry.size.width, height: contentHeight, alignment: .top)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .padding(.bottom, usesCompressedPadLayout ? 16 : 24)
         }
     }
 
@@ -189,7 +149,7 @@ struct HomeView: View {
                 content()
             }
             .scrollIndicators(.hidden)
-            .contentMargins(.bottom, tabBarScrollInset, for: .scrollContent)
+            .clearsFloatingTabBar()
             .onChange(of: scrollAlertIntoView) { _, shouldScroll in
                 guard shouldScroll else { return }
                 scrollExpandedAlertCard(proxy: proxy)

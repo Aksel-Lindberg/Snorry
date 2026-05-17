@@ -57,10 +57,11 @@ private struct AnalyticsContent: View {
                 AlertCorrelationCard(points: vm.alertProfilePoints, xMax: vm.alertChartXMax)
             }
             .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
-            .padding(.bottom, 40)
+            .padding(.bottom, horizontalSizeClass == .regular ? 16 : 24)
             .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
             .frame(maxWidth: .infinity)
         }
+        .clearsFloatingTabBar()
     }
 
     // MARK: Range picker

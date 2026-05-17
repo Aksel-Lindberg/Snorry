@@ -22,6 +22,7 @@ struct SupportView: View {
                 .frame(maxWidth: horizontalSizeClass == .regular ? 760 : .infinity)
                 .frame(maxWidth: .infinity)
             }
+            .clearsFloatingTabBar()
         }
         .navigationTitle("Support")
         .navigationBarTitleDisplayMode(.large)
