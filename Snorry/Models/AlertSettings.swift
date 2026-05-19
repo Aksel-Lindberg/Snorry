@@ -36,7 +36,8 @@ final class AlertSettings {
         snoringDetectionSensitivity = 5
         alarmStyleRaw             = AlarmStyle.marimbaIntrumental.rawValue
         pushNotificationEnabled   = false
-        soundAlarmEnabled         = false
+        /// Sound alarm on by default so monitoring can alert without extra Settings steps.
+        soundAlarmEnabled         = true
         pushRepeatEnabled         = true
         pushRepeatIntervalSeconds = 3
     }

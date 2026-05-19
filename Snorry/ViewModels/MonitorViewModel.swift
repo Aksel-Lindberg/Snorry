@@ -151,7 +151,7 @@ final class MonitorViewModel {
             queue: nil
         ) { [weak self] _ in
             Task { @MainActor in
-                self?.reapplySnoreDetectionFromSavedSettings()
+                self?.reapplyAlertAndDetectionFromSavedSettings()
                 await self?.syncNotificationAuthorizationFromSystem()
             }
         }
@@ -269,10 +269,20 @@ final class MonitorViewModel {
         )
     }
 
-    /// After Settings save while monitoring — keeps classifier + detector aligned with stored sensitivity.
-    private func reapplySnoreDetectionFromSavedSettings() {
+    /// After Settings save while monitoring — refresh alert channels and snore tuning.
+    private func reapplyAlertAndDetectionFromSavedSettings() {
         guard isMonitoring else { return }
         let settings = AlertSettings.load(context: modelContext)
+
+        sessionPushEnabled        = settings.pushNotificationEnabled
+        sessionSoundEnabled       = settings.soundAlarmEnabled
+        sessionPushRepeatInterval = settings.pushRepeatIntervalSeconds
+        alertManager.config.pushEnabled     = settings.pushNotificationEnabled
+        alertManager.config.soundEnabled    = settings.soundAlarmEnabled
+        alertManager.config.soundAlarmAfter = settings.soundAlarmAfterSeconds
+        alertManager.config.alarmVolume     = settings.alarmVolume
+        alarmPlayer.setStyle(AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic)
+
         applySnoreDetectionTuning(sensitivity: settings.snoringDetectionSensitivity)
     }
 
@@ -481,6 +491,8 @@ final class MonitorViewModel {
             activeEventID      = id
             snoreEventCount   += 1
             isEpisodeConfirmed = true
+            // Start the alert escalation clock as soon as the pattern is confirmed.
+            alertManager.update(isSnoring: true, at: Date())
             // Fresh BRPM estimation for each new detector bout / event.
             currentBRPM       = 0
             brpmAvailable     = false
@@ -530,8 +542,11 @@ final class MonitorViewModel {
             currentBRPM   = brpm
             brpmAvailable = brpm > 0
             activeEventID = nil
-            // Stop alarm/push exactly when this confirmed snore event ends.
-            alertManager.clearAfterSnoreBoutEnded()
+            // Only force-clear when an alert already fired; otherwise let the 1 Hz loop
+            // finish the notify/sound delay (short test clips used to cancel too early).
+            if alertPhase == .notified || alertPhase == .alarming {
+                alertManager.clearAfterSnoreBoutEnded()
+            }
 
         case .brpmUpdated(let brpm):
             currentBRPM   = brpm
@@ -546,7 +561,9 @@ final class MonitorViewModel {
     /// alarm never sees quiet time and won't clear until `clearDelay` — which never ran — causing
     /// the tone to loop after snoring stops on the lock screen.
     private func updateAlertSnoringState() {
-        let sustainedForAlerts = isEpisodeConfirmed && isSnoring
+        // Keep escalating through brief classifier dropouts once an episode is confirmed.
+        let alertAlreadyActive = alertPhase == .notified || alertPhase == .alarming
+        let sustainedForAlerts = isEpisodeConfirmed && (isSnoring || alertAlreadyActive)
         alertManager.update(isSnoring: sustainedForAlerts, at: Date())
     }
 
