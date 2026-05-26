@@ -107,7 +107,7 @@ final class MonitorViewModel {
     private var sessionPushRepeatInterval: TimeInterval = 60
 
     /// Restored when unlocking — snapshot from `startMonitoring()`.
-    private var savedDetectorConfirmedGap: TimeInterval = 5
+    private var savedDetectorConfirmedGap: TimeInterval = 10
     private var savedAlertClearDelay: TimeInterval = 3
 
     /// Held only for removal in `deinit` (nonisolated) — tokens are thread-safe opaque handles.
@@ -245,11 +245,11 @@ final class MonitorViewModel {
         alertManager.config.soundEnabled      = settings.soundAlarmEnabled
 
         // Pending (unconfirmed) episodes are discarded after 3 s of silence.
-        // Confirmed events use the longer hysteresis window to bridge between individual
-        // snores and avoid premature fragmentation of a single bout.
-        detector.gapTolerance          = 3
-        detector.confirmedGapTolerance = 5
-        savedDetectorConfirmedGap      = detector.confirmedGapTolerance
+        // Confirmed events require 10 s of silence before ending and saving.
+        detector.gapTolerance                      = 3
+        detector.confirmedGapTolerance             = 10
+        detector.minContinuousSnoringBeforeConfirm = 5
+        savedDetectorConfirmedGap                  = detector.confirmedGapTolerance
         savedAlertClearDelay           = alertManager.config.clearDelay
 
         // Alarm tone style for this session.
@@ -574,10 +574,9 @@ final class MonitorViewModel {
         session.hadBackgroundRecordingPeriod = true
     }
 
-    /// Bout-end tuning while locked; also uses a **5 s** silence window before alerts clear (matches lock-screen alarm cap default).
+    /// Lock-screen alert tuning; event end gap stays at 10 s (same as foreground).
     private func applyLockScreenDetectorTuning() {
         guard isMonitoring else { return }
-        detector.confirmedGapTolerance = 2.5
         alertManager.config.clearDelay = 5
         // If the sound alarm was already playing before the phone locked, start the 5 s cap from now.
         if alertPhase == .alarming, sessionSoundEnabled {
@@ -588,7 +587,6 @@ final class MonitorViewModel {
     private func restoreLockScreenDetectorTuning() {
         guard isMonitoring else { return }
         cancelLockScreenAlarmCapTask()
-        detector.confirmedGapTolerance = savedDetectorConfirmedGap
         alertManager.config.clearDelay = savedAlertClearDelay
     }
 

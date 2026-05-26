@@ -18,17 +18,21 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     private let analyzer: SNAudioStreamAnalyzer
     private let request: SNClassifySoundRequest
     private let analysisQueue = DispatchQueue(label: "app.Snorry.classifier", qos: .userInitiated)
+    private let rumbleTracker = SnoreRumbleTracker()
 
     private var continuation: AsyncStream<Bool>.Continuation?
     private(set) var stream: AsyncStream<Bool>?
 
     // Majority-vote window: last 5 classification results
     private var voteWindow: [Bool] = []
+    private var rumbleVoteWindow: [Bool] = []
     private let voteWindowSize = 5
     /// Foreground SoundAnalysis path — 3-of-5 votes.
     private let foregroundVoteThreshold = 3
     /// Background RMS path — stricter (less sensitive): need 4-of-5 loud frames.
     private let energyFallbackVoteThreshold = 4
+    /// Rumble vote threshold — 2-of-5 keeps sensitivity while still rejecting steady breathing.
+    private let rumbleVoteThreshold = 2
 
     /// Minimum classifier confidence to count a frame as snoring.
     /// Set from ``SnoreDetectionTuning`` using the saved sensitivity level (app default: maximum).
@@ -37,6 +41,15 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     /// Background RMS gate: higher dBFS = louder required → **less** sensitive than foreground ML.
     /// Set from ``SnoreDetectionTuning`` together with `confidenceThreshold`.
     var energyFallbackThresholdDB: Float = -42
+
+    /// Reject only when breathing confidence clearly exceeds snoring (foreground ML path).
+    var breathingRejectionMargin: Float = 0.05
+
+    /// Spectral rumble tuning applied to the rolling 512-sample tracker.
+    var rumbleConfig: SnoreRumbleGate.Config {
+        get { rumbleTracker.config }
+        set { rumbleTracker.config = newValue }
+    }
 
     /// Only read/written on `analysisQueue` — true after `didEnterBackground`, false after `willEnterForeground`.
     private var useEnergyFallbackWhileBackground = false
@@ -74,6 +87,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
                 guard let self else { return }
                 self.useEnergyFallbackWhileBackground = true
                 self.voteWindow.removeAll()
+                self.rumbleVoteWindow.removeAll()
                 self.logger.info("Classifier: lock/background — RMS energy gate (SoundAnalysis paused, no GPU)")
             }
         }
@@ -87,6 +101,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
                 guard let self else { return }
                 self.useEnergyFallbackWhileBackground = false
                 self.voteWindow.removeAll()
+                self.rumbleVoteWindow.removeAll()
                 self.logger.info("Classifier: foreground — SoundAnalysis active again")
             }
         }
@@ -133,8 +148,6 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         }
 
         // Simulator (and any host missing the on-disk `.mlmodelc`): use Apple’s identifier API.
-        // On device we prefer loading the compiled model with `.cpuOnly` (see comment above); this
-        // initializer may allow GPU/ANE and is avoided there when the system model file exists.
         do {
             let req = try SNClassifySoundRequest(classifierIdentifier: .version1)
             applyWindowing(req)
@@ -161,6 +174,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         continuation = nil
         stream = nil
         voteWindow.removeAll()
+        rumbleVoteWindow.removeAll()
         logger.info("SnoreClassifier stopped")
     }
 
@@ -170,14 +184,32 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         analysisQueue.async { [weak self] in
             guard let self else { return }
 
+            let rumblePass = self.rumbleTracker.feed(
+                buffer: buffer,
+                sampleRate: Float(AudioMonitorService.targetSampleRate)
+            )
+            self.pushRumbleVote(rumblePass)
+
             if self.useEnergyFallbackWhileBackground {
                 let db = AudioMath.rmsDBFS(buffer: buffer)
                 let loud = db >= self.energyFallbackThresholdDB
-                self.pushVoteFrame(loud)
+                self.pushVoteFrame(loud && self.rumbleRecentlyPassed)
                 return
             }
 
             self.analyzer.analyze(buffer, atAudioFramePosition: time.sampleTime)
+        }
+    }
+
+    private var rumbleRecentlyPassed: Bool {
+        guard !rumbleVoteWindow.isEmpty else { return false }
+        return rumbleVoteWindow.filter { $0 }.count >= rumbleVoteThreshold
+    }
+
+    private func pushRumbleVote(_ pass: Bool) {
+        rumbleVoteWindow.append(pass)
+        if rumbleVoteWindow.count > voteWindowSize {
+            rumbleVoteWindow.removeFirst()
         }
     }
 
@@ -204,15 +236,19 @@ extension SnoreClassifier: SNResultsObserving {
 
         analysisQueue.async { [weak self] in
             guard let self else { return }
-            // Ignore late SoundAnalysis callbacks while we are in energy-only mode (no GPU submitted).
             guard !self.useEnergyFallbackWhileBackground else { return }
 
-            let snoringLabel = "snoring"
-            let confidence = classResult.classifications
-                .first(where: { $0.identifier.lowercased() == snoringLabel })
-                .map { $0.confidence } ?? 0
+            let snoringConfidence = classResult.classifications
+                .first(where: { $0.identifier.lowercased() == "snoring" })
+                .map { Float($0.confidence) } ?? 0
+            let breathingConfidence = classResult.classifications
+                .first(where: { $0.identifier.lowercased() == "breathing" })
+                .map { Float($0.confidence) } ?? 0
 
-            let isSnoring = Float(confidence) >= self.confidenceThreshold
+            // Reject only when breathing clearly dominates — snoring often co-scores with breathing.
+            let breathingDominates = breathingConfidence > snoringConfidence + self.breathingRejectionMargin
+            let mlPass = snoringConfidence >= self.confidenceThreshold && !breathingDominates
+            let isSnoring = mlPass && self.rumbleRecentlyPassed
             self.pushVoteFrame(isSnoring)
         }
     }
@@ -225,7 +261,6 @@ extension SnoreClassifier: SNResultsObserving {
 // MARK: - Snore sensitivity → classifier + onset detector
 
 /// Maps stored snore sensitivity (1…5) to foreground ML thresholds and the lock-screen RMS gate.
-/// The app persists maximum sensitivity (5); level **3** matches historical fixed tuning.
 enum SnoreDetectionTuning {
 
     static func apply(
@@ -237,6 +272,8 @@ enum SnoreDetectionTuning {
         let profile = profile(for: level)
         classifier.confidenceThreshold = profile.confidenceThreshold
         classifier.energyFallbackThresholdDB = profile.energyFallbackThresholdDB
+        classifier.breathingRejectionMargin = profile.breathingRejectionMargin
+        classifier.rumbleConfig = profile.rumbleConfig
         detector.onsetThresholdDB = profile.onsetThresholdDB
     }
 
@@ -244,21 +281,52 @@ enum SnoreDetectionTuning {
         let confidenceThreshold: Float
         let onsetThresholdDB: Float
         let energyFallbackThresholdDB: Float
+        let rumbleConfig: SnoreRumbleGate.Config
+        let breathingRejectionMargin: Float
     }
 
     private static func profile(for level: Int) -> Profile {
         switch level {
         case 1:
-            return Profile(confidenceThreshold: 0.75, onsetThresholdDB: 20, energyFallbackThresholdDB: -28)
+            return Profile(
+                confidenceThreshold: 0.75,
+                onsetThresholdDB: 20,
+                energyFallbackThresholdDB: -28,
+                rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.5, minSignalDBFS: -45),
+                breathingRejectionMargin: 0.12
+            )
         case 2:
-            // Blend 0.5 of the historical low ↔ high curve (matches interpolated onset/confidence).
-            return Profile(confidenceThreshold: 0.525, onsetThresholdDB: 11, energyFallbackThresholdDB: -35)
+            return Profile(
+                confidenceThreshold: 0.525,
+                onsetThresholdDB: 11,
+                energyFallbackThresholdDB: -35,
+                rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.3, minSignalDBFS: -50),
+                breathingRejectionMargin: 0.08
+            )
         case 3:
-            return Profile(confidenceThreshold: 0.30, onsetThresholdDB: 2, energyFallbackThresholdDB: -42)
+            return Profile(
+                confidenceThreshold: 0.30,
+                onsetThresholdDB: 2,
+                energyFallbackThresholdDB: -42,
+                rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.2, minSignalDBFS: -55),
+                breathingRejectionMargin: 0.06
+            )
         case 4:
-            return Profile(confidenceThreshold: 0.22, onsetThresholdDB: 1.25, energyFallbackThresholdDB: -44)
+            return Profile(
+                confidenceThreshold: 0.22,
+                onsetThresholdDB: 1.25,
+                energyFallbackThresholdDB: -44,
+                rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.15, minSignalDBFS: -57),
+                breathingRejectionMargin: 0.05
+            )
         case 5:
-            return Profile(confidenceThreshold: 0.15, onsetThresholdDB: 0.75, energyFallbackThresholdDB: -46)
+            return Profile(
+                confidenceThreshold: 0.15,
+                onsetThresholdDB: 0.75,
+                energyFallbackThresholdDB: -46,
+                rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.1, minSignalDBFS: -58),
+                breathingRejectionMargin: 0.04
+            )
         default:
             return profile(for: 3)
         }
