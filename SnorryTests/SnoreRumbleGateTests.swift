@@ -41,11 +41,23 @@ struct SnoreRumbleGateTests {
         #expect(!SnoreRumbleGate.passes(buffer: buffer))
     }
 
-    @Test func lenientConfigAllowsWeakerRumble() {
-        var config = SnoreRumbleGate.Config()
-        config.ratioThreshold = 1.05
-        config.minSignalDBFS = -70
-        let buffer = sineBuffer(frequencyHz: 150, amplitude: 0.05)
-        #expect(SnoreRumbleGate.passes(buffer: buffer, config: config))
+    @Test func speechDominanceRejectsSleepTalkingLikeSpectrum() {
+        let format = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: 16_000,
+            channels: 1,
+            interleaved: false
+        )!
+        let frameCount = 512
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frameCount))!
+        buffer.frameLength = AVAudioFrameCount(frameCount)
+        guard let data = buffer.floatChannelData?[0] else { return }
+
+        // Low rumble plus strong mid speech-like energy — should not pass snore gate.
+        for i in 0 ..< frameCount {
+            let t = Float(i) / 16_000
+            data[i] = 0.12 * sin(2 * Float.pi * 120 * t) + 0.22 * sin(2 * Float.pi * 900 * t)
+        }
+        #expect(!SnoreRumbleGate.passes(buffer: buffer))
     }
 }

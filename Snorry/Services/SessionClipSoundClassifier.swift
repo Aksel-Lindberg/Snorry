@@ -22,6 +22,10 @@ enum SessionClipSoundClassifier {
     /// Lowered relative to the live threshold so clips with mixed content still count.
     static var snoringMinScore: Float = 0.25
 
+    /// Stricter thresholds for lock-screen alarm verification (before arming push/sound).
+    static var alarmVerificationSnoringMinScore: Float = 0.30
+    static var alarmVerificationSleepTalkingMinScore: Float = 0.30
+
     /// Minimum aggregate speech-like score fraction for sleep-talking classification.
     /// Must exceed `snoringMinScore` to win the tie-break.
     static var sleepTalkingMinScore: Float = 0.35
@@ -44,8 +48,33 @@ enum SessionClipSoundClassifier {
     /// - Returns: The inferred `SoundEventKind`. Falls back to `.environment` on analysis
     ///   failure so noise-gate false positives do not inflate snore statistics.
     static func classify(fileURL: URL) async -> SoundEventKind {
+        await classify(
+            fileURL: fileURL,
+            snoringMin: snoringMinScore,
+            sleepTalkingMin: sleepTalkingMinScore
+        )
+    }
+
+    /// Classifies a clip before arming lock-screen alarms — stricter snoring bar, same speech rejection.
+    static func classifyForAlarmVerification(fileURL: URL) async -> SoundEventKind {
+        await classify(
+            fileURL: fileURL,
+            snoringMin: alarmVerificationSnoringMinScore,
+            sleepTalkingMin: alarmVerificationSleepTalkingMinScore
+        )
+    }
+
+    static func classify(
+        fileURL: URL,
+        snoringMin: Float,
+        sleepTalkingMin: Float
+    ) async -> SoundEventKind {
         do {
-            return try await analyzeClip(at: fileURL)
+            return try await analyzeClip(
+                at: fileURL,
+                snoringMin: snoringMin,
+                sleepTalkingMin: sleepTalkingMin
+            )
         } catch {
             logger.warning("Clip classification failed (\(fileURL.lastPathComponent)): \(error.localizedDescription) — marking environment")
             return .environment
@@ -112,7 +141,11 @@ enum SessionClipSoundClassifier {
 
     // MARK: Private — single-file analysis
 
-    private static func analyzeClip(at url: URL) async throws -> SoundEventKind {
+    private static func analyzeClip(
+        at url: URL,
+        snoringMin: Float,
+        sleepTalkingMin: Float
+    ) async throws -> SoundEventKind {
         // Decode + resample to 16 kHz mono (matches live pipeline)
         let samples = try decodeTo16kMono(url: url)
         guard !samples.isEmpty else { return .environment }
@@ -160,8 +193,8 @@ enum SessionClipSoundClassifier {
         analyzer.completeAnalysis()
 
         return observer.decision(
-            snoringMin: snoringMinScore,
-            sleepTalkingMin: sleepTalkingMinScore,
+            snoringMin: snoringMin,
+            sleepTalkingMin: sleepTalkingMin,
             sleepTalkingLabels: sleepTalkingLabels
         )
     }

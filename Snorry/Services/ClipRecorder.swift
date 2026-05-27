@@ -81,6 +81,13 @@ final class ClipRecorder: @unchecked Sendable {
         return relativePath
     }
 
+    /// Relative path of the clip currently being written, if any.
+    var openClipRelativePath: String? {
+        ioLock.lock()
+        defer { ioLock.unlock() }
+        return currentRelativePath
+    }
+
     /// Write a live native-format buffer to the current clip (same levels as input).
     func write(buffer: AVAudioPCMBuffer) {
         ioLock.lock()

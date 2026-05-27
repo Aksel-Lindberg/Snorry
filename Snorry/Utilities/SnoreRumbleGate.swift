@@ -13,6 +13,9 @@ enum SnoreRumbleGate {
         var ratioThreshold: Float = 1.15
         /// Minimum overall signal RMS in dBFS before evaluating the ratio.
         var minSignalDBFS: Float = -58
+        /// Reject when speech-band (300–3400 Hz) RMS exceeds rumble RMS by this factor (sleep talking).
+        /// Set to 0 to disable.
+        var speechDominanceRejectionRatio: Float = 1.35
     }
 
     private static let fftLength = 512
@@ -21,6 +24,8 @@ enum SnoreRumbleGate {
     private static let rumbleHighHz: Float = 400
     private static let referenceLowHz: Float = 400
     private static let referenceHighHz: Float = 2000
+    private static let speechLowHz: Float = 300
+    private static let speechHighHz: Float = 3400
 
     /// Returns `true` when the buffer carries dominant low-frequency rumble characteristic of snoring.
     static func passes(buffer: AVAudioPCMBuffer, config: Config = Config()) -> Bool {
@@ -105,6 +110,13 @@ enum SnoreRumbleGate {
 
         guard rumbleRMS > 1e-12 else { return false }
 
+        if config.speechDominanceRejectionRatio > 0 {
+            let speechRMS = bandRMS(amps: amps, binHz: binHz, lowHz: speechLowHz, highHz: speechHighHz)
+            if speechRMS / rumbleRMS >= config.speechDominanceRejectionRatio {
+                return false
+            }
+        }
+
         let refSafe = max(refRMS, 1e-12)
         return (rumbleRMS / refSafe) >= config.ratioThreshold
     }
@@ -136,6 +148,8 @@ final class SnoreRumbleTracker: @unchecked Sendable {
     private var writeIndex = 0
     private var sampleCount = 0
     var config = SnoreRumbleGate.Config()
+    /// When true (lock screen), applies stricter rumble + speech rejection before counting a frame.
+    var useBackgroundStrictMode = false
 
     /// Ingests a PCM buffer and returns whether the current 512-sample window passes the rumble gate.
     func feed(buffer: AVAudioPCMBuffer, sampleRate: Float) -> Bool {
@@ -153,6 +167,14 @@ final class SnoreRumbleTracker: @unchecked Sendable {
         for idx in 0 ..< fftLength {
             ordered[idx] = ring[(writeIndex + idx) % fftLength]
         }
-        return SnoreRumbleGate.passesWindow(ordered, sampleRate: sampleRate, config: config)
+        return SnoreRumbleGate.passesWindow(ordered, sampleRate: sampleRate, config: effectiveConfig())
+    }
+
+    private func effectiveConfig() -> SnoreRumbleGate.Config {
+        guard useBackgroundStrictMode else { return config }
+        var cfg = config
+        cfg.ratioThreshold += 0.12
+        cfg.speechDominanceRejectionRatio = max(cfg.speechDominanceRejectionRatio, 1.45)
+        return cfg
     }
 }

@@ -86,6 +86,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
             queue.async { [weak self] in
                 guard let self else { return }
                 self.useEnergyFallbackWhileBackground = true
+                self.rumbleTracker.useBackgroundStrictMode = true
                 self.voteWindow.removeAll()
                 self.rumbleVoteWindow.removeAll()
                 self.logger.info("Classifier: lock/background — RMS energy gate (SoundAnalysis paused, no GPU)")
@@ -100,6 +101,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
             queue.async { [weak self] in
                 guard let self else { return }
                 self.useEnergyFallbackWhileBackground = false
+                self.rumbleTracker.useBackgroundStrictMode = false
                 self.voteWindow.removeAll()
                 self.rumbleVoteWindow.removeAll()
                 self.logger.info("Classifier: foreground — SoundAnalysis active again")

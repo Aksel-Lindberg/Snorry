@@ -97,17 +97,34 @@ final class SessionStore {
 
     /// Background clip analysis writes the measured rumble peak after `endEvent`.
     func setSpectralPeakHz(_ peakHz: Double, eventID: UUID) {
-        let uuid = eventID
-        let descriptor = FetchDescriptor<SnoreEvent>(predicate: #Predicate<SnoreEvent> { snoreEvent in
-            snoreEvent.id == uuid
-        })
-        guard let event = try? context.fetch(descriptor).first else {
+        guard let event = fetchEvent(id: eventID) else {
             logger.warning("setSpectralPeakHz: no event \(eventID.uuidString)")
             return
         }
         event.spectralPeakHz = peakHz
         saveContext()
         logger.debug("Spectral peak stored: \(eventID) \(peakHz) Hz")
+    }
+
+    /// Live lock-screen verification writes the inferred sound category before/alongside alarms.
+    func setSoundKind(_ kind: SoundEventKind, eventID: UUID) {
+        guard let event = fetchEvent(id: eventID) else {
+            logger.warning("setSoundKind: no event \(eventID.uuidString)")
+            return
+        }
+        event.soundKind = kind
+        scheduleDebouncedSave()
+        logger.debug("Sound kind set for event \(eventID.uuidString): \(kind.displayName)")
+    }
+
+    private func fetchEvent(id eventID: UUID) -> SnoreEvent? {
+        if let open = openEvents[eventID] { return open }
+        if let fromSession = activeSession?.events.first(where: { $0.id == eventID }) { return fromSession }
+        let uuid = eventID
+        let descriptor = FetchDescriptor<SnoreEvent>(predicate: #Predicate<SnoreEvent> { snoreEvent in
+            snoreEvent.id == uuid
+        })
+        return try? context.fetch(descriptor).first
     }
 
     func updateEventAudioPath(_ path: String, eventID: UUID) {

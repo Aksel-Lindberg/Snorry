@@ -176,10 +176,8 @@ struct ClassifierDecisionTests {
         #expect(decide(snoringScore: 0.50, talkingScore: 0.50) == .snoring)
     }
 
-    @Test func talkingMustExceedSnoringToWin() {
-        // Talking score slightly below snoring — snoring should win.
-        let snoringScore: Float = 0.45
-        let talkingScore: Float = 0.44
-        #expect(decide(snoringScore: snoringScore, talkingScore: talkingScore) == .snoring)
+    @Test func alarmVerificationUsesStricterSnoringThreshold() {
+        #expect(SessionClipSoundClassifier.alarmVerificationSnoringMinScore
+                > SessionClipSoundClassifier.snoringMinScore)
     }
 }

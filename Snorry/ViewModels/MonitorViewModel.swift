@@ -94,6 +94,9 @@ final class MonitorViewModel {
     private var clipOpen = false
     /// True once push or sound has fired for the current `activeEventID` — prevents re-alarming mid-bout.
     private var alertDeliveredForCurrentEvent = false
+    /// Lock-screen only: CPU SoundAnalysis must confirm snoring on the clip before arming alarms.
+    private var backgroundSnoringVerifiedForAlarm = true
+    private var backgroundAlarmVerificationTask: Task<Void, Never>?
     private var monitorTask: Task<Void, Never>?
     private var classifierTask: Task<Void, Never>?
     private var detectorTask: Task<Void, Never>?
@@ -130,6 +133,7 @@ final class MonitorViewModel {
         ) { [weak self] _ in
             Task { @MainActor in
                 self?.markBackgroundRecordingPeriodIfNeeded()
+                self?.handleEnteredBackgroundDuringMonitoring()
             }
         }
         lockScreenFGObserver = nc.addObserver(
@@ -139,6 +143,7 @@ final class MonitorViewModel {
         ) { [weak self] _ in
             Task { @MainActor in
                 await self?.syncNotificationAuthorizationFromSystem()
+                self?.handleReturnedToForegroundDuringMonitoring()
             }
         }
 
@@ -312,6 +317,8 @@ final class MonitorViewModel {
         activeSession = nil
         activeEventID = nil
         alertDeliveredForCurrentEvent = false
+        backgroundSnoringVerifiedForAlarm = true
+        cancelBackgroundAlarmVerification()
 
         isMonitoring       = false
         isSnoring          = false
@@ -472,6 +479,7 @@ final class MonitorViewModel {
         elapsedTimer?.cancel();  elapsedTimer = nil
         timelineTimer?.cancel(); timelineTimer = nil
         pushRepeatTask?.cancel(); pushRepeatTask = nil
+        cancelBackgroundAlarmVerification()
     }
 
     // MARK: Event handling
@@ -487,8 +495,13 @@ final class MonitorViewModel {
             snoreEventCount   += 1
             isEpisodeConfirmed = true
             alertDeliveredForCurrentEvent = false
-            // Start the alert escalation clock as soon as the pattern is confirmed.
-            alertManager.update(isSnoring: true, at: Date())
+            // Foreground: ML already validated the bout. Lock screen: verify the clip before arming alarms.
+            if requiresBackgroundAlarmVerification {
+                backgroundSnoringVerifiedForAlarm = false
+            } else {
+                backgroundSnoringVerifiedForAlarm = true
+                alertManager.update(isSnoring: true, at: Date())
+            }
             // Fresh BRPM estimation for each new detector bout / event.
             currentBRPM       = 0
             brpmAvailable     = false
@@ -514,6 +527,9 @@ final class MonitorViewModel {
             if let clipPath = path {
                 sessionStore?.updateEventAudioPath(clipPath, eventID: id)
             }
+            if requiresBackgroundAlarmVerification {
+                startBackgroundAlarmVerification(eventID: id)
+            }
 
         case .snoreOnset:
             break
@@ -536,6 +552,7 @@ final class MonitorViewModel {
                 scheduleClipSpectralAnalysis(relativePath: rel, eventID: id)
             }
             activeEventID = nil
+            cancelBackgroundAlarmVerification()
             // Return UI to Quiet and remove live BRPM harmonic highlighting once the event is saved.
             isEpisodeConfirmed = false
             brpmAvailable = false
@@ -565,12 +582,86 @@ final class MonitorViewModel {
             snoringForAlerts = isSnoring
         } else if !isEpisodeConfirmed || alertDeliveredForCurrentEvent {
             snoringForAlerts = false
+        } else if requiresBackgroundAlarmVerification && !backgroundSnoringVerifiedForAlarm {
+            // Lock screen: wait for CPU clip analysis — do not arm on RMS false positives.
+            snoringForAlerts = false
         } else {
             // Pre-alert escalation for a confirmed bout that has not yet alerted.
             snoringForAlerts = true
         }
 
         alertManager.update(isSnoring: snoringForAlerts, at: Date())
+    }
+
+    /// True while the app is locked or backgrounded — RMS fallback replaces live SoundAnalysis.
+    private var requiresBackgroundAlarmVerification: Bool {
+        UIApplication.shared.applicationState != .active
+    }
+
+    /// When the device locks mid-session, verify any open bout that has not yet passed ML verification.
+    private func handleEnteredBackgroundDuringMonitoring() {
+        guard isMonitoring,
+              let id = activeEventID,
+              !alertDeliveredForCurrentEvent,
+              !backgroundSnoringVerifiedForAlarm else { return }
+        startBackgroundAlarmVerification(eventID: id)
+    }
+
+    /// Foreground SoundAnalysis resumes — allow alarm escalation without waiting for clip verification.
+    private func handleReturnedToForegroundDuringMonitoring() {
+        guard isMonitoring, isEpisodeConfirmed, activeEventID != nil else { return }
+        guard !backgroundSnoringVerifiedForAlarm else { return }
+        cancelBackgroundAlarmVerification()
+        backgroundSnoringVerifiedForAlarm = true
+        updateAlertSnoringState()
+    }
+
+    /// Runs CPU SoundAnalysis on the in-progress AAC clip (~4 s after bout start) before arming alarms.
+    private func startBackgroundAlarmVerification(eventID: UUID) {
+        cancelBackgroundAlarmVerification()
+        guard requiresBackgroundAlarmVerification else { return }
+
+        backgroundAlarmVerificationTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            // Pre-roll + live audio need a few seconds before SoundAnalysis has enough context.
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled, activeEventID == eventID else { return }
+
+            guard let relativePath = clipRecorder.openClipRelativePath else {
+                applyBackgroundAlarmVerification(.environment, eventID: eventID)
+                return
+            }
+
+            let support = FileManager.default.urls(
+                for: .applicationSupportDirectory, in: .userDomainMask
+            ).first!
+            let url = support.appendingPathComponent(relativePath)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                applyBackgroundAlarmVerification(.environment, eventID: eventID)
+                return
+            }
+
+            let kind = await SessionClipSoundClassifier.classifyForAlarmVerification(fileURL: url)
+            guard !Task.isCancelled, activeEventID == eventID else { return }
+            applyBackgroundAlarmVerification(kind, eventID: eventID)
+        }
+    }
+
+    private func applyBackgroundAlarmVerification(_ kind: SoundEventKind, eventID: UUID) {
+        sessionStore?.setSoundKind(kind, eventID: eventID)
+        switch kind {
+        case .snoring:
+            backgroundSnoringVerifiedForAlarm = true
+            updateAlertSnoringState()
+        case .sleepTalking, .environment:
+            backgroundSnoringVerifiedForAlarm = false
+            alertManager.update(isSnoring: false, at: Date())
+        }
+    }
+
+    private func cancelBackgroundAlarmVerification() {
+        backgroundAlarmVerificationTask?.cancel()
+        backgroundAlarmVerificationTask = nil
     }
 
     /// Records that the device went to the background during an active session.
