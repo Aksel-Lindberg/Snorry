@@ -176,6 +176,12 @@ struct ClassifierDecisionTests {
         #expect(decide(snoringScore: 0.50, talkingScore: 0.50) == .snoring)
     }
 
+    @Test func backgroundSessionPreservesSnoringUnlessSleepTalking() {
+        #expect(SessionClipSoundClassifier.kindPreservingDetectorSnoring(.snoring) == .snoring)
+        #expect(SessionClipSoundClassifier.kindPreservingDetectorSnoring(.environment) == .snoring)
+        #expect(SessionClipSoundClassifier.kindPreservingDetectorSnoring(.sleepTalking) == .sleepTalking)
+    }
+
     @Test func alarmVerificationUsesStricterSnoringThreshold() {
         #expect(SessionClipSoundClassifier.alarmVerificationSnoringMinScore
                 > SessionClipSoundClassifier.snoringMinScore)

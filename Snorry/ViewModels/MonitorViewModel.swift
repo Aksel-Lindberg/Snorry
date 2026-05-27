@@ -97,6 +97,17 @@ final class MonitorViewModel {
     /// Lock-screen only: CPU SoundAnalysis must confirm snoring on the clip before arming alarms.
     private var backgroundSnoringVerifiedForAlarm = true
     private var backgroundAlarmVerificationTask: Task<Void, Never>?
+    /// Stops the audible alarm a fixed interval after it begins.
+    private var alarmAutoStopTask: Task<Void, Never>?
+    /// When continuous background snoring began (RMS + rumble path) — used for the 3 s alarm delay.
+    private var backgroundContinuousSnoringSince: Date?
+    /// Brief classifier dropouts during a bout do not reset the 3 s snoring clock.
+    private var backgroundSnoringInactiveSince: Date?
+    private let backgroundSnoringGapBridge: TimeInterval = 1.25
+    private var isBackgroundMonitoringProfileActive = false
+    private var savedForegroundMinConfirm: TimeInterval = 5
+    private var savedForegroundNotifyDelay: TimeInterval = 2
+    private var savedForegroundSoundAlarmAfter: TimeInterval = 10
     private var monitorTask: Task<Void, Never>?
     private var classifierTask: Task<Void, Never>?
     private var detectorTask: Task<Void, Never>?
@@ -118,6 +129,15 @@ final class MonitorViewModel {
     nonisolated(unsafe) private var alertSettingsSaveObserver: NSObjectProtocol?
 
     private let modelContext: ModelContext
+
+    /// Lock-screen / background timing — faster confirm, fixed 3 s alarm, strict 10 s event end.
+    private enum BackgroundMonitoring {
+        static let eventConfirmSeconds: TimeInterval = 3
+        static let eventEndSilenceSeconds: TimeInterval = 10
+        static let alarmDelaySeconds: TimeInterval = 3
+        static let alarmPlayDurationSeconds: TimeInterval = 5
+        static let clipVerificationDelaySeconds: TimeInterval = 4.5
+    }
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -257,6 +277,18 @@ final class MonitorViewModel {
 
         applySnoreDetectionTuning(sensitivity: settings.snoringDetectionSensitivity)
 
+        savedForegroundMinConfirm = detector.minContinuousSnoringBeforeConfirm
+        savedForegroundNotifyDelay = alertManager.config.notifyDelay
+        savedForegroundSoundAlarmAfter = settings.soundAlarmAfterSeconds
+
+        if requiresBackgroundAlarmVerification {
+            applyBackgroundMonitoringProfile(soundAlarmAfter: settings.soundAlarmAfterSeconds)
+            backgroundSnoringVerifiedForAlarm = false
+            if isSnoring {
+                backgroundContinuousSnoringSince = Date()
+            }
+        }
+
         startTasks()
     }
 
@@ -284,6 +316,12 @@ final class MonitorViewModel {
         alarmPlayer.setStyle(AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic)
 
         applySnoreDetectionTuning(sensitivity: settings.snoringDetectionSensitivity)
+
+        if isBackgroundMonitoringProfileActive {
+            applyBackgroundMonitoringProfile(soundAlarmAfter: settings.soundAlarmAfterSeconds)
+        } else {
+            alertManager.config.soundAlarmAfter = settings.soundAlarmAfterSeconds
+        }
     }
 
     /// Synchronous teardown — used by crash/orphan recovery paths.
@@ -304,6 +342,7 @@ final class MonitorViewModel {
         finalizeOpenClipAndEventIfInterrupted()
 
         cancelTasks()
+        cancelAlarmAutoStop()
         audioService.stop()
         classifier.stop()
         detector.stop()
@@ -318,7 +357,10 @@ final class MonitorViewModel {
         activeEventID = nil
         alertDeliveredForCurrentEvent = false
         backgroundSnoringVerifiedForAlarm = true
+        backgroundContinuousSnoringSince = nil
+        backgroundSnoringInactiveSince = nil
         cancelBackgroundAlarmVerification()
+        cancelAlarmAutoStop()
 
         isMonitoring       = false
         isSnoring          = false
@@ -353,7 +395,8 @@ final class MonitorViewModel {
                 ).first!
                 await SessionClipSoundClassifier.classifyAll(
                     events: completedEvents,
-                    applicationSupport: support
+                    applicationSupport: support,
+                    preserveDetectorSnoreEvents: true
                 )
             }
         }
@@ -451,6 +494,9 @@ final class MonitorViewModel {
                 try? await Task.sleep(for: .seconds(1))
                 guard let self, isMonitoring else { break }
                 elapsedSeconds += 1
+                if requiresBackgroundAlarmVerification {
+                    evaluateBackgroundAlarmEligibility()
+                }
                 // Drive alert silence detection at 1 Hz (alarm clears after 3 s without snoring).
                 updateAlertSnoringState()
                 // Persist waveform sample every second
@@ -480,6 +526,7 @@ final class MonitorViewModel {
         timelineTimer?.cancel(); timelineTimer = nil
         pushRepeatTask?.cancel(); pushRepeatTask = nil
         cancelBackgroundAlarmVerification()
+        cancelAlarmAutoStop()
     }
 
     // MARK: Event handling
@@ -488,6 +535,9 @@ final class MonitorViewModel {
         switch event {
         case .snoringActive(let active):
             isSnoring = active
+            if requiresBackgroundAlarmVerification {
+                trackBackgroundContinuousSnoring(active: active)
+            }
             updateAlertSnoringState()
 
         case .snoreStarted(let id, let at, let captureFrom):
@@ -495,9 +545,8 @@ final class MonitorViewModel {
             snoreEventCount   += 1
             isEpisodeConfirmed = true
             alertDeliveredForCurrentEvent = false
-            // Foreground: ML already validated the bout. Lock screen: verify the clip before arming alarms.
             if requiresBackgroundAlarmVerification {
-                backgroundSnoringVerifiedForAlarm = false
+                armBackgroundAlertsIfVerified()
             } else {
                 backgroundSnoringVerifiedForAlarm = true
                 alertManager.update(isSnoring: true, at: Date())
@@ -506,6 +555,9 @@ final class MonitorViewModel {
             currentBRPM       = 0
             brpmAvailable     = false
             sessionStore?.beginEvent(id: id, at: at)
+            if isBackgroundMonitoringProfileActive || requiresBackgroundAlarmVerification {
+                sessionStore?.setSoundKind(.snoring, eventID: id)
+            }
 
             // One AAC file per SwiftData SnoreEvent: pre-roll → end of detector bout (silence gap).
             // Use the native hardware format so the clip replays at the original volume and
@@ -548,12 +600,17 @@ final class MonitorViewModel {
             let rumbleHz = AudioMath.brpmHarmonicHighlightHz(brpm: brpm) ?? 0
             sessionStore?.endEvent(id: id, at: at, brpm: brpm, peakDB: peakDB,
                                    avgDB: avgDB, rumbleFrequencyHz: rumbleHz)
+            if isBackgroundMonitoringProfileActive
+                || activeSession?.hadBackgroundRecordingPeriod == true {
+                sessionStore?.setSoundKind(.snoring, eventID: id)
+            }
             if let rel = clipRelativePath {
                 scheduleClipSpectralAnalysis(relativePath: rel, eventID: id)
             }
             activeEventID = nil
             cancelBackgroundAlarmVerification()
-            // Return UI to Quiet and remove live BRPM harmonic highlighting once the event is saved.
+            cancelAlarmAutoStop()
+            // Return UI to Quiet
             isEpisodeConfirmed = false
             brpmAvailable = false
             currentBRPM = 0
@@ -580,13 +637,14 @@ final class MonitorViewModel {
         let snoringForAlerts: Bool
         if alertAlreadyActive {
             snoringForAlerts = isSnoring
-        } else if !isEpisodeConfirmed || alertDeliveredForCurrentEvent {
+        } else if alertDeliveredForCurrentEvent {
             snoringForAlerts = false
-        } else if requiresBackgroundAlarmVerification && !backgroundSnoringVerifiedForAlarm {
-            // Lock screen: wait for CPU clip analysis — do not arm on RMS false positives.
+        } else if requiresBackgroundAlarmVerification {
+            // Lock screen: escalate after 3 s continuous RMS + rumble snoring (clip ML may cancel later).
+            snoringForAlerts = isSnoring && backgroundSnoringVerifiedForAlarm
+        } else if !isEpisodeConfirmed {
             snoringForAlerts = false
         } else {
-            // Pre-alert escalation for a confirmed bout that has not yet alerted.
             snoringForAlerts = true
         }
 
@@ -598,48 +656,120 @@ final class MonitorViewModel {
         UIApplication.shared.applicationState != .active
     }
 
-    /// When the device locks mid-session, verify any open bout that has not yet passed ML verification.
+    /// When the device locks mid-session, apply lock-screen detection / alarm timing.
     private func handleEnteredBackgroundDuringMonitoring() {
-        guard isMonitoring,
-              let id = activeEventID,
-              !alertDeliveredForCurrentEvent,
-              !backgroundSnoringVerifiedForAlarm else { return }
-        startBackgroundAlarmVerification(eventID: id)
+        guard isMonitoring else { return }
+        let settings = AlertSettings.load(context: modelContext)
+        applyBackgroundMonitoringProfile(soundAlarmAfter: settings.soundAlarmAfterSeconds)
+        backgroundSnoringVerifiedForAlarm = false
+        if isSnoring {
+            backgroundContinuousSnoringSince = Date()
+            evaluateBackgroundAlarmEligibility()
+        }
+        if let id = activeEventID, !alertDeliveredForCurrentEvent {
+            startBackgroundAlarmVerification(eventID: id)
+        }
     }
 
-    /// Foreground SoundAnalysis resumes — allow alarm escalation without waiting for clip verification.
+    /// Foreground SoundAnalysis resumes — restore user alert timing and faster bout confirm rules.
     private func handleReturnedToForegroundDuringMonitoring() {
-        guard isMonitoring, isEpisodeConfirmed, activeEventID != nil else { return }
-        guard !backgroundSnoringVerifiedForAlarm else { return }
-        cancelBackgroundAlarmVerification()
-        backgroundSnoringVerifiedForAlarm = true
+        guard isMonitoring else { return }
+        applyForegroundMonitoringProfile()
+        if isEpisodeConfirmed, activeEventID != nil, !backgroundSnoringVerifiedForAlarm {
+            cancelBackgroundAlarmVerification()
+            backgroundSnoringVerifiedForAlarm = true
+            armBackgroundAlertsIfVerified()
+        }
         updateAlertSnoringState()
     }
 
-    /// Runs CPU SoundAnalysis on the in-progress AAC clip (~4 s after bout start) before arming alarms.
+    private func applyBackgroundMonitoringProfile(soundAlarmAfter: TimeInterval) {
+        isBackgroundMonitoringProfileActive = true
+        classifier.setLockScreenEnergyMode(true)
+        detector.minContinuousSnoringBeforeConfirm = BackgroundMonitoring.eventConfirmSeconds
+        detector.confirmedGapTolerance = BackgroundMonitoring.eventEndSilenceSeconds
+        detector.strictConfirmedSilenceGap = true
+        alertManager.config.notifyDelay = BackgroundMonitoring.alarmDelaySeconds
+        alertManager.config.soundAlarmAfter = BackgroundMonitoring.alarmDelaySeconds
+    }
+
+    private func applyForegroundMonitoringProfile() {
+        isBackgroundMonitoringProfileActive = false
+        classifier.setLockScreenEnergyMode(false)
+        detector.minContinuousSnoringBeforeConfirm = savedForegroundMinConfirm
+        detector.confirmedGapTolerance = BackgroundMonitoring.eventEndSilenceSeconds
+        detector.strictConfirmedSilenceGap = false
+        alertManager.config.notifyDelay = savedForegroundNotifyDelay
+        alertManager.config.soundAlarmAfter = savedForegroundSoundAlarmAfter
+        backgroundContinuousSnoringSince = nil
+        backgroundSnoringInactiveSince = nil
+    }
+
+    /// Marks 3 s of continuous lock-screen snoring and back-dates the alert escalation clock to bout onset.
+    private func trackBackgroundContinuousSnoring(active: Bool) {
+        if active {
+            backgroundSnoringInactiveSince = nil
+            if backgroundContinuousSnoringSince == nil {
+                backgroundContinuousSnoringSince = Date()
+            }
+            evaluateBackgroundAlarmEligibility()
+        } else {
+            if backgroundSnoringInactiveSince == nil {
+                backgroundSnoringInactiveSince = Date()
+            }
+            guard let pauseStart = backgroundSnoringInactiveSince else { return }
+            if Date().timeIntervalSince(pauseStart) >= backgroundSnoringGapBridge,
+               alertPhase == .idle, !alertDeliveredForCurrentEvent {
+                backgroundContinuousSnoringSince = nil
+                backgroundSnoringVerifiedForAlarm = false
+            }
+        }
+    }
+
+    private func evaluateBackgroundAlarmEligibility(at now: Date = Date()) {
+        guard requiresBackgroundAlarmVerification, isSnoring else { return }
+        guard let since = backgroundContinuousSnoringSince else { return }
+        guard now.timeIntervalSince(since) >= BackgroundMonitoring.alarmDelaySeconds else { return }
+
+        backgroundSnoringVerifiedForAlarm = true
+        armBackgroundAlertsIfVerified()
+        syncAlertDelivery()
+    }
+
+    private func armBackgroundAlertsIfVerified() {
+        guard backgroundSnoringVerifiedForAlarm, !alertDeliveredForCurrentEvent else { return }
+        guard alertPhase == .idle else { return }
+        let anchor = backgroundContinuousSnoringSince ?? Date()
+        alertManager.beginEscalation(from: anchor)
+        alertManager.update(isSnoring: true, at: Date())
+    }
+
+    /// Applies alert side-effects immediately — the async phase stream can lag on lock screen.
+    private func syncAlertDelivery() {
+        while alertManager.phase != alertPhase {
+            let phase = alertManager.phase
+            alertPhase = phase
+            handleAlertPhase(phase)
+        }
+    }
+
+    /// Runs CPU SoundAnalysis on the in-progress AAC clip to cancel false-positive lock-screen alarms.
     private func startBackgroundAlarmVerification(eventID: UUID) {
         cancelBackgroundAlarmVerification()
         guard requiresBackgroundAlarmVerification else { return }
 
         backgroundAlarmVerificationTask = Task { @MainActor [weak self] in
             guard let self else { return }
-            // Pre-roll + live audio need a few seconds before SoundAnalysis has enough context.
-            try? await Task.sleep(for: .seconds(4))
+            try? await Task.sleep(for: .seconds(BackgroundMonitoring.clipVerificationDelaySeconds))
             guard !Task.isCancelled, activeEventID == eventID else { return }
 
-            guard let relativePath = clipRecorder.openClipRelativePath else {
-                applyBackgroundAlarmVerification(.environment, eventID: eventID)
-                return
-            }
+            guard let relativePath = clipRecorder.openClipRelativePath else { return }
 
             let support = FileManager.default.urls(
                 for: .applicationSupportDirectory, in: .userDomainMask
             ).first!
             let url = support.appendingPathComponent(relativePath)
-            guard FileManager.default.fileExists(atPath: url.path) else {
-                applyBackgroundAlarmVerification(.environment, eventID: eventID)
-                return
-            }
+            guard FileManager.default.fileExists(atPath: url.path) else { return }
 
             let kind = await SessionClipSoundClassifier.classifyForAlarmVerification(fileURL: url)
             guard !Task.isCancelled, activeEventID == eventID else { return }
@@ -648,15 +778,22 @@ final class MonitorViewModel {
     }
 
     private func applyBackgroundAlarmVerification(_ kind: SoundEventKind, eventID: UUID) {
-        sessionStore?.setSoundKind(kind, eventID: eventID)
-        switch kind {
-        case .snoring:
-            backgroundSnoringVerifiedForAlarm = true
-            updateAlertSnoringState()
-        case .sleepTalking, .environment:
-            backgroundSnoringVerifiedForAlarm = false
-            alertManager.update(isSnoring: false, at: Date())
+        let boutWasAlarmed = alertDeliveredForCurrentEvent
+            || alertPhase == .notified
+            || alertPhase == .alarming
+
+        if kind == .snoring || boutWasAlarmed {
+            // Detector + RMS confirmed this bout; keep it counted as snoring in history.
+            sessionStore?.setSoundKind(.snoring, eventID: eventID)
+            return
         }
+
+        // Sleep talking / environment with no alert — relabel and suppress future escalation.
+        sessionStore?.setSoundKind(kind, eventID: eventID)
+        backgroundSnoringVerifiedForAlarm = false
+        backgroundContinuousSnoringSince = nil
+        backgroundSnoringInactiveSince = nil
+        alertManager.update(isSnoring: false, at: Date())
     }
 
     private func cancelBackgroundAlarmVerification() {
@@ -675,9 +812,16 @@ final class MonitorViewModel {
         switch phase {
         case .notified:
             alertDeliveredForCurrentEvent = true
-            guard sessionPushEnabled else { return }
-            notifications.scheduleSnoringAlert()
-            startPushRepeatLoop()
+            if sessionPushEnabled {
+                notifications.scheduleSnoringAlert()
+                startPushRepeatLoop()
+            } else if sessionSoundEnabled, alertManager.config.soundEnabled {
+                // Push disabled — escalate straight to the audible alarm at the 3 s mark.
+                let anchor = backgroundContinuousSnoringSince ?? Date()
+                alertManager.beginEscalation(from: anchor)
+                alertManager.update(isSnoring: true, at: Date())
+                syncAlertDelivery()
+            }
 
         case .alarming:
             alertDeliveredForCurrentEvent = true
@@ -690,8 +834,10 @@ final class MonitorViewModel {
             let selectedVolume = max(0.10, min(1.0, alertManager.config.alarmVolume))
             // Jump straight to the configured volume — no fade-in for a real alarm.
             alarmPlayer.playImmediate(volume: selectedVolume)
+            scheduleAlarmAutoStop()
 
         case .idle, .cleared:
+            cancelAlarmAutoStop()
             pushRepeatTask?.cancel()
             pushRepeatTask = nil
             alarmPlayer.stop()
@@ -704,6 +850,31 @@ final class MonitorViewModel {
                 detector.resetForNewEpisode()
             }
         }
+    }
+
+    /// Caps audible alarm playback at 5 s — one short burst per bout.
+    private func scheduleAlarmAutoStop() {
+        cancelAlarmAutoStop()
+        alarmAutoStopTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(BackgroundMonitoring.alarmPlayDurationSeconds))
+            guard let self, !Task.isCancelled else { return }
+            guard alertPhase == .alarming else { return }
+            stopActiveAlarmPlayback()
+        }
+    }
+
+    private func cancelAlarmAutoStop() {
+        alarmAutoStopTask?.cancel()
+        alarmAutoStopTask = nil
+    }
+
+    private func stopActiveAlarmPlayback() {
+        alarmPlayer.stop()
+        pushRepeatTask?.cancel()
+        pushRepeatTask = nil
+        notifications.cancelSnoringAlert()
+        alertManager.clearAfterSnoreBoutEnded()
+        alertPhase = .idle
     }
 
     /// Re-sends push notifications on an interval while still in `.notified` (snoring continues).

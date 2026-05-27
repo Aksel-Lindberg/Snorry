@@ -64,6 +64,11 @@ final class AlertManager: @unchecked Sendable {
 
     // MARK: Drive the state machine
 
+    func beginEscalation(from startDate: Date) {
+        snoringStartDate = startDate
+        silenceStartDate = nil
+    }
+
     func update(isSnoring: Bool, at now: Date = Date()) {
         if isSnoring {
             silenceStartDate = nil

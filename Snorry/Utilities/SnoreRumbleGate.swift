@@ -175,6 +175,7 @@ final class SnoreRumbleTracker: @unchecked Sendable {
         var cfg = config
         cfg.ratioThreshold += 0.12
         cfg.speechDominanceRejectionRatio = max(cfg.speechDominanceRejectionRatio, 1.45)
+        cfg.minSignalDBFS += 4
         return cfg
     }
 }

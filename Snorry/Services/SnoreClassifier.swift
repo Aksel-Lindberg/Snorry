@@ -31,6 +31,8 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     private let foregroundVoteThreshold = 3
     /// Background RMS path — stricter (less sensitive): need 4-of-5 loud frames.
     private let energyFallbackVoteThreshold = 4
+    /// Lock-screen rumble vote — 3-of-5 rejects quiet broadband environment noise.
+    private let backgroundRumbleVoteThreshold = 3
     /// Rumble vote threshold — 2-of-5 keeps sensitivity while still rejecting steady breathing.
     private let rumbleVoteThreshold = 2
 
@@ -41,6 +43,8 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     /// Background RMS gate: higher dBFS = louder required → **less** sensitive than foreground ML.
     /// Set from ``SnoreDetectionTuning`` together with `confidenceThreshold`.
     var energyFallbackThresholdDB: Float = -42
+    /// Lock-screen floor — rejects low-volume environment hum even when sensitivity is high.
+    var backgroundMinimumLevelDB: Float = -38
 
     /// Reject only when breathing confidence clearly exceeds snoring (foreground ML path).
     var breathingRejectionMargin: Float = 0.05
@@ -58,6 +62,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
 
     private var backgroundObserver: NSObjectProtocol?
     private var foregroundObserver: NSObjectProtocol?
+    private var resignedActiveObserver: NSObjectProtocol?
 
     // MARK: Init
 
@@ -77,12 +82,8 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
 
         let queue = analysisQueue
         let nc = NotificationCenter.default
-        backgroundObserver = nc.addObserver(
-            forName: UIApplication.didEnterBackgroundNotification,
-            object: nil,
-            queue: nil
-        ) { [weak self] _ in
-            guard let self else { return }
+
+        func enterLockScreenPath() {
             queue.async { [weak self] in
                 guard let self else { return }
                 self.useEnergyFallbackWhileBackground = true
@@ -92,12 +93,8 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
                 self.logger.info("Classifier: lock/background — RMS energy gate (SoundAnalysis paused, no GPU)")
             }
         }
-        foregroundObserver = nc.addObserver(
-            forName: UIApplication.willEnterForegroundNotification,
-            object: nil,
-            queue: nil
-        ) { [weak self] _ in
-            guard let self else { return }
+
+        func leaveLockScreenPath() {
             queue.async { [weak self] in
                 guard let self else { return }
                 self.useEnergyFallbackWhileBackground = false
@@ -107,6 +104,31 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
                 self.logger.info("Classifier: foreground — SoundAnalysis active again")
             }
         }
+
+        backgroundObserver = nc.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            guard self != nil else { return }
+            enterLockScreenPath()
+        }
+        foregroundObserver = nc.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            guard self != nil else { return }
+            leaveLockScreenPath()
+        }
+        resignedActiveObserver = nc.addObserver(
+            forName: UIApplication.willResignActiveNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            guard self != nil else { return }
+            enterLockScreenPath()
+        }
     }
 
     deinit {
@@ -115,6 +137,9 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         }
         if let foregroundObserver {
             NotificationCenter.default.removeObserver(foregroundObserver)
+        }
+        if let resignedActiveObserver {
+            NotificationCenter.default.removeObserver(resignedActiveObserver)
         }
     }
 
@@ -159,6 +184,18 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         }
     }
 
+    /// Mirrors UIApplication lock/background state from ``MonitorViewModel`` (covers monitoring start while locked).
+    func setLockScreenEnergyMode(_ enabled: Bool) {
+        analysisQueue.async { [weak self] in
+            guard let self else { return }
+            guard self.useEnergyFallbackWhileBackground != enabled else { return }
+            self.useEnergyFallbackWhileBackground = enabled
+            self.rumbleTracker.useBackgroundStrictMode = enabled
+            self.voteWindow.removeAll()
+            self.rumbleVoteWindow.removeAll()
+        }
+    }
+
     // MARK: Lifecycle
 
     func start() {
@@ -194,7 +231,8 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
 
             if self.useEnergyFallbackWhileBackground {
                 let db = AudioMath.rmsDBFS(buffer: buffer)
-                let loud = db >= self.energyFallbackThresholdDB
+                let threshold = max(self.energyFallbackThresholdDB, self.backgroundMinimumLevelDB)
+                let loud = db >= threshold
                 self.pushVoteFrame(loud && self.rumbleRecentlyPassed)
                 return
             }
@@ -205,7 +243,8 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
 
     private var rumbleRecentlyPassed: Bool {
         guard !rumbleVoteWindow.isEmpty else { return false }
-        return rumbleVoteWindow.filter { $0 }.count >= rumbleVoteThreshold
+        let need = useEnergyFallbackWhileBackground ? backgroundRumbleVoteThreshold : rumbleVoteThreshold
+        return rumbleVoteWindow.filter { $0 }.count >= need
     }
 
     private func pushRumbleVote(_ pass: Bool) {

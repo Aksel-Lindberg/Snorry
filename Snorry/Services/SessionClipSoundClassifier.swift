@@ -81,23 +81,33 @@ enum SessionClipSoundClassifier {
         }
     }
 
+    /// Maps ML output for lock-screen detector bouts — only sleep talking overrides snoring.
+    static func kindPreservingDetectorSnoring(_ classified: SoundEventKind) -> SoundEventKind {
+        switch classified {
+        case .sleepTalking: return .sleepTalking
+        case .snoring, .environment: return .snoring
+        }
+    }
+
     /// Classifies every event in `events` concurrently (up to 3 in parallel).
     /// Writes the result back to `event.soundKind` on the main actor.
     ///
     /// - Parameters:
     ///   - events: Completed `SnoreEvent` rows that were recorded during a background period.
     ///   - applicationSupport: Base URL for resolving `audioRelativePath`.
+    ///   - preserveDetectorSnoreEvents: When true, keeps detector-logged bouts as snoring unless ML finds sleep talking.
     ///   - onUpdate: Called on `@MainActor` after each event is classified so the stop
     ///     overlay can show progress if desired.
     @MainActor
     static func classifyAll(
         events: [SnoreEvent],
         applicationSupport: URL,
+        preserveDetectorSnoreEvents: Bool = false,
         onUpdate: ((SnoreEvent, SoundEventKind) -> Void)? = nil
     ) async {
         // Capture id + relative path + current kind so we don't hold live model objects
         // across actor hops.
-        let work: [(id: UUID, url: URL?, kind: SoundEventKind)] = events.map { event in
+        let work: [(id: UUID, url: URL?, priorKind: SoundEventKind)] = events.map { event in
             let url: URL? = event.audioRelativePath.flatMap { rel in
                 let u = applicationSupport.appendingPathComponent(rel)
                 return FileManager.default.fileExists(atPath: u.path) ? u : nil
@@ -116,10 +126,12 @@ enum SessionClipSoundClassifier {
                     let (id, url, _) = item
                     group.addTask {
                         guard let url else {
-                            // No saved clip → treat as environment noise
-                            return (id, .environment)
+                            return (id, preserveDetectorSnoreEvents ? .snoring : .environment)
                         }
-                        let kind = await classify(fileURL: url)
+                        let classified = await classify(fileURL: url)
+                        let kind = preserveDetectorSnoreEvents
+                            ? kindPreservingDetectorSnoring(classified)
+                            : classified
                         return (id, kind)
                     }
                 }

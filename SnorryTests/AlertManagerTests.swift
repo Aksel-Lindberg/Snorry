@@ -105,6 +105,16 @@ struct AlertManagerTests {
         mgr.stop()
     }
 
+    @Test func beginEscalationBackdatesElapsedTime() {
+        let mgr = makeManager()
+        mgr.config.notifyDelay = 3
+        let onset = Date()
+        mgr.beginEscalation(from: onset.addingTimeInterval(-3.5))
+        mgr.update(isSnoring: true, at: onset)
+        #expect(mgr.phase == .notified)
+        mgr.stop()
+    }
+
     @Test func clearsImmediatelyAfterSnoreBoutEnds() {
         let mgr = makeManager()
         mgr.config.clearDelay = 99  // would block silence-based clear for a long time

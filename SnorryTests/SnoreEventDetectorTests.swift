@@ -251,6 +251,32 @@ struct SnoreEventDetectorTests {
         #expect(startedCount(in: events) == 1, "Brief inter-snore pauses should still reach 5 s accumulated active time")
     }
 
+    @Test func strictSilenceGapIgnoresBriefConfirmedBlips() async {
+        let detector = SnoreEventDetector()
+        detector.confirmedGapTolerance = 10
+        detector.strictConfirmedSilenceGap = true
+        detector.minContinuousSnoringBeforeConfirm = 3
+        detector.onsetThresholdDB = 6
+        detector.start()
+
+        let t0 = Date(timeIntervalSince1970: 8000)
+
+        detector.feed(classifierResult: false, at: t0.addingTimeInterval(-1))
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(-1)))
+        feedActiveWindow(detector: detector, from: t0, through: 3.5)
+
+        // 8 s inactive, then a 0.2 s blip — should still end the event (~10 s silence).
+        feedInactiveWindow(detector: detector, from: t0.addingTimeInterval(4.0), through: 8.0)
+        detector.feed(classifierResult: true, at: t0.addingTimeInterval(12.0))
+        detector.feed(tick: makeTick(db: -20, at: t0.addingTimeInterval(12.0)))
+        detector.feed(classifierResult: false, at: t0.addingTimeInterval(12.2))
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(12.2)))
+        feedInactiveWindow(detector: detector, from: t0.addingTimeInterval(12.5), through: 2.0)
+
+        let events = await collectEvents(from: detector)
+        #expect(endedCount(in: events) == 1, "10 s silence should end event despite brief blip")
+    }
+
     @Test func endsEventAfterTenSecondsSilence() async {
         let detector = SnoreEventDetector()
         detector.confirmedGapTolerance = 10

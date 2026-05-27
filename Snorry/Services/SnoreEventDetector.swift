@@ -38,6 +38,8 @@ final class SnoreEventDetector: @unchecked Sendable {
     var gapTolerance: TimeInterval             = 3.0
     /// Seconds of silence before a **confirmed** snore event ends and is stored.
     var confirmedGapTolerance: TimeInterval    = 10.0
+    /// When true, brief classifier blips during a confirmed bout do not reset the silence gap (lock screen).
+    var strictConfirmedSilenceGap = false
     /// Minimum uninterrupted rumble-validated snoring before logging begins.
     var minContinuousSnoringBeforeConfirm: TimeInterval = 5.0
     /// Gaps shorter than this between active stretches still count toward the 5 s total (inter-snore pauses).
@@ -79,6 +81,9 @@ final class SnoreEventDetector: @unchecked Sendable {
     private var classifierInactiveSince: Date?
     /// Anchor for clip pre-roll — set when accumulation last restarted.
     private var accumulationAnchor: Date?
+    /// Lock-screen: classifier must stay active this long before resetting the confirmed silence gap.
+    private var confirmedActiveStreakStart: Date?
+    private let strictConfirmedActiveBridge: TimeInterval = 0.8
 
     private var classifierActive = false
 
@@ -141,6 +146,7 @@ final class SnoreEventDetector: @unchecked Sendable {
         lastActiveTickTimestamp = nil
         classifierInactiveSince = nil
         accumulationAnchor = nil
+        confirmedActiveStreakStart = nil
         classifierActive = false
     }
 
@@ -200,23 +206,37 @@ final class SnoreEventDetector: @unchecked Sendable {
 
         // Gap / silence tracking; accumulate level for average.
         if classifierActive {
-            silenceStart = nil
+            if isConfirmed && strictConfirmedSilenceGap {
+                if confirmedActiveStreakStart == nil {
+                    confirmedActiveStreakStart = now
+                }
+                if let streakStart = confirmedActiveStreakStart,
+                   now.timeIntervalSince(streakStart) >= strictConfirmedActiveBridge {
+                    silenceStart = nil
+                }
+            } else {
+                confirmedActiveStreakStart = now
+                silenceStart = nil
+            }
             if db > eventPeakDB { eventPeakDB = db }
             eventSumDB    += Double(db)
             eventTickCount += 1
-        } else if pendingID != nil {
-            if silenceStart == nil { silenceStart = now }
-            let gap = now.timeIntervalSince(silenceStart!)
-            // Use a longer gap tolerance once confirmed to bridge between individual snores
-            // (hysteresis: harder to leave the snoring state than to enter it).
-            let effectiveGap = isConfirmed ? confirmedGapTolerance : gapTolerance
-            if gap >= effectiveGap {
-                if isConfirmed {
-                    finishCurrentEvent(at: now)
-                    resetEpisodeState()
-                } else {
-                    logger.debug("Snore pending discarded — no pattern before gap")
-                    resetEpisodeState()
+        } else {
+            confirmedActiveStreakStart = nil
+            if pendingID != nil {
+                if silenceStart == nil { silenceStart = now }
+                let gap = now.timeIntervalSince(silenceStart!)
+                // Use a longer gap tolerance once confirmed to bridge between individual snores
+                // (hysteresis: harder to leave the snoring state than to enter it).
+                let effectiveGap = isConfirmed ? confirmedGapTolerance : gapTolerance
+                if gap >= effectiveGap {
+                    if isConfirmed {
+                        finishCurrentEvent(at: now)
+                        resetEpisodeState()
+                    } else {
+                        logger.debug("Snore pending discarded — no pattern before gap")
+                        resetEpisodeState()
+                    }
                 }
             }
         }
@@ -289,6 +309,7 @@ final class SnoreEventDetector: @unchecked Sendable {
         eventSumDB      = 0
         eventTickCount  = 0
         silenceStart    = nil
+        confirmedActiveStreakStart = nil
         accumulatedActiveTime = 0
         lastActiveTickTimestamp = nil
         classifierInactiveSince = nil
