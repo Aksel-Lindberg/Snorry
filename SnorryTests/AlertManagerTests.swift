@@ -87,6 +87,24 @@ struct AlertManagerTests {
         mgr.stop()
     }
 
+    @Test func alarmingClearsAfterThreeSecondsOfSilence() {
+        let mgr = makeManager()
+        mgr.config.clearDelay = 3
+        let start = Date()
+        mgr.update(isSnoring: true, at: start)
+        mgr.update(isSnoring: true, at: start.addingTimeInterval(5.5))
+        #expect(mgr.phase == .alarming)
+
+        let silenceStart = start.addingTimeInterval(6.0)
+        mgr.update(isSnoring: false, at: silenceStart)
+        mgr.update(isSnoring: false, at: silenceStart.addingTimeInterval(2.9))
+        #expect(mgr.phase == .alarming, "Should not clear before 3 s of silence")
+
+        mgr.update(isSnoring: false, at: silenceStart.addingTimeInterval(3.0))
+        #expect(mgr.phase == .idle, "Sound alarm should stop after 3 s without snoring")
+        mgr.stop()
+    }
+
     @Test func clearsImmediatelyAfterSnoreBoutEnds() {
         let mgr = makeManager()
         mgr.config.clearDelay = 99  // would block silence-based clear for a long time
