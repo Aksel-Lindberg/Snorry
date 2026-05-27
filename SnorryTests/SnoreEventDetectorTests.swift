@@ -138,6 +138,43 @@ struct SnoreEventDetectorTests {
         #expect(startedCount(in: events) == 1, "Expected confirmation after 5 s accumulated active snoring")
     }
 
+    @Test func classifierOnlyPauseDoesNotCreditGap() async {
+        let detector = SnoreEventDetector()
+        detector.minContinuousSnoringBeforeConfirm = 5
+        detector.activeGapBridge = 4
+        detector.onsetThresholdDB = 6
+        detector.start()
+
+        let t0 = Date(timeIntervalSince1970: 7000)
+
+        detector.feed(classifierResult: false, at: t0.addingTimeInterval(-1))
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(-1)))
+
+        feedActiveWindow(detector: detector, from: t0, through: 3.0)
+
+        // 2 s classifier-only pause (no inactive ticks) — gap must not count toward 5 s.
+        let pauseStart = t0.addingTimeInterval(3.0)
+        let pauseEnd = t0.addingTimeInterval(5.0)
+        detector.feed(classifierResult: false, at: pauseStart)
+        detector.feed(classifierResult: true, at: pauseEnd)
+
+        feedActiveWindow(detector: detector, from: pauseEnd, through: 0.5)
+
+        var events = await collectEvents(from: detector)
+        #expect(startedCount(in: events) == 0, "Classifier-only pause must not count toward active time")
+
+        detector.start()
+        detector.feed(classifierResult: false, at: t0.addingTimeInterval(-1))
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(-1)))
+        feedActiveWindow(detector: detector, from: t0, through: 3.0)
+        detector.feed(classifierResult: false, at: pauseStart)
+        detector.feed(classifierResult: true, at: pauseEnd)
+        feedActiveWindow(detector: detector, from: pauseEnd, through: 2.5)
+
+        events = await collectEvents(from: detector)
+        #expect(startedCount(in: events) == 1, "Should confirm once true active time reaches 5 s")
+    }
+
     @Test func briefPauseDoesNotCountAsActiveTime() async {
         let detector = SnoreEventDetector()
         detector.minContinuousSnoringBeforeConfirm = 5

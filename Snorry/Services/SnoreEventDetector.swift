@@ -146,12 +146,22 @@ final class SnoreEventDetector: @unchecked Sendable {
 
     // MARK: Classifier feed
 
-    func feed(classifierResult: Bool) {
+    func feed(classifierResult: Bool, at timestamp: Date = Date()) {
         feedLock.lock()
         defer { feedLock.unlock() }
 
+        let wasActive = classifierActive
         classifierActive = classifierResult
         continuation?.yield(.snoringActive(classifierResult))
+
+        if wasActive && !classifierResult {
+            // Classifier can drop between audio ticks — start the pause clock immediately.
+            if classifierInactiveSince == nil {
+                classifierInactiveSince = timestamp
+            }
+        } else if !wasActive && classifierResult {
+            resumeFromClassifierPause(at: timestamp)
+        }
 
         if classifierResult && pendingID == nil {
             // First classifier trigger for this episode → enter pending phase.
@@ -289,15 +299,8 @@ final class SnoreEventDetector: @unchecked Sendable {
     /// Short inter-snore pauses (< ``activeGapBridge``) preserve accumulated time but are not counted toward it.
     private func updateAccumulatedActiveTime(at now: Date) {
         if classifierActive {
-            if let inactiveSince = classifierInactiveSince {
-                let pause = now.timeIntervalSince(inactiveSince)
-                if pause >= activeGapBridge {
-                    accumulatedActiveTime = 0
-                    accumulationAnchor = now
-                }
-                classifierInactiveSince = nil
-                // Resuming after a pause — do not credit inactive elapsed time toward the 5 s total.
-                lastActiveTickTimestamp = now
+            if classifierInactiveSince != nil {
+                resumeFromClassifierPause(at: now)
             } else if let lastActive = lastActiveTickTimestamp {
                 accumulatedActiveTime += now.timeIntervalSince(lastActive)
                 lastActiveTickTimestamp = now
@@ -308,6 +311,19 @@ final class SnoreEventDetector: @unchecked Sendable {
         } else if classifierInactiveSince == nil {
             classifierInactiveSince = now
         }
+    }
+
+    /// Ends a classifier pause without crediting inactive time toward the 5 s confirmation window.
+    private func resumeFromClassifierPause(at now: Date) {
+        guard let inactiveSince = classifierInactiveSince else { return }
+        let pause = now.timeIntervalSince(inactiveSince)
+        if pause >= activeGapBridge {
+            accumulatedActiveTime = 0
+            accumulationAnchor = now
+        }
+        classifierInactiveSince = nil
+        // Re-anchor so the next active tick does not credit the pause gap.
+        lastActiveTickTimestamp = now
     }
 
     private func updateBRPM() {
