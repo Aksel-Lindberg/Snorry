@@ -117,10 +117,10 @@ struct MonitorView: View {
 
             LivePowerSpectrumView(
                 bands: vm.spectrumBands,
-                isSnoring: vm.isSnoring,
+                isSnoring: vm.detectionPhase == .confirmed && vm.isSnoring,
                 brpmHighlightBandIndex: vm.spectrumBRPMHighlightBandIndex,
                 brpmHarmonicFrequencyHz: vm.spectrumBRPMHighlightHz,
-                emphasiseMarker: vm.isSnoring && vm.isEpisodeConfirmed
+                emphasiseMarker: vm.detectionPhase == .confirmed && vm.isSnoring
             )
             .frame(height: 104)
 
@@ -129,7 +129,7 @@ struct MonitorView: View {
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(Theme.labelTertiary)
                 Spacer()
-                if let hz = vm.spectrumBRPMHighlightHz, vm.isEpisodeConfirmed, vm.brpmAvailable {
+                if let hz = vm.spectrumBRPMHighlightHz, vm.detectionPhase == .confirmed, vm.brpmAvailable {
                     Text(String(format: "~%.0f Hz harmonic", hz))
                         .font(.caption2.monospacedDigit())
                         .foregroundStyle(Color.red.opacity(vm.isSnoring ? 1 : 0.65))
@@ -167,7 +167,7 @@ struct MonitorView: View {
             ) {
                 BreathingLungsIcon(
                     brpm: vm.currentBRPM,
-                    isActive: vm.brpmAvailable,
+                    isActive: vm.isSnoreEventActive && vm.brpmAvailable,
                     color: Theme.snoring
                 )
             }

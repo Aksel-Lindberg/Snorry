@@ -29,14 +29,17 @@ final class MonitorViewModel {
     /// Three-state detection status for the UI status badge.
     enum DetectionPhase { case quiet, detecting, confirmed }
     var detectionPhase: DetectionPhase {
-        if isEpisodeConfirmed { return .confirmed }
+        if isSnoreEventActive { return .confirmed }
         if isSnoring           { return .detecting }
         return .quiet
     }
 
+    /// True between `.snoreStarted` and `.snoreEnded` while an event is being logged.
+    var isSnoreEventActive: Bool { activeEventID != nil }
+
     /// Lowest harmonic of the respiratory tempo that falls in the snore-heavy band (~85–2800 Hz).
     var spectrumBRPMHighlightHz: Double? {
-        guard isEpisodeConfirmed, brpmAvailable, currentBRPM > 0 else { return nil }
+        guard isSnoreEventActive, brpmAvailable, currentBRPM > 0 else { return nil }
         return AudioMath.brpmHarmonicHighlightHz(brpm: currentBRPM)
     }
 
@@ -447,13 +450,13 @@ final class MonitorViewModel {
                 sessionStore?.addWaveformSample(
                     dBFS: currentDB,
                     brpm: currentBRPM,
-                    isSnoringActive: isSnoring
+                    isSnoringActive: isSnoreEventActive && isSnoring
                 )
                 timelinePoints.append(TimelinePoint(
                     time: Date(),
                     dBFS: currentDB,
                     brpm: currentBRPM,
-                    isSnoring: isSnoring
+                    isSnoring: isSnoreEventActive && isSnoring
                 ))
                 // Keep at most 8 hours of data in memory
                 if timelinePoints.count > 28_800 { timelinePoints.removeFirst() }
@@ -532,9 +535,11 @@ final class MonitorViewModel {
             if let rel = clipRelativePath {
                 scheduleClipSpectralAnalysis(relativePath: rel, eventID: id)
             }
-            currentBRPM   = brpm
-            brpmAvailable = brpm > 0
             activeEventID = nil
+            // Return UI to Quiet and remove live BRPM harmonic highlighting once the event is saved.
+            isEpisodeConfirmed = false
+            brpmAvailable = false
+            currentBRPM = 0
             // Only force-clear when an alert already fired; otherwise let the 1 Hz loop
             // finish the notify/sound delay (short test clips used to cancel too early).
             if alertPhase == .notified || alertPhase == .alarming {
