@@ -74,7 +74,8 @@ final class SnoreEventDetector: @unchecked Sendable {
     private var onsetTimestamps: [Date] = []
     /// Accumulated classifier-active time within the current bout (bridges short inter-snore pauses).
     private var accumulatedActiveTime: TimeInterval = 0
-    private var lastTickTimestamp: Date?
+    /// Timestamp of the previous classifier-active tick — not advanced while inactive.
+    private var lastActiveTickTimestamp: Date?
     private var classifierInactiveSince: Date?
     /// Anchor for clip pre-roll — set when accumulation last restarted.
     private var accumulationAnchor: Date?
@@ -137,7 +138,7 @@ final class SnoreEventDetector: @unchecked Sendable {
         silenceStart     = nil
         onsetTimestamps  = []
         accumulatedActiveTime = 0
-        lastTickTimestamp = nil
+        lastActiveTickTimestamp = nil
         classifierInactiveSince = nil
         accumulationAnchor = nil
         classifierActive = false
@@ -279,15 +280,14 @@ final class SnoreEventDetector: @unchecked Sendable {
         eventTickCount  = 0
         silenceStart    = nil
         accumulatedActiveTime = 0
-        lastTickTimestamp = nil
+        lastActiveTickTimestamp = nil
         classifierInactiveSince = nil
         accumulationAnchor = nil
     }
 
-    /// Adds elapsed active time; short pauses between snores do not reset the 5 s accumulator.
+    /// Adds elapsed active time only while the classifier is active.
+    /// Short inter-snore pauses (< ``activeGapBridge``) preserve accumulated time but are not counted toward it.
     private func updateAccumulatedActiveTime(at now: Date) {
-        defer { lastTickTimestamp = now }
-
         if classifierActive {
             if let inactiveSince = classifierInactiveSince {
                 let pause = now.timeIntervalSince(inactiveSince)
@@ -296,11 +296,15 @@ final class SnoreEventDetector: @unchecked Sendable {
                     accumulationAnchor = now
                 }
                 classifierInactiveSince = nil
+                // Resuming after a pause — do not credit inactive elapsed time toward the 5 s total.
+                lastActiveTickTimestamp = now
+            } else if let lastActive = lastActiveTickTimestamp {
+                accumulatedActiveTime += now.timeIntervalSince(lastActive)
+                lastActiveTickTimestamp = now
+            } else {
+                lastActiveTickTimestamp = now
             }
             if accumulationAnchor == nil { accumulationAnchor = now }
-            if let last = lastTickTimestamp {
-                accumulatedActiveTime += now.timeIntervalSince(last)
-            }
         } else if classifierInactiveSince == nil {
             classifierInactiveSince = now
         }

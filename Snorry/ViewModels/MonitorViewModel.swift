@@ -89,6 +89,8 @@ final class MonitorViewModel {
 
     // Tracks an open AAC file for exactly one detector `SnoreEvent` (opened on `.snoreStarted`, closed on `.snoreEnded`).
     private var clipOpen = false
+    /// True once push or sound has fired for the current `activeEventID` — prevents re-alarming mid-bout.
+    private var alertDeliveredForCurrentEvent = false
     private var monitorTask: Task<Void, Never>?
     private var classifierTask: Task<Void, Never>?
     private var detectorTask: Task<Void, Never>?
@@ -306,6 +308,7 @@ final class MonitorViewModel {
     private func resetMonitoringState() {
         activeSession = nil
         activeEventID = nil
+        alertDeliveredForCurrentEvent = false
 
         isMonitoring       = false
         isSnoring          = false
@@ -480,6 +483,7 @@ final class MonitorViewModel {
             activeEventID      = id
             snoreEventCount   += 1
             isEpisodeConfirmed = true
+            alertDeliveredForCurrentEvent = false
             // Start the alert escalation clock as soon as the pattern is confirmed.
             alertManager.update(isSnoring: true, at: Date())
             // Fresh BRPM estimation for each new detector bout / event.
@@ -546,17 +550,18 @@ final class MonitorViewModel {
     /// Runs the alert state machine from confirmed episode state.
     ///
     /// Before an alert fires, keep the escalation clock running through brief classifier dropouts.
-    /// Once push or sound is active, pass live classifier state so the alarm stops after `clearDelay`.
+    /// Once push or sound has fired for this event, pass live classifier state only while the alarm
+    /// is still playing; after it clears, do not re-arm until the next `.snoreStarted`.
     private func updateAlertSnoringState() {
         let alertAlreadyActive = alertPhase == .notified || alertPhase == .alarming
 
         let snoringForAlerts: Bool
-        if !isEpisodeConfirmed {
-            snoringForAlerts = false
-        } else if alertAlreadyActive {
+        if alertAlreadyActive {
             snoringForAlerts = isSnoring
+        } else if !isEpisodeConfirmed || alertDeliveredForCurrentEvent {
+            snoringForAlerts = false
         } else {
-            // Pre-alert: confirmed bout — keep notify/sound delay clock running.
+            // Pre-alert escalation for a confirmed bout that has not yet alerted.
             snoringForAlerts = true
         }
 
@@ -573,11 +578,13 @@ final class MonitorViewModel {
     private func handleAlertPhase(_ phase: AlertPhase) {
         switch phase {
         case .notified:
+            alertDeliveredForCurrentEvent = true
             guard sessionPushEnabled else { return }
             notifications.scheduleSnoringAlert()
             startPushRepeatLoop()
 
         case .alarming:
+            alertDeliveredForCurrentEvent = true
             pushRepeatTask?.cancel()
             pushRepeatTask = nil
             guard sessionSoundEnabled else { return }

@@ -138,6 +138,37 @@ struct SnoreEventDetectorTests {
         #expect(startedCount(in: events) == 1, "Expected confirmation after 5 s accumulated active snoring")
     }
 
+    @Test func briefPauseDoesNotCountAsActiveTime() async {
+        let detector = SnoreEventDetector()
+        detector.minContinuousSnoringBeforeConfirm = 5
+        detector.activeGapBridge = 4
+        detector.onsetThresholdDB = 6
+        detector.start()
+
+        let t0 = Date(timeIntervalSince1970: 2500)
+
+        detector.feed(classifierResult: false)
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(-1)))
+
+        // 3 s active, 2 s inactive, then a sliver of active — must not reach 5 s yet.
+        feedActiveWindow(detector: detector, from: t0, through: 3.0)
+        feedInactiveWindow(detector: detector, from: t0.addingTimeInterval(3.5), through: 1.5)
+        feedActiveWindow(detector: detector, from: t0.addingTimeInterval(5.5), through: 0.5)
+
+        var events = await collectEvents(from: detector)
+        #expect(startedCount(in: events) == 0, "Pause duration must not count toward the 5 s active total")
+
+        detector.start()
+        detector.feed(classifierResult: false)
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(-1)))
+        feedActiveWindow(detector: detector, from: t0, through: 3.0)
+        feedInactiveWindow(detector: detector, from: t0.addingTimeInterval(3.5), through: 1.5)
+        feedActiveWindow(detector: detector, from: t0.addingTimeInterval(5.5), through: 2.5)
+
+        events = await collectEvents(from: detector)
+        #expect(startedCount(in: events) == 1, "Should confirm once true active time reaches 5 s")
+    }
+
     @Test func longDropoutResetsAccumulatedActiveTime() async {
         let detector = SnoreEventDetector()
         detector.minContinuousSnoringBeforeConfirm = 5
