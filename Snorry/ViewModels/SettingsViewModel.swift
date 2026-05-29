@@ -66,13 +66,21 @@ final class SettingsViewModel {
         pushRepeatInterval = Self.clampTiming(pushRepeatInterval)
 
         // Record a change snapshot before writing if any tracked push/alarm field changed.
-        let hasChanged = stored.pushNotificationEnabled    != pushNotificationEnabled
-            || stored.soundAlarmEnabled                    != soundAlarmEnabled
-            || stored.pushRepeatEnabled                    != true
-            || stored.notifyDelaySeconds                   != notifyDelay
-            || stored.soundAlarmAfterSeconds               != soundAlarmAfter
-            || stored.pushRepeatIntervalSeconds            != pushRepeatInterval
-            || stored.alarmStyleRaw                        != alarmStyle.rawValue
+        let changeFlags = SettingsChangeFlags(
+            pushEnabled: stored.pushNotificationEnabled != pushNotificationEnabled,
+            soundAlarmEnabled: stored.soundAlarmEnabled != soundAlarmEnabled,
+            notifyDelay: stored.notifyDelaySeconds != notifyDelay,
+            soundAlarmAfter: stored.soundAlarmAfterSeconds != soundAlarmAfter,
+            pushRepeatInterval: stored.pushRepeatIntervalSeconds != pushRepeatInterval,
+            alarmTone: stored.alarmStyleRaw != alarmStyle.rawValue
+        )
+        let hasChanged = changeFlags.pushEnabled
+            || changeFlags.soundAlarmEnabled
+            || stored.pushRepeatEnabled != true
+            || changeFlags.notifyDelay
+            || changeFlags.soundAlarmAfter
+            || changeFlags.pushRepeatInterval
+            || changeFlags.alarmTone
 
         stored.notifyDelaySeconds              = notifyDelay
         stored.soundAlarmAfterSeconds          = soundAlarmAfter
@@ -98,6 +106,9 @@ final class SettingsViewModel {
         }
 
         try? context.save()
+        if hasChanged {
+            AppAnalytics.logSettingsSaved(changes: changeFlags)
+        }
         NotificationCenter.default.post(name: .snorryAlertSettingsDidSave, object: nil)
     }
 

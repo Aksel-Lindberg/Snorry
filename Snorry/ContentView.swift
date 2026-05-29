@@ -45,5 +45,19 @@ struct RootView: View {
                 .tag(Tab.settings)
         }
         .tint(Theme.accent)
+        .onChange(of: selectedTab) { _, tab in
+            AppAnalytics.logTabSelected(tab.analyticsName)
+        }
+    }
+}
+
+private extension RootView.Tab {
+    var analyticsName: String {
+        switch self {
+        case .home: return "monitor"
+        case .sessions: return "history"
+        case .analytics: return "analytics"
+        case .settings: return "settings"
+        }
     }
 }

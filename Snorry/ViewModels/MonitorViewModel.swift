@@ -270,6 +270,11 @@ final class MonitorViewModel {
 
         monitoringStartedAt = Date()
         startTasks()
+
+        AppAnalytics.logMonitoringStarted(
+            pushEnabled: settings.pushNotificationEnabled,
+            soundEnabled: settings.soundAlarmEnabled
+        )
     }
 
     /// Applies alert, detector, and classifier tuning before the mic pipeline starts.
@@ -422,8 +427,10 @@ final class MonitorViewModel {
             }
         }
 
+        let durationSeconds = elapsedSeconds
         sessionStore?.finalizeSession()
         resetMonitoringState()
+        AppAnalytics.logMonitoringStopped(durationSeconds: durationSeconds)
     }
 
     // MARK: Async pipelines

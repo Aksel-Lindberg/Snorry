@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import UserNotifications
 
 // MARK: - First-launch onboarding (two pages: Welcome → Consent & Legal)
 struct OnboardingView: View {
@@ -227,6 +228,16 @@ private struct ConsentPage: View {
         _ = await AVAudioApplication.requestRecordPermission()
         await NotificationManager.shared.requestAuthorization()
         isRequestingPermissions = false
+
+        let micGranted = AVAudioApplication.shared.recordPermission == .granted
+        let notificationStatus = await NotificationManager.shared.checkAuthorisationStatus()
+        let notificationsGranted = notificationStatus == .authorized
+            || notificationStatus == .provisional
+            || notificationStatus == .ephemeral
+        AppAnalytics.logOnboardingCompleted(
+            micGranted: micGranted,
+            notificationsGranted: notificationsGranted
+        )
         onComplete()
     }
 }
