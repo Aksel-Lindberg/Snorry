@@ -136,7 +136,7 @@ struct SupportView: View {
                 .font(.headline)
                 .foregroundStyle(Theme.labelPrimary)
 
-            Text("Snorry is designed to process and store session data on-device. For full details, review the Privacy Policy in Settings > Legal.")
+            Text(PrivacyCopy.supportPrivacySummary)
                 .font(.caption)
                 .foregroundStyle(Theme.labelSecondary)
                 .fixedSize(horizontal: false, vertical: true)

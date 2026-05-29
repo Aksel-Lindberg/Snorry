@@ -22,7 +22,7 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .gettingStarted,
                             title: "First launch & privacy",
-                            subtitle: "Onboarding, microphone, notifications, legal",
+                            subtitle: "Onboarding, microphone, notifications, analytics, legal",
                             systemImage: "sparkles"
                         ) {
                             HelpBullet(
@@ -39,6 +39,11 @@ struct HelpCenterView: View {
                                 icon: "bell.badge.fill",
                                 title: "Notifications",
                                 detail: "Snore alerts use standard local notifications on this iPhone (they can mirror to a paired watch like any iOS alert). Onboarding requests notification permission together with the microphone; later you can enable or disable push alerts in Settings."
+                            )
+                            HelpBullet(
+                                icon: "chart.bar.doc.horizontal",
+                                title: "Usage analytics",
+                                detail: PrivacyCopy.usageAnalytics
                             )
                         }
 

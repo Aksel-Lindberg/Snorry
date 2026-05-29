@@ -176,6 +176,12 @@ private struct ConsentPage: View {
                                      "notifications — they can appear on your iOS-Compatible Smartwatch so you get " +
                                      "wrist nudges that help you stop snoring without waking up."
                     )
+
+                    ConsentRow(
+                        icon: "chart.bar.doc.horizontal",
+                        title: PrivacyCopy.onboardingAnalyticsTitle,
+                        description: PrivacyCopy.usageAnalytics
+                    )
                 }
 
                 // Legal card

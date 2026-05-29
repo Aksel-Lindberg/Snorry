@@ -834,6 +834,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Snorry;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Snorry listens to your sleep to detect snoring and gently wake you.";
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Snorry sends alerts when snoring is detected so you can adjust without fully waking up.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -875,6 +876,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Snorry;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Snorry listens to your sleep to detect snoring and gently wake you.";
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "Snorry sends alerts when snoring is detected so you can adjust without fully waking up.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

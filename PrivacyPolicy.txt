@@ -1,0 +1,180 @@
+SNORRY — PRIVACY POLICY
+========================
+
+Last updated: 29 May 2026
+Privacy policy URL: https://snorry.lintech.no
+App: Snorry (iOS)
+Bundle ID: app.Snorry.Snorry
+
+Data controller / contact
+-------------------------
+Lintech (developer of Snorry)
+Email: aksel.lindberg@lintech.no
+
+This Privacy Policy explains how Snorry ("we", "us", "our") handles information
+when you use the Snorry mobile application ("the App"). This policy should be
+read together with our Terms of Use.
+
+
+1. SUMMARY
+----------
+
+Snorry is a sleep snore monitoring app.
+
+• Sleep audio, snore clips, session history, and waveforms stay on your iPhone.
+  We do not upload them to our servers for storage or analysis.
+
+• We use Google Firebase Analytics to collect anonymous app usage information
+  (for example which screens you open and whether you started monitoring) to
+  understand how the App is used and to improve it. Sleep audio and detailed
+  health session content are not sent to Firebase through our integration.
+
+
+2. DATA PROCESSED ON YOUR DEVICE (NOT UPLOADED BY US)
+-----------------------------------------------------
+
+When you use Snorry, the following is processed and stored locally on your
+device:
+
+• Microphone audio while monitoring is active, to detect snoring and related
+  patterns
+• Snore session records (times, events, settings snapshots)
+• Short audio clips of snore events, where the App records them
+• Waveform samples used for in-app charts
+• Your alert and detection settings
+
+This data is used only to provide App features (monitoring, history, in-app
+analytics charts, alerts). We do not operate a cloud service that receives or
+stores your sleep audio or full session recordings.
+
+Deletion: You can delete saved sleep data in the App (Settings → Delete All
+Sleep & Settings Logs). Uninstalling the App removes local App data from your
+device subject to iOS behaviour.
+
+
+3. DEVICE PERMISSIONS
+---------------------
+
+Microphone
+  Snorry needs microphone access to listen for snoring during monitoring.
+  Audio is analysed on your device. The system permission dialog explains why
+  access is requested.
+
+Notifications
+  Snorry can send local notifications on your iPhone when snoring is detected
+  (according to your settings). Notifications are delivered by Apple's
+  notification system; they may appear on a paired Apple Watch like other iOS
+  alerts. We do not need your email or phone number for this.
+
+
+4. APP USAGE ANALYTICS (GOOGLE FIREBASE ANALYTICS)
+--------------------------------------------------
+
+We use Google Firebase Analytics (Google LLC / Google Ireland Limited,
+depending on region) to understand how the App is used and to improve stability
+and features.
+
+What may be collected (typically in aggregated or pseudonymous form):
+
+• App opens and sessions (e.g. first open, session start)
+• Custom events, such as:
+  - Completion of onboarding (whether microphone and notification permissions
+    were granted — yes/no only)
+  - Start and stop of monitoring (whether push/sound alerts were enabled;
+    duration grouped into coarse buckets such as under 30 minutes, 30 minutes
+    to 2 hours, over 2 hours — not exact timestamps of your sleep)
+  - Settings saved (which categories of settings changed, not exact values)
+  - Tab navigation (e.g. Monitor, History, Analytics, Settings)
+• Technical diagnostics that Firebase may collect as part of its SDK (e.g.
+  device model, OS version, App version, crash-related data if enabled by the
+  SDK)
+
+What we do not send to Firebase Analytics through our integration:
+
+• Sleep audio or snore recordings
+• Snore clip file paths or content
+• Individual snore event timelines tied to identifiable health profiles
+• Your name, email, or account credentials (Snorry does not require an account)
+
+Firebase may assign an app instance identifier on your device to distinguish
+installations. We do not use Firebase for advertising personalization in
+Snorry and we do not request App Tracking Transparency (ATT) for cross-app
+tracking.
+
+Legal basis (EEA/UK users): Legitimate interests in operating and improving the
+App, where applicable; or consent where required by local law.
+
+Retention: Google retains analytics data according to Google Analytics /
+Firebase data retention settings configured in our Firebase project. Configure
+and document your chosen retention period in the Firebase Console (e.g. 14
+months).
+
+More information:
+  Google Privacy Policy: https://policies.google.com/privacy
+  Firebase privacy: https://firebase.google.com/support/privacy
+
+
+5. THIRD-PARTY PROCESSORS
+--------------------------
+
+Provider              Purpose                          Data involved
+--------------------  -------------------------------  ---------------------------
+Google (Firebase      Usage analytics, product         Pseudonymous usage events
+  Analytics)          improvement                      and technical metadata
+Apple (iOS)           App distribution,                Data processed on device
+                      notifications, on-device         per Apple's policies
+                      storage
+
+We do not sell your personal information.
+
+
+6. INTERNATIONAL TRANSFERS
+--------------------------
+
+Firebase/Google may process data on servers outside your country (including the
+United States). Where required, Google relies on appropriate safeguards (such
+as Standard Contractual Clauses). See Google's privacy documentation for
+details.
+
+
+7. YOUR RIGHTS
+--------------
+
+Depending on where you live, you may have rights to access, rectify, erase,
+restrict, or object to processing, and to data portability or complain to a
+supervisory authority.
+
+Because most sleep data stays on your device, you can delete it in the App as
+described above. For analytics data held by Google, contact us at
+aksel.lindberg@lintech.no and we will help where we can.
+
+
+8. CHILDREN
+-----------
+
+Snorry is not directed at children under 13 (or 16 where local law requires).
+We do not knowingly collect personal information from children. If you believe
+a child has provided data through the App, contact us at aksel.lindberg@lintech.no.
+
+
+9. CHANGES TO THIS POLICY
+---------------------------
+
+We may update this policy when the App or our practices change (for example new
+analytics events). We will post the new version at https://snorry.lintech.no
+with an updated "Last updated" date. Continued use of the App after changes
+constitutes acceptance where permitted by law.
+
+
+10. CONTACT
+-----------
+
+Questions about this Privacy Policy:
+  aksel.lindberg@lintech.no
+  https://snorry.lintech.no
+
+---
+
+NOTE: This document is a draft for publication on your website. Have qualified
+legal counsel review it before relying on it for App Store or regulatory
+compliance.
