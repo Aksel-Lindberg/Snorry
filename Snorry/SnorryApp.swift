@@ -11,13 +11,18 @@ struct SnorryApp: App {
 
     @State private var appEnv = AppEnvironment()
 
+    #if DEBUG
+    /// True when Xcode passes Firebase’s debug launch flag (see shared Snorry scheme).
+    private static var isFirebaseAnalyticsDebugMode: Bool {
+        CommandLine.arguments.contains("-FIRAnalyticsDebugEnabled")
+    }
+    #endif
+
     init() {
         FirebaseApp.configure()
         #if DEBUG
-        // Off by default so casual Debug runs do not pollute GA4; enabled when the scheme sets
-        // -FIRAnalyticsDebugEnabled for Firebase Console → Analytics → DebugView.
-        let debugViewEnabled = ProcessInfo.processInfo.environment["FIRAnalyticsDebugEnabled"] == "YES"
-        Analytics.setAnalyticsCollectionEnabled(debugViewEnabled)
+        // Collection off unless the Snorry scheme passes -FIRAnalyticsDebugEnabled (DebugView).
+        Analytics.setAnalyticsCollectionEnabled(Self.isFirebaseAnalyticsDebugMode)
         #endif
         // Required so snoring alerts show as system banners while Snorry is on-screen (foreground).
         UNUserNotificationCenter.current().delegate = NotificationManager.shared
