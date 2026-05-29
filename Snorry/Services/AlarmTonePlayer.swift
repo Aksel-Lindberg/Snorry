@@ -194,14 +194,19 @@ final class AlarmTonePlayer: @unchecked Sendable {
     }
 
     /// Starts playback and jumps to `volume` immediately — use for live alarm firing.
-    /// Skips the fade-in so the alarm hits at full intensity from the first sample.
+    /// Restarts the engine so it picks up the current output route (e.g. Bluetooth).
     func playImmediate(volume: Float) {
         rampTimer?.invalidate()
         rampTimer = nil
         targetVolume  = volume
         currentVolume = volume
         mixerNode.outputVolume = volume
-        if !isRunning { startEngine() }
+        if engine.isRunning {
+            playerNode.stop()
+            engine.stop()
+            isRunning = false
+        }
+        startEngine()
     }
 
     /// Hard-stop with no fade — use when snoring ends.
@@ -225,6 +230,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
 
     private func startEngine() {
         do {
+            engine.prepare()
             try engine.start()
             isRunning = true
             scheduleLoop()

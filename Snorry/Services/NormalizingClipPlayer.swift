@@ -1,6 +1,5 @@
 import AVFoundation
 import Accelerate
-import os.log
 
 // MARK: - Peak-normalised clip player
 /// Decodes an AAC/M4A file into a Float32 PCM buffer, measures its peak sample,
@@ -17,7 +16,6 @@ final class NormalizingClipPlayer: @unchecked Sendable {
 
     private let engine     = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
-    private let logger     = Logger(subsystem: "app.Snorry", category: "ClipPlayer")
 
     /// Maximum linear gain (+18 dB ≈ ×8) to prevent near-silent clips from becoming
     /// uncomfortably loud while still giving a strong boost to typical snore levels.
@@ -36,7 +34,6 @@ final class NormalizingClipPlayer: @unchecked Sendable {
     func play(url: URL) throws {
         stop()
 
-        // Decode the compressed AAC/M4A file to Float32 PCM.
         let file       = try AVAudioFile(forReading: url)
         let frameCount = AVAudioFrameCount(file.length)
 
@@ -50,17 +47,16 @@ final class NormalizingClipPlayer: @unchecked Sendable {
         try file.read(into: buffer)
         buffer.frameLength = frameCount
 
-        // Boost quiet clips to –1 dBFS (capped at +18 dB).
         applyPeakNormalisation(to: buffer)
 
-        // Connect with the buffer's exact format so the engine matches the decoder output.
+        engine.disconnectNodeOutput(playerNode)
         engine.connect(playerNode, to: engine.mainMixerNode, format: buffer.format)
         engine.mainMixerNode.outputVolume = 1.0
 
+        engine.prepare()
         try engine.start()
 
         playerNode.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
-            // AVAudioPlayerNode completion fires on an internal thread; bounce to main.
             DispatchQueue.main.async { self?.didFinish() }
         }
         playerNode.play()
@@ -69,7 +65,10 @@ final class NormalizingClipPlayer: @unchecked Sendable {
     /// Stops playback immediately (no fade).
     func stop() {
         playerNode.stop()
-        if engine.isRunning { engine.stop() }
+        if engine.isRunning {
+            engine.stop()
+        }
+        engine.reset()
     }
 
     // MARK: - Private
@@ -99,8 +98,6 @@ final class NormalizingClipPlayer: @unchecked Sendable {
         guard peak > 0.001 else { return }
 
         var gain = min(Self.targetPeak / peak, Self.maxGain)
-        let gainDB = 20 * log10(gain)
-        logger.info("Clip peak \(peak, format: .fixed(precision: 4)), gain \(gain, format: .fixed(precision: 2))× (\(gainDB, format: .fixed(precision: 1)) dB)")
 
         // Pass 2 — scale all samples by gain in-place.
         for channel in 0..<channelCount {

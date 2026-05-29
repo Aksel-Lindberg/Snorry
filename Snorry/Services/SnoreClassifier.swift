@@ -90,7 +90,6 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
                 self.rumbleTracker.useBackgroundStrictMode = true
                 self.voteWindow.removeAll()
                 self.rumbleVoteWindow.removeAll()
-                self.logger.info("Classifier: lock/background — RMS energy gate (SoundAnalysis paused, no GPU)")
             }
         }
 
@@ -101,7 +100,6 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
                 self.rumbleTracker.useBackgroundStrictMode = false
                 self.voteWindow.removeAll()
                 self.rumbleVoteWindow.removeAll()
-                self.logger.info("Classifier: foreground — SoundAnalysis active again")
             }
         }
 
@@ -203,8 +201,19 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         stream = s
         continuation = c
 
-        try? analyzer.add(request, withObserver: self)
-        logger.info("SnoreClassifier started")
+        analyzer.remove(request)
+        do {
+            try analyzer.add(request, withObserver: self)
+        } catch {
+            logger.error("SnoreClassifier failed to attach request: \(error)")
+        }
+
+        analysisQueue.sync {
+            useEnergyFallbackWhileBackground = false
+            rumbleTracker.useBackgroundStrictMode = false
+            voteWindow.removeAll()
+            rumbleVoteWindow.removeAll()
+        }
     }
 
     func stop() {
@@ -214,7 +223,6 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         stream = nil
         voteWindow.removeAll()
         rumbleVoteWindow.removeAll()
-        logger.info("SnoreClassifier stopped")
     }
 
     // MARK: Feed buffers

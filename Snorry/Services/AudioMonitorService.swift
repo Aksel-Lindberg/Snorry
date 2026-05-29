@@ -92,6 +92,8 @@ final class AudioMonitorService: @unchecked Sendable {
 
     private var continuation: AsyncStream<MonitorTick>.Continuation?
     private(set) var stream: AsyncStream<MonitorTick>?
+    private var inputTapInstalled = false
+    private(set) var lastTickTime: Date?
 
     private let logger = Logger(subsystem: "app.Snorry", category: "AudioMonitor")
 
@@ -100,7 +102,12 @@ final class AudioMonitorService: @unchecked Sendable {
     // MARK: Start / Stop
 
     func start() throws {
-        guard stream == nil else { return }
+        if stream != nil {
+            stop()
+        }
+
+        engine.reset()
+        lastTickTime = nil
 
         try AudioSessionManager.shared.configureForMonitoring()
 
@@ -114,50 +121,112 @@ final class AudioMonitorService: @unchecked Sendable {
         self.stream = asyncStream
         self.continuation = cont
 
-        // ~20 ms tap at native sample rate
         let tapFrames = AVAudioFrameCount(inputFormat.sampleRate * 0.02)
 
-        inputNode.installTap(onBus: 0, bufferSize: tapFrames, format: inputFormat) { [weak self] buffer, _ in
-            self?.process(buffer: buffer)
+        do {
+            inputNode.installTap(onBus: 0, bufferSize: tapFrames, format: inputFormat) { [weak self] buffer, _ in
+                self?.process(buffer: buffer)
+            }
+            inputTapInstalled = true
+            engine.prepare()
+            try engine.start()
+            AudioSessionManager.shared.setMonitoringAudioActive(true)
+        } catch {
+            if inputTapInstalled {
+                inputNode.removeTap(onBus: 0)
+                inputTapInstalled = false
+            }
+            engine.stop()
+            engine.reset()
+            continuation?.finish()
+            continuation = nil
+            stream = nil
+            self.inputFormat = nil
+            converter = nil
+            logger.error("AudioMonitorService start failed — rolled back: \(error)")
+            throw error
         }
-
-        engine.prepare()
-        try engine.start()
-        AudioSessionManager.shared.setMonitoringAudioActive(true)
-        logger.info("AudioMonitorService started")
     }
 
     /// After phone calls, Siri, or other session interruptions, re-activates the session and restarts
     /// the engine if monitoring is still supposed to be running (`stream` remains non-nil).
     func resumeAfterInterruptionIfNeeded() {
         guard stream != nil else { return }
-        do {
-            try AudioSessionManager.shared.configureForMonitoring()
-            if !engine.isRunning {
-                try engine.start()
-            }
-            logger.info("AudioMonitorService resumed after interruption")
-        } catch {
-            logger.error("Failed to resume AudioMonitorService after interruption: \(error)")
+        reconfigureAfterRouteChange()
+    }
+
+    /// Re-applies session routing and restarts the mic tap after Bluetooth connect/disconnect.
+    func reconfigureAfterRouteChange() {
+        guard stream != nil else { return }
+
+        if engine.isRunning { engine.stop() }
+        if inputTapInstalled {
+            engine.inputNode.removeTap(onBus: 0)
+            inputTapInstalled = false
         }
+
+        for attempt in 1...2 {
+            do {
+                try AudioSessionManager.shared.configureForMonitoring()
+
+                let inputNode = engine.inputNode
+                let inputFormat = inputNode.outputFormat(forBus: 0)
+                self.inputFormat = inputFormat
+                converter = AVAudioConverter(from: inputFormat, to: targetFormat)
+
+                let tapFrames = AVAudioFrameCount(inputFormat.sampleRate * 0.02)
+                inputNode.installTap(onBus: 0, bufferSize: tapFrames, format: inputFormat) { [weak self] buffer, _ in
+                    self?.process(buffer: buffer)
+                }
+                inputTapInstalled = true
+
+                engine.prepare()
+                try engine.start()
+                guard engine.isRunning else {
+                    throw NSError(domain: "app.Snorry", code: -1,
+                                  userInfo: [NSLocalizedDescriptionKey: "Engine failed to run after reconfigure"])
+                }
+                return
+            } catch {
+                logger.error("Reconfigure attempt \(attempt) failed: \(error)")
+                if inputTapInstalled {
+                    engine.inputNode.removeTap(onBus: 0)
+                    inputTapInstalled = false
+                }
+                engine.stop()
+                engine.reset()
+            }
+        }
+    }
+
+    /// Restores built-in mic routing and restarts the mic tap after alarm playback.
+    func restoreMonitoringAfterAlarm() {
+        guard stream != nil else { return }
+        reconfigureAfterRouteChange()
     }
 
     func stop() {
         AudioSessionManager.shared.setMonitoringAudioActive(false)
-        engine.inputNode.removeTap(onBus: 0)
-        engine.stop()
+        if inputTapInstalled {
+            engine.inputNode.removeTap(onBus: 0)
+            inputTapInstalled = false
+        }
+        if engine.isRunning { engine.stop() }
+        engine.reset()
         continuation?.finish()
         continuation = nil
         stream = nil
         inputFormat = nil
+        converter = nil
+        lastTickTime = nil
         AudioSessionManager.shared.deactivate()
-        logger.info("AudioMonitorService stopped")
     }
 
     // MARK: Buffer processing
 
     private func process(buffer: AVAudioPCMBuffer) {
         let now = Date()
+        lastTickTime = now
         // Store the native-format buffer first so it's available for full-quality clip recording.
         nativePreRoll.append(buffer, at: now)
 

@@ -45,6 +45,8 @@ final class SessionDetailViewModel {
     /// Peak-normalising player: decodes AAC → Float32, boosts gain, plays via AVAudioEngine.
     private let clipPlayer = NormalizingClipPlayer()
     private let logger     = Logger(subsystem: "app.Snorry", category: "SessionDetail")
+    /// Avoids reconfiguring AVAudioSession on every clip tap while browsing a session.
+    private var replaySessionConfigured = false
 
     /// Loads relationships eagerly off the navigation transition so the History list stays responsive.
     static func prepare(session: SnoreSession, modelContext: ModelContext) async -> SessionDetailViewModel {
@@ -151,22 +153,20 @@ final class SessionDetailViewModel {
 
         stopPlaybackInternal(deactivateSession: false)
 
-        // Wire finish callback before play() so it's set even if play() throws.
         clipPlayer.onFinish = { [weak self] in
             Task { @MainActor in self?.playbackDidFinish() }
         }
 
         do {
-            // Force loudspeaker and reset monitoring's 16 kHz preferred sample rate.
-            try AudioSessionManager.shared.configureForClipReplay()
-            // Decode, peak-normalise (up to +18 dB), then start AVAudioEngine playback.
+            try ensureReplaySessionConfigured()
             try clipPlayer.play(url: url)
             playingEventID = event.id
             playbackDiagnostic = nil
         } catch {
             logger.error("Replay failed: \(error.localizedDescription)")
             playbackDiagnostic = error.localizedDescription
-            playbackDidFinish()
+            playingEventID = nil
+            clipPlayer.stop()
         }
     }
 
@@ -174,18 +174,34 @@ final class SessionDetailViewModel {
         stopPlaybackInternal(deactivateSession: true)
     }
 
+    /// Called when the user leaves session detail — releases replay audio resources.
+    func tearDownPlayback() {
+        stopPlaybackInternal(deactivateSession: true)
+    }
+
+    private func ensureReplaySessionConfigured() throws {
+        guard !replaySessionConfigured else { return }
+        try AudioSessionManager.shared.configureForClipReplay()
+        replaySessionConfigured = true
+    }
+
+    private func releaseReplaySession() {
+        guard replaySessionConfigured else { return }
+        AudioSessionManager.shared.endClipReplaySession(restoreMonitoring: true)
+        replaySessionConfigured = false
+    }
+
     private func playbackDidFinish() {
         clipPlayer.stop()
         playingEventID = nil
-        // Restore automatic output routing and deactivate the replay session.
-        AudioSessionManager.shared.resetReplayOverrides()
+        // Keep the replay session warm for the next tap — released in tearDownPlayback().
     }
 
     private func stopPlaybackInternal(deactivateSession: Bool) {
         clipPlayer.stop()
         playingEventID = nil
         if deactivateSession {
-            AudioSessionManager.shared.resetReplayOverrides()
+            releaseReplaySession()
         }
     }
 

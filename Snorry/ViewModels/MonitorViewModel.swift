@@ -116,6 +116,10 @@ final class MonitorViewModel {
     private var timelineTimer: Task<Void, Never>?
     /// Fires repeated push notifications while in `.notified`.
     private var pushRepeatTask: Task<Void, Never>?
+    /// Set when an alarm reconfigures the audio session; cleared after monitoring is restored.
+    private var needsMonitoringRestoreAfterAlarm = false
+    private var monitoringStartedAt: Date?
+    private var lastPipelineRecoveryAt: Date?
 
     /// Copied from settings at session start (alert UI / playback).
     private var sessionPushEnabled = true
@@ -217,8 +221,12 @@ final class MonitorViewModel {
 
     func startMonitoring() {
         guard !isMonitoring,
+              !isStoppingMonitoring,
               microphonePermission == .granted,
               let store = sessionStore else { return }
+
+        // Clear any orphaned tasks from a prior session that did not tear down cleanly.
+        cancelTasks()
 
         UIApplication.shared.isIdleTimerDisabled = true
 
@@ -229,52 +237,64 @@ final class MonitorViewModel {
         spectrumBands = []
         timelinePoints = []
         alertPhase = .idle
+        needsMonitoringRestoreAfterAlarm = false
+        monitoringStartedAt = nil
+        lastPipelineRecoveryAt = nil
 
         let session = store.startSession()
         activeSession = session
 
+        let settings = AlertSettings.load(context: modelContext)
+        applyMonitoringSettings(settings, to: session)
+
+        // Release any clip-replay session left open from session detail or settings preview.
+        AudioSessionManager.shared.endClipReplaySession(restoreMonitoring: false)
+
         do {
             classifier.start()
+            classifier.setLockScreenEnergyMode(false)
             detector.start()
             alertManager.start()
             try audioService.start()
         } catch {
+            audioService.stop()
+            classifier.stop()
+            detector.stop()
+            alertManager.stop()
+            sessionStore?.finalizeSession()
+            activeSession = nil
             isMonitoring = false
+            UIApplication.shared.isIdleTimerDisabled = false
             return
         }
 
-        // Apply saved alert settings
-        let settings = AlertSettings.load(context: modelContext)
+        monitoringStartedAt = Date()
+        startTasks()
+    }
 
-        // Snapshot the active alert configuration onto the session for analytics.
+    /// Applies alert, detector, and classifier tuning before the mic pipeline starts.
+    private func applyMonitoringSettings(_ settings: AlertSettings, to session: SnoreSession) {
         session.snapshotPushEnabled    = settings.pushNotificationEnabled
         session.snapshotSoundEnabled   = settings.soundAlarmEnabled
         session.snapshotAlarmStyleRaw  = settings.alarmStyleRaw
 
-        sessionPushEnabled          = settings.pushNotificationEnabled
-        sessionSoundEnabled         = settings.soundAlarmEnabled
-        // Repeat push notifications are always enabled; interval remains user-configurable.
+        sessionPushEnabled        = settings.pushNotificationEnabled
+        sessionSoundEnabled       = settings.soundAlarmEnabled
         sessionPushRepeatEnabled    = true
         sessionPushRepeatInterval   = settings.pushRepeatIntervalSeconds
 
-        // Push notification delay is fixed; sound alarm delay is user-configurable.
         alertManager.config.notifyDelay       = 2
         alertManager.config.soundAlarmAfter   = settings.soundAlarmAfterSeconds
-        // Match alert clear delay to the detector gap so the alert machine never races ahead.
         alertManager.config.clearDelay        = 3
         alertManager.config.alarmVolume       = settings.alarmVolume
         alertManager.config.pushEnabled       = settings.pushNotificationEnabled
         alertManager.config.soundEnabled      = settings.soundAlarmEnabled
 
-        // Pending (unconfirmed) episodes are discarded after 3 s of silence.
-        // Confirmed events require 10 s of silence before ending and saving.
         detector.gapTolerance                      = 3
         detector.confirmedGapTolerance             = 10
         detector.minContinuousSnoringBeforeConfirm = 5
 
-        // Alarm tone style for this session.
         alarmPlayer.setStyle(AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic)
-
         applySnoreDetectionTuning(sensitivity: settings.snoringDetectionSensitivity)
 
         savedForegroundMinConfirm = detector.minContinuousSnoringBeforeConfirm
@@ -288,8 +308,6 @@ final class MonitorViewModel {
                 backgroundContinuousSnoringSince = Date()
             }
         }
-
-        startTasks()
     }
 
     /// Foreground: SoundAnalysis confidence + onset dB. Background / lock: RMS gate (`energyFallbackThresholdDB`).
@@ -366,6 +384,9 @@ final class MonitorViewModel {
         isSnoring          = false
         isEpisodeConfirmed = false
         alertPhase         = .idle
+        needsMonitoringRestoreAfterAlarm = false
+        monitoringStartedAt = nil
+        lastPipelineRecoveryAt = nil
         currentBRPM        = 0
         brpmAvailable      = false
 
@@ -494,6 +515,7 @@ final class MonitorViewModel {
                 try? await Task.sleep(for: .seconds(1))
                 guard let self, isMonitoring else { break }
                 elapsedSeconds += 1
+                recoverAudioPipelineIfStalled()
                 if requiresBackgroundAlarmVerification {
                     evaluateBackgroundAlarmEligibility()
                 }
@@ -527,6 +549,20 @@ final class MonitorViewModel {
         pushRepeatTask?.cancel(); pushRepeatTask = nil
         cancelBackgroundAlarmVerification()
         cancelAlarmAutoStop()
+    }
+
+    /// Restarts the mic tap when ticks stop arriving (e.g. after a failed route reconfigure).
+    private func recoverAudioPipelineIfStalled() {
+        guard let startedAt = monitoringStartedAt else { return }
+        guard Date().timeIntervalSince(startedAt) > 4 else { return }
+        guard Date().timeIntervalSince(lastPipelineRecoveryAt ?? .distantPast) > 10 else { return }
+
+        let lastTick = audioService.lastTickTime
+        let stalled = lastTick.map { Date().timeIntervalSince($0) > 3 } ?? true
+        guard stalled else { return }
+
+        lastPipelineRecoveryAt = Date()
+        audioService.reconfigureAfterRouteChange()
     }
 
     // MARK: Event handling
@@ -828,9 +864,10 @@ final class MonitorViewModel {
             pushRepeatTask?.cancel()
             pushRepeatTask = nil
             guard sessionSoundEnabled else { return }
-            // Re-assert speaker routing before playing — the session can lose its
+            needsMonitoringRestoreAfterAlarm = true
+            // Re-assert output routing before playing — the session can lose its
             // port override if interrupted by a system sound, phone call, etc.
-            AudioSessionManager.shared.activateSpeakerForAlarm()
+            AudioSessionManager.shared.prepareOutputRouteForAlarm()
             let selectedVolume = max(0.10, min(1.0, alertManager.config.alarmVolume))
             // Jump straight to the configured volume — no fade-in for a real alarm.
             alarmPlayer.playImmediate(volume: selectedVolume)
@@ -841,6 +878,10 @@ final class MonitorViewModel {
             pushRepeatTask?.cancel()
             pushRepeatTask = nil
             alarmPlayer.stop()
+            if isMonitoring, needsMonitoringRestoreAfterAlarm {
+                AudioSessionManager.shared.restoreMonitoringAfterAlarm()
+                needsMonitoringRestoreAfterAlarm = false
+            }
             notifications.cancelSnoringAlert()
             // Only tear down the bout when logging has ended — brief pauses mid-event may clear the alarm.
             if activeEventID == nil {

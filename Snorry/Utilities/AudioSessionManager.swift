@@ -77,16 +77,12 @@ final class AudioSessionManager: @unchecked Sendable {
 
         switch type {
         case .began:
-            logger.info("Audio session interruption began")
+            break
         case .ended:
             guard let optionsValue = info[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
-            guard options.contains(.shouldResume) else {
-                logger.info("Interruption ended without shouldResume — leaving engine state unchanged")
-                return
-            }
+            guard options.contains(.shouldResume) else { return }
             guard monitoringAudioActive() else { return }
-            logger.info("Interruption ended with shouldResume — attempting engine resume")
             AudioMonitorService.shared.resumeAfterInterruptionIfNeeded()
         @unknown default:
             break
@@ -100,13 +96,11 @@ final class AudioSessionManager: @unchecked Sendable {
               let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else { return }
 
         switch reason {
-        case .oldDeviceUnavailable, .newDeviceAvailable, .categoryChange, .override, .routeConfigurationChange:
-            do {
-                try AVAudioSession.sharedInstance().overrideOutputAudioPort(.speaker)
-                logger.info("Re-applied speaker output after route change (reason \(reason.rawValue))")
-            } catch {
-                logger.error("Route change speaker override failed: \(error)")
-            }
+        // Only react to physical device connect/disconnect — categoryChange (3),
+        // override (4), and routeConfigurationChange (8) are emitted by our own
+        // session updates and would loop if handled here.
+        case .oldDeviceUnavailable, .newDeviceAvailable:
+            AudioMonitorService.shared.reconfigureAfterRouteChange()
         default:
             break
         }
@@ -126,79 +120,166 @@ final class AudioSessionManager: @unchecked Sendable {
     /// The 16 kHz mic analysis rate is achieved by `AudioMonitorService`'s internal
     /// `AVAudioConverter` — no need to pin the hardware I/O to 16 kHz, which would
     /// constrain the output path and reduce alarm loudness.
+    ///
+    /// Uses A2DP (not HFP) so the built-in mic stays active for snore detection and recording.
+    /// HFP is only used for settings preview where no microphone capture is needed.
     func configureForMonitoring() throws {
         let session = AVAudioSession.sharedInstance()
+        // Clear any HFP replay session left from session-detail clip playback.
+        if !monitoringAudioActive() {
+            try? session.setActive(false, options: .notifyOthersOnDeactivation)
+        }
         try session.setCategory(
             .playAndRecord,
             mode: .default,
-            options: [
-                .allowBluetoothHFP,
-                .allowBluetoothA2DP,
-                .defaultToSpeaker,
-                .duckOthers
-            ]
+            options: [.allowBluetoothA2DP, .duckOthers]
         )
         try session.setPreferredIOBufferDuration(0.02) // ~20 ms latency
         try session.setActive(true)
-        // Explicit speaker override — must come after setActive — matches the
-        // same call made in configureForClipReplay so both contexts route identically.
-        try session.overrideOutputAudioPort(.speaker)
-        logger.info("Audio session activated: .playAndRecord / .default + speaker override")
+        try preferBuiltInMicrophone()
+        try applyMonitoringOutputRoute(for: session)
     }
 
-    /// Re-asserts the bottom loudspeaker for alarm playback.
-    /// Safe to call while the session is already active (e.g. mid-monitoring).
-    func activateSpeakerForAlarm() {
+    /// Keeps the monitoring category (A2DP-only) so the built-in mic is not stolen by HFP.
+    func prepareOutputRouteForAlarm() {
+        let session = AVAudioSession.sharedInstance()
         do {
-            try AVAudioSession.sharedInstance().overrideOutputAudioPort(.speaker)
-            logger.info("Speaker override re-asserted for alarm")
+            try session.setCategory(
+                .playAndRecord,
+                mode: .default,
+                options: [.allowBluetoothA2DP, .duckOthers]
+            )
+            try preferBuiltInMicrophone()
+            if shouldRouteAlarmToExternalDevice(session) {
+                try session.overrideOutputAudioPort(.none)
+            } else {
+                try session.setCategory(
+                    .playAndRecord,
+                    mode: .default,
+                    options: [.allowBluetoothA2DP, .defaultToSpeaker, .duckOthers]
+                )
+                try preferBuiltInMicrophone()
+                try session.overrideOutputAudioPort(.speaker)
+            }
         } catch {
-            logger.error("Failed to override output port for alarm: \(error)")
+            logger.error("Failed to prepare alarm output route: \(error)")
         }
+    }
+
+    /// Re-applies monitoring session routing after alarm playback ends.
+    func restoreMonitoringAfterAlarm() {
+        AudioMonitorService.shared.restoreMonitoringAfterAlarm()
     }
 
     func deactivate() {
         do {
             try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-            logger.info("Audio session deactivated")
         } catch {
             logger.error("Failed to deactivate audio session: \(error)")
         }
     }
 
-    /// Configure the session for snore clip replay.
+    /// Configure the session for alarm preview and snore clip replay (playback only).
     ///
-    /// Uses `.playAndRecord` with `.defaultToSpeaker` — the only reliable way to force
-    /// the bottom loudspeaker on iPhone without triggering OSStatus -50.
+    /// Uses `.playAndRecord` so `overrideOutputAudioPort(.speaker)` works when no
+    /// external device is connected (`.playback` returns OSStatus -50 for that call).
     /// Requests 48 kHz so AAC clips decode at their native rate for full output level.
     func configureForClipReplay() throws {
         let session = AVAudioSession.sharedInstance()
-        try? session.setActive(false, options: .notifyOthersOnDeactivation)
-        try session.setPreferredSampleRate(48_000)
+        // Don't tear down an active monitoring session — replay restores it when finished.
+        if !monitoringAudioActive() {
+            try? session.setActive(false, options: .notifyOthersOnDeactivation)
+        }
+        try? session.setPreferredSampleRate(48_000)
         try session.setCategory(
             .playAndRecord,
             mode: .default,
-            options: [.defaultToSpeaker]
+            options: [.defaultToSpeaker, .allowBluetoothA2DP, .allowBluetoothHFP]
         )
         try session.setActive(true)
-        // Force bottom loudspeaker explicitly — must come after setActive.
-        try session.overrideOutputAudioPort(.speaker)
-        logger.info("Audio session configured for clip replay (loudspeaker, 48 kHz)")
+        applyPreferredOutputRoute(for: session)
     }
 
-    /// Restore automatic output routing after clip replay ends.
-    func resetReplayOverrides() {
-        let session = AVAudioSession.sharedInstance()
-        do {
+    /// Routes monitoring playback to a connected external device when possible; otherwise loudspeaker.
+    private func applyMonitoringOutputRoute(for session: AVAudioSession) throws {
+        if shouldRouteAlarmToExternalDevice(session) {
             try session.overrideOutputAudioPort(.none)
-        } catch {
-            logger.error("Failed to reset output port override: \(error)")
+        } else {
+            try session.setCategory(
+                .playAndRecord,
+                mode: .default,
+                options: [.allowBluetoothA2DP, .defaultToSpeaker, .duckOthers]
+            )
+            try session.overrideOutputAudioPort(.speaker)
         }
+    }
+
+    /// Routes clip replay / settings preview to external output when present.
+    private func applyPreferredOutputRoute(for session: AVAudioSession = AVAudioSession.sharedInstance()) {
         do {
-            try session.setActive(false, options: .notifyOthersOnDeactivation)
+            if hasExternalOutputRoute(session) {
+                try session.overrideOutputAudioPort(.none)
+            } else if session.category == .playAndRecord {
+                try session.overrideOutputAudioPort(.speaker)
+            }
         } catch {
-            logger.error("Failed to deactivate replay session: \(error)")
+            logger.error("Failed to apply output route: \(error)")
         }
-        logger.info("Replay audio session deactivated")
+    }
+
+    /// True when a Bluetooth/headphone device is connected for playback.
+    /// Pinning the built-in mic can move the active output to Speaker while the
+    /// headset remains connected — check `availableInputs` as well as `currentRoute`.
+    private func shouldRouteAlarmToExternalDevice(_ session: AVAudioSession) -> Bool {
+        if hasExternalOutputRoute(session) { return true }
+        return session.availableInputs?.contains(where: { isExternalPlaybackPort($0.portType) }) ?? false
+    }
+
+    private func isExternalPlaybackPort(_ portType: AVAudioSession.Port) -> Bool {
+        switch portType {
+        case .bluetoothA2DP, .bluetoothHFP, .bluetoothLE,
+             .headphones, .headsetMic, .airPlay, .carAudio, .usbAudio:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func hasExternalOutputRoute(_ session: AVAudioSession) -> Bool {
+        session.currentRoute.outputs.contains { output in
+            switch output.portType {
+            case .bluetoothA2DP, .bluetoothHFP, .bluetoothLE,
+                 .headphones, .headsetMic, .airPlay, .carAudio, .usbAudio:
+                return true
+            default:
+                return false
+            }
+        }
+    }
+
+    /// Keeps snore detection on the phone mic even when Bluetooth earbuds are connected for output.
+    private func preferBuiltInMicrophone() throws {
+        let session = AVAudioSession.sharedInstance()
+        guard let builtInMic = session.availableInputs?.first(where: { $0.portType == .builtInMic }) else {
+            logger.warning("Built-in microphone not available in route")
+            return
+        }
+        try session.setPreferredInput(builtInMic)
+    }
+
+    /// Ends clip replay. Restores monitoring when active; otherwise deactivates the session.
+    func resetReplayOverrides() {
+        endClipReplaySession(restoreMonitoring: true)
+    }
+
+    /// Releases the clip-replay audio session (e.g. when leaving session detail).
+    func endClipReplaySession(restoreMonitoring: Bool = true) {
+        let session = AVAudioSession.sharedInstance()
+        try? session.overrideOutputAudioPort(.none)
+        if restoreMonitoring, monitoringAudioActive() {
+            AudioMonitorService.shared.restoreMonitoringAfterAlarm()
+        } else {
+            try? session.setActive(false, options: .notifyOthersOnDeactivation)
+        }
     }
 }

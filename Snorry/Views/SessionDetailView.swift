@@ -61,7 +61,7 @@ struct SessionDetailView: View {
             let status = await NotificationManager.shared.checkAuthorisationStatus()
             notificationsAuthorized = (status == .authorized)
         }
-        .onDisappear { vm?.stopPlayback() }
+        .onDisappear { vm?.tearDownPlayback() }
     }
 
     private func ensureAlertSettingsRowExists() {
