@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -87,6 +87,10 @@
 		F9537C4A3F8A5E54F1AB8222 /* AlertSetupSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC3AAF0922B2A428E2CD2A6E /* AlertSetupSummaryCard.swift */; };
 		FBF5D5B5DD8B447E0C510FBE /* Raindrop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */; };
 		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
+		FBAA00012EAA4B00C99A0001 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */; };
+		FBAA00012EAA4B00C99A0003 /* AppAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */; };
+		FBAA00012EAA4B00C99A0005 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = FBAA00012EAA4B00C99A0007 /* FirebaseAnalytics */; };
+		FBAA00012EAA4B00C99A0006 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = FBAA00012EAA4B00C99A0008 /* FirebaseCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -189,6 +193,8 @@
 		F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSettingsChange.swift; path = Models/AlertSettingsChange.swift; sourceTree = "<group>"; };
 		F8170BA25460F76D30A51269 /* Singball.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Singball.mp3; path = Resources/Singball.mp3; sourceTree = "<group>"; };
 		F9B7B29710F28E6010817EE4 /* SnoreGIFData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreGIFData.swift; path = Resources/SnoreGIFData.swift; sourceTree = "<group>"; };
+		FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = GoogleService-Info.plist; sourceTree = "<group>"; };
+		FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppAnalytics.swift; path = Services/AppAnalytics.swift; sourceTree = "<group>"; };
 		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -198,6 +204,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				E6AE4D1B1AD210053BE7E6FA /* Foundation.framework in Frameworks */,
+				FBAA00012EAA4B00C99A0005 /* FirebaseAnalytics in Frameworks */,
+				FBAA00012EAA4B00C99A0006 /* FirebaseCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +292,7 @@
 				E8752C417837145970A7AE3E /* Tornado.mp3 */,
 				F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */,
 				C3DF721CCFE5BF5EA3AF9F05 /* AlarmTonePlayer.swift */,
+				FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */,
 				C47BD28A2BFED416769A000D /* AlertManager.swift */,
 				88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */,
 				7D62F5369622A86D30CFA65A /* ClipRecorder.swift */,
@@ -295,6 +304,7 @@
 				A1B2C3D4E5F60001A1B2C3D4 /* SessionClipSoundClassifier.swift */,
 				02D05DF695906DB7AAF6107F /* SnoreEventDetector.swift */,
 				92B789E63D6E30A4F499CB1E /* SnorryApp.swift */,
+				FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */,
 				C99A00012EAA4B00C99A0001 /* Info.plist */,
 				C99A00012EAA4B00C99A0002 /* Snorry.entitlements */,
 				0E1FD86195053E77F6425F9F /* AudioMath.swift */,
@@ -373,6 +383,10 @@
 			dependencies = (
 			);
 			name = Snorry;
+			packageProductDependencies = (
+				FBAA00012EAA4B00C99A0007 /* FirebaseAnalytics */,
+				FBAA00012EAA4B00C99A0008 /* FirebaseCore */,
+			);
 			productName = Snorry;
 			productReference = A1C3C8E48A75DE8B17178BC1 /* Snorry.app */;
 			productType = "com.apple.product-type.application";
@@ -437,7 +451,7 @@
 				};
 			};
 			buildConfigurationList = 6595020B2AB442DB43027825 /* Build configuration list for PBXProject "Snorry" */;
-			compatibilityVersion = "Xcode 3.2";
+			compatibilityVersion = "Xcode 16.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -445,6 +459,9 @@
 				Base,
 			);
 			mainGroup = 36823818A3F0AFEBB82E9507;
+			packageReferences = (
+				FBAA00012EAA4B00C99A0009 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			productRefGroup = 0B94D6212CAC6B31EDAC4ADE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -468,6 +485,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FBAA00012EAA4B00C99A0001 /* GoogleService-Info.plist in Resources */,
 				5A0E2D2F4C1745B890A1D3E1 /* Assets.xcassets in Resources */,
 				9394A28B5E3B8350FD48D341 /* Bell.mp3 in Resources */,
 				7856D6CBD3BC3258C029264A /* Birds 2.mp3 in Resources */,
@@ -526,6 +544,7 @@
 				692538E70ED9525590726985 /* WaveformSample.swift in Sources */,
 				C449FA418A604F5FD8CFDB9D /* SnoreGIFData.swift in Sources */,
 				2E28E782D7B3045FB6F2F177 /* AlarmTonePlayer.swift in Sources */,
+				FBAA00012EAA4B00C99A0003 /* AppAnalytics.swift in Sources */,
 				733C5279F76F30354CDA23D8 /* AlertManager.swift in Sources */,
 				619277A0FEAB50A31193F873 /* AudioMonitorService.swift in Sources */,
 				BC2665D2FF0AF7EA995045FB /* ClipRecorder.swift in Sources */,
@@ -920,6 +939,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FBAA00012EAA4B00C99A0009 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FBAA00012EAA4B00C99A0007 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FBAA00012EAA4B00C99A0009 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		FBAA00012EAA4B00C99A0008 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FBAA00012EAA4B00C99A0009 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7363CB5C462D9CA35C25AE60 /* Project object */;
 }

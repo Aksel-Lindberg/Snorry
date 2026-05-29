@@ -1,6 +1,10 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import FirebaseCore
+#if DEBUG
+import FirebaseAnalytics
+#endif
 
 @main
 struct SnorryApp: App {
@@ -8,6 +12,13 @@ struct SnorryApp: App {
     @State private var appEnv = AppEnvironment()
 
     init() {
+        FirebaseApp.configure()
+        #if DEBUG
+        // Off by default so casual Debug runs do not pollute GA4; enabled when the scheme sets
+        // -FIRAnalyticsDebugEnabled for Firebase Console → Analytics → DebugView.
+        let debugViewEnabled = ProcessInfo.processInfo.environment["FIRAnalyticsDebugEnabled"] == "YES"
+        Analytics.setAnalyticsCollectionEnabled(debugViewEnabled)
+        #endif
         // Required so snoring alerts show as system banners while Snorry is on-screen (foreground).
         UNUserNotificationCenter.current().delegate = NotificationManager.shared
     }
