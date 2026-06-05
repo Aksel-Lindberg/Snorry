@@ -82,7 +82,7 @@ enum SessionClipSoundClassifier {
     }
 
     /// Maps ML output for lock-screen detector bouts — only sleep talking overrides snoring.
-    static func kindPreservingDetectorSnoring(_ classified: SoundEventKind) -> SoundEventKind {
+    nonisolated static func kindPreservingDetectorSnoring(_ classified: SoundEventKind) -> SoundEventKind {
         switch classified {
         case .sleepTalking: return .sleepTalking
         case .snoring, .environment: return .snoring

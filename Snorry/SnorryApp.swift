@@ -2,9 +2,7 @@ import SwiftUI
 import SwiftData
 import UserNotifications
 import FirebaseCore
-#if DEBUG
 import FirebaseAnalytics
-#endif
 
 @main
 struct SnorryApp: App {

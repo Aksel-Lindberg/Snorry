@@ -45,7 +45,7 @@ final class ClipRecorder: @unchecked Sendable {
         ioLock.lock()
         defer { ioLock.unlock() }
 
-        endClipUnderLock()   // safety: close any open file
+        _ = endClipUnderLock()   // safety: close any open file
 
         let relativePath = "SnoreClips/\(sessionID.uuidString)/\(eventID.uuidString).m4a"
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!

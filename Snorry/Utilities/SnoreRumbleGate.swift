@@ -49,7 +49,7 @@ enum SnoreRumbleGate {
 
         var windowed = [Float](repeating: 0, count: fftLength)
         let copyCount = min(count, fftLength)
-        windowed.withUnsafeMutableBufferPointer { wp in
+        _ = windowed.withUnsafeMutableBufferPointer { wp in
             memcpy(wp.baseAddress!, samples, copyCount * MemoryLayout<Float>.size)
         }
         return analyzeWindowed(windowed, sampleRate: sampleRate, config: config)

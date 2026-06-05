@@ -87,11 +87,11 @@
 		F9537C4A3F8A5E54F1AB8222 /* AlertSetupSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC3AAF0922B2A428E2CD2A6E /* AlertSetupSummaryCard.swift */; };
 		FBAA00012EAA4B00C99A0001 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */; };
 		FBAA00012EAA4B00C99A0003 /* AppAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */; };
-		TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */; };
 		FBAA00012EAA4B00C99A0005 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = FBAA00012EAA4B00C99A0007 /* FirebaseAnalytics */; };
 		FBAA00012EAA4B00C99A0006 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = FBAA00012EAA4B00C99A0008 /* FirebaseCore */; };
 		FBF5D5B5DD8B447E0C510FBE /* Raindrop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */; };
 		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
+		TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -196,8 +196,8 @@
 		F9B7B29710F28E6010817EE4 /* SnoreGIFData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreGIFData.swift; path = Resources/SnoreGIFData.swift; sourceTree = "<group>"; };
 		FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppAnalytics.swift; path = Services/AppAnalytics.swift; sourceTree = "<group>"; };
-		TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TrackingAuthorizationManager.swift; path = Services/TrackingAuthorizationManager.swift; sourceTree = "<group>"; };
 		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
+		TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TrackingAuthorizationManager.swift; path = Services/TrackingAuthorizationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -830,7 +830,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -876,7 +876,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

@@ -128,8 +128,11 @@ final class MonitorViewModel {
     private var sessionPushRepeatInterval: TimeInterval = 60
 
     /// Held only for removal in `deinit` (nonisolated) — tokens are thread-safe opaque handles.
+    @ObservationIgnored
     nonisolated(unsafe) private var lockScreenBGObserver: NSObjectProtocol?
+    @ObservationIgnored
     nonisolated(unsafe) private var lockScreenFGObserver: NSObjectProtocol?
+    @ObservationIgnored
     nonisolated(unsafe) private var alertSettingsSaveObserver: NSObjectProtocol?
 
     private let modelContext: ModelContext
@@ -155,9 +158,10 @@ final class MonitorViewModel {
             object: nil,
             queue: nil
         ) { [weak self] _ in
-            Task { @MainActor in
-                self?.markBackgroundRecordingPeriodIfNeeded()
-                self?.handleEnteredBackgroundDuringMonitoring()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                markBackgroundRecordingPeriodIfNeeded()
+                handleEnteredBackgroundDuringMonitoring()
             }
         }
         lockScreenFGObserver = nc.addObserver(
@@ -165,9 +169,10 @@ final class MonitorViewModel {
             object: nil,
             queue: nil
         ) { [weak self] _ in
-            Task { @MainActor in
-                await self?.syncNotificationAuthorizationFromSystem()
-                self?.handleReturnedToForegroundDuringMonitoring()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                await syncNotificationAuthorizationFromSystem()
+                handleReturnedToForegroundDuringMonitoring()
             }
         }
 
@@ -176,9 +181,10 @@ final class MonitorViewModel {
             object: nil,
             queue: nil
         ) { [weak self] _ in
-            Task { @MainActor in
-                self?.reapplyAlertAndDetectionFromSavedSettings()
-                await self?.syncNotificationAuthorizationFromSystem()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                reapplyAlertAndDetectionFromSavedSettings()
+                await syncNotificationAuthorizationFromSystem()
             }
         }
     }
