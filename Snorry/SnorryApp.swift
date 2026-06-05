@@ -23,6 +23,9 @@ struct SnorryApp: App {
         #if DEBUG
         // Collection off unless the Snorry scheme passes -FIRAnalyticsDebugEnabled (DebugView).
         Analytics.setAnalyticsCollectionEnabled(Self.isFirebaseAnalyticsDebugMode)
+        #else
+        // Disabled until ATT is resolved (see TrackingAuthorizationManager).
+        Analytics.setAnalyticsCollectionEnabled(false)
         #endif
         // Required so snoring alerts show as system banners while Snorry is on-screen (foreground).
         UNUserNotificationCenter.current().delegate = NotificationManager.shared

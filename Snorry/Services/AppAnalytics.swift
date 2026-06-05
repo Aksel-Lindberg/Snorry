@@ -4,6 +4,7 @@ import FirebaseAnalytics
 enum AppAnalytics {
 
     static func log(_ name: String, _ params: [String: Any]? = nil) {
+        guard TrackingAuthorizationManager.isAnalyticsCollectionEnabled else { return }
         Analytics.logEvent(name, parameters: params)
     }
 

@@ -98,8 +98,9 @@ What we do not send to Firebase Analytics through our integration:
 
 Firebase may assign an app instance identifier on your device to distinguish
 installations. We do not use Firebase for advertising personalization in
-Snorry and we do not request App Tracking Transparency (ATT) for cross-app
-tracking.
+Snorry. Before collecting usage analytics, Snorry requests permission through
+Apple's App Tracking Transparency (ATT) system dialog. If you decline, Firebase
+Analytics collection remains disabled in the App.
 
 Legal basis (EEA/UK users): Legitimate interests in operating and improving the
 App, where applicable; or consent where required by local law.

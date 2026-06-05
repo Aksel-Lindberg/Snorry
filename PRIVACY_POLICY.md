@@ -48,7 +48,7 @@ We use **Google Firebase Analytics** (Google LLC / Google Ireland Limited, depen
 - Individual snore timelines tied to identifiable health profiles
 - Your name, email, or account credentials (Snorry does not require an account)
 
-Firebase may assign an **app instance identifier** on your device. We do **not** use Firebase for advertising personalization in Snorry and we do **not** request App Tracking Transparency (ATT) for cross-app tracking.
+Firebase may assign an **app instance identifier** on your device. We do **not** use Firebase for advertising personalization in Snorry. Before collecting usage analytics in the App, Snorry requests your permission through Apple’s **App Tracking Transparency** (ATT) system dialog. If you decline tracking, Firebase Analytics collection remains disabled in the App.
 
 **Legal basis (EEA/UK users):** Legitimate interests in operating and improving the App, where applicable; or consent where required by local law.
 
@@ -62,6 +62,7 @@ Snorry may request the following permissions:
 
 - **Microphone:** Required to detect snoring sounds on-device.
 - **Notifications:** Required to send local snoring alerts when snoring is detected. Notifications are delivered by Apple’s system and may appear on a paired Apple Watch like other iOS alerts.
+- **App Tracking Transparency:** Used to ask whether Snorry may collect anonymous app usage analytics via Firebase. Sleep audio is never included.
 
 If you deny these permissions, parts of the App may not function as intended.
 

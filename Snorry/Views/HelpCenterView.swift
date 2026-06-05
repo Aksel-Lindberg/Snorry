@@ -28,7 +28,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "hand.wave.fill",
                                 title: "Welcome flow",
-                                detail: "First launch is a two-page onboarding flow: Welcome, then Before You Start (microphone + notifications explained, legal links, charger tip). Tap Allow & Continue to request iOS permissions and reach the main tabs."
+                                detail: "First launch is a two-page onboarding flow: Welcome, then Before You Start (microphone + notifications explained, legal links, charger tip). Tap Continue to request iOS permissions and reach the main tabs."
                             )
                             HelpBullet(
                                 icon: "mic.fill",

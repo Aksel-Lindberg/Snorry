@@ -52,7 +52,7 @@ A contextual **Help** sheet is available from the Monitor tab (toolbar).
   - **Usage analytics** — anonymous app usage via Firebase (no sleep audio)  
   - **Legal** — Terms of Use and Privacy Policy links  
   - **Charger tip** — recommends plugging in the iPhone overnight  
-- **Allow & Continue** requests microphone, then notification permission, then opens the main app
+- **Continue** requests App Tracking Transparency (analytics), then microphone, then notification permission, then opens the main app
 
 ### Typical use
 

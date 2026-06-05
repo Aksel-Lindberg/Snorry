@@ -176,12 +176,6 @@ private struct ConsentPage: View {
                                      "notifications — they can appear on your iOS-Compatible Smartwatch so you get " +
                                      "wrist nudges that help you stop snoring without waking up."
                     )
-
-                    ConsentRow(
-                        icon: "chart.bar.doc.horizontal",
-                        title: PrivacyCopy.onboardingAnalyticsTitle,
-                        description: PrivacyCopy.usageAnalytics
-                    )
                 }
 
                 // Legal card
@@ -196,7 +190,7 @@ private struct ConsentPage: View {
                         Task { await requestPermissions() }
                     } label: {
                         ZStack {
-                            Text("Allow & Continue")
+                            Text("Continue")
                                 .font(.headline)
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
@@ -228,9 +222,10 @@ private struct ConsentPage: View {
         }
     }
 
-    // Sequentially request mic then notifications, then complete onboarding.
+    // ATT first, then mic and notifications, then complete onboarding.
     private func requestPermissions() async {
         isRequestingPermissions = true
+        await TrackingAuthorizationManager.requestTrackingAuthorizationIfNeeded()
         _ = await AVAudioApplication.requestRecordPermission()
         await NotificationManager.shared.requestAuthorization()
         isRequestingPermissions = false

@@ -20,7 +20,7 @@ struct PermissionsView: View {
                         .foregroundStyle(Theme.accent)
 
                     VStack(spacing: 8) {
-                        Text("Allow Snorry to Listen")
+                        Text("Microphone Access")
                             .font(.title2.bold())
                             .foregroundStyle(Theme.labelPrimary)
                         Text("Snorry uses your microphone to detect snoring. Audio is processed entirely on-device and only short clips are saved.")
@@ -56,7 +56,7 @@ struct PermissionsView: View {
                                 }
                             }
                         } label: {
-                            Text("Grant Microphone Access")
+                            Text("Continue")
                                 .font(.headline)
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)

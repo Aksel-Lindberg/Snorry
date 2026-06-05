@@ -45,6 +45,10 @@ struct RootView: View {
                 .tag(Tab.settings)
         }
         .tint(Theme.accent)
+        .task {
+            // Existing users who completed onboarding before ATT was added.
+            await TrackingAuthorizationManager.requestTrackingAuthorizationIfNeeded()
+        }
         .onChange(of: selectedTab) { _, tab in
             AppAnalytics.logTabSelected(tab.analyticsName)
         }

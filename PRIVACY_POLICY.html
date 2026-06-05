@@ -173,7 +173,7 @@
             <li>Your name, email, or account credentials (Snorry does not require an account)</li>
           </ul>
 
-          <p>Firebase may assign an <strong>app instance identifier</strong> on your device. We do <strong>not</strong> use Firebase for advertising personalization in Snorry and we do <strong>not</strong> request App Tracking Transparency (ATT) for cross-app tracking.</p>
+          <p>Firebase may assign an <strong>app instance identifier</strong> on your device. We do <strong>not</strong> use Firebase for advertising personalization in Snorry. Before collecting usage analytics, Snorry requests permission through Apple’s <strong>App Tracking Transparency</strong> (ATT) system dialog. If you decline tracking, Firebase Analytics collection remains disabled in the App.</p>
 
           <p><strong>Legal basis (EEA/UK users):</strong> Legitimate interests in operating and improving the App, where applicable; or consent where required by local law.</p>
 
@@ -188,6 +188,7 @@
           <ul>
             <li><strong>Microphone:</strong> Required to detect snoring sounds on-device.</li>
             <li><strong>Notifications:</strong> Required to send local snoring alerts when snoring is detected. Notifications are delivered by Apple’s system and may appear on a paired Apple Watch like other iOS alerts.</li>
+            <li><strong>App Tracking Transparency:</strong> Used to ask whether Snorry may collect anonymous app usage analytics via Firebase. Sleep audio is never included.</li>
           </ul>
           <p>If you deny these permissions, parts of the App may not function as intended.</p>
         </section>
