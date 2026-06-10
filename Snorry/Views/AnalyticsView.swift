@@ -6,16 +6,27 @@ import SwiftData
 struct AnalyticsView: View {
 
     @Environment(\.modelContext) private var context
+    @Environment(AppEnvironment.self) private var appEnv
     @State private var vm: AnalyticsViewModel?
+    @State private var showSubscription = false
+
+    private var hasBasicAccess: Bool { appEnv.subscription.hasBasicAccess }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Theme.nightGradient.ignoresSafeArea()
-                if let vm {
-                    AnalyticsContent(vm: vm)
+                if hasBasicAccess {
+                    if let vm {
+                        AnalyticsContent(vm: vm)
+                    } else {
+                        ProgressView().tint(Theme.accent)
+                    }
                 } else {
-                    ProgressView().tint(Theme.accent)
+                    AnalyticsLockedView {
+                        AppAnalytics.logPaywallViewed(source: "analytics_tab")
+                        showSubscription = true
+                    }
                 }
             }
             .navigationTitle("Analytics")
@@ -23,10 +34,59 @@ struct AnalyticsView: View {
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
+                guard hasBasicAccess else { return }
                 if vm == nil { vm = AnalyticsViewModel(context: context) }
                 vm?.refresh()
             }
+            .onChange(of: hasBasicAccess) { _, isBasic in
+                guard isBasic else {
+                    vm = nil
+                    return
+                }
+                if vm == nil { vm = AnalyticsViewModel(context: context) }
+                vm?.refresh()
+            }
+            .sheet(isPresented: $showSubscription) {
+                SubscriptionView()
+            }
         }
+    }
+}
+
+// MARK: - Locked state for Free plan
+private struct AnalyticsLockedView: View {
+    let onUpgrade: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "chart.line.uptrend.xyaxis")
+                .font(.system(size: 56, weight: .thin))
+                .foregroundStyle(Theme.labelTertiary)
+
+            Text("Analytics is a Basic feature")
+                .font(.title3.bold())
+                .foregroundStyle(Theme.labelSecondary)
+                .multilineTextAlignment(.center)
+
+            Text("Upgrade to Basic to see snore trends, daily charts, and alert correlations.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.labelTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            Button(action: onUpgrade) {
+                Text("Upgrade to Basic")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Theme.accentGradient, in: RoundedRectangle(cornerRadius: Theme.radiusButton))
+            }
+            .padding(.horizontal, 32)
+            .padding(.top, 8)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clearsFloatingTabBar()
     }
 }
 

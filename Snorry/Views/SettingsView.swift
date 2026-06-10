@@ -11,8 +11,10 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss)      private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(AppEnvironment.self) private var appEnv
     @State private var vm: SettingsViewModel?
     @State private var confirmDeleteAllLogs = false
+    @State private var showSubscription = false
 
     var body: some View {
         NavigationStack {
@@ -54,6 +56,9 @@ struct SettingsView: View {
             .onDisappear {
                 vm?.stopAlarmStylePreview()
             }
+            .sheet(isPresented: $showSubscription) {
+                SubscriptionView()
+            }
         }
     }
 
@@ -65,6 +70,7 @@ struct SettingsView: View {
             alertTimingsSection(vm: vm)
             alarmStyleSection(vm: vm)
             actionsSection(vm: vm)
+            subscriptionSection()
             supportSection()
             legalSection()
         }
@@ -293,6 +299,74 @@ struct SettingsView: View {
             .font(.caption)
         }
         .listRowBackground(Theme.surface)
+    }
+
+    private func subscriptionSection() -> some View {
+        let subscription = appEnv.subscription
+
+        return Section {
+            HStack {
+                Text("Current Plan")
+                    .foregroundStyle(Theme.labelPrimary)
+                Spacer()
+                Text(subscription.hasBasicAccess ? "Basic" : "Free")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(subscription.hasBasicAccess ? Theme.good : Theme.labelSecondary)
+            }
+
+            if subscription.hasBasicAccess {
+                Link("Manage Subscription", destination: LegalLinks.manageSubscriptions)
+                    .foregroundStyle(Theme.accent)
+            } else {
+                Button("Upgrade to Basic") {
+                    AppAnalytics.logPaywallViewed(source: "settings")
+                    showSubscription = true
+                }
+                .foregroundStyle(Theme.accent)
+            }
+
+            Button("Restore Purchases") {
+                Task { await subscription.restorePurchases() }
+            }
+            .foregroundStyle(Theme.labelPrimary)
+            .disabled(
+                subscription.purchaseState == .restoring ||
+                subscription.purchaseState == .purchasing
+            )
+
+            if subscription.purchaseState == .restoring {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .tint(Theme.accent)
+                    Text("Restoring purchases…")
+                        .foregroundStyle(Theme.labelSecondary)
+                        .font(.footnote)
+                }
+            }
+        } header: {
+            Text("Subscription")
+                .foregroundStyle(Theme.labelSecondary)
+        } footer: {
+            Text(
+                subscription.hasBasicAccess
+                    ? "Basic includes full Sleep History and Analytics. Manage billing in your Apple ID subscriptions."
+                    : "Free includes Monitor and your latest sleep session. Upgrade for full history and Analytics."
+            )
+            .foregroundStyle(Theme.labelSecondary)
+            .font(.caption)
+        }
+        .listRowBackground(Theme.surface)
+        .alert(
+            "Subscription",
+            isPresented: Binding(
+                get: { subscription.errorMessage != nil },
+                set: { if !$0 { subscription.clearError() } }
+            )
+        ) {
+            Button("OK", role: .cancel) { subscription.clearError() }
+        } message: {
+            Text(subscription.errorMessage ?? "")
+        }
     }
 
     private func legalSection() -> some View {

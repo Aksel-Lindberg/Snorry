@@ -91,6 +91,9 @@
 		FBAA00012EAA4B00C99A0006 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = FBAA00012EAA4B00C99A0008 /* FirebaseCore */; };
 		FBF5D5B5DD8B447E0C510FBE /* Raindrop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */; };
 		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
+		SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */; };
+		SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */; };
+		SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */; };
 		TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -197,6 +200,10 @@
 		FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppAnalytics.swift; path = Services/AppAnalytics.swift; sourceTree = "<group>"; };
 		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
+		SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionProductID.swift; path = Models/SubscriptionProductID.swift; sourceTree = "<group>"; };
+		SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionManager.swift; path = Services/SubscriptionManager.swift; sourceTree = "<group>"; };
+		SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionView.swift; path = Views/SubscriptionView.swift; sourceTree = "<group>"; };
+		SUB00012EAA4B00C99A0007 /* Snorry.storekit */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Snorry.storekit; path = Configuration/Snorry.storekit; sourceTree = "<group>"; };
 		TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TrackingAuthorizationManager.swift; path = Services/TrackingAuthorizationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -268,7 +275,9 @@
 				F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */,
 				EC33EC45DDFD9E8E895030C2 /* SnoreEvent.swift */,
 				EFE39AA711F0B5E5D9F976D3 /* SnoreSession.swift */,
+				SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */,
 				718076CEB0C1A73D98CC0A5C /* WaveformSample.swift */,
+				SUB00012EAA4B00C99A0007 /* Snorry.storekit */,
 				5A55EDDD2F1C197F6A297891 /* Bell.mp3 */,
 				CBAFF4958BCBF90A7F36F62B /* Birds 2.mp3 */,
 				C37029CCF29EF0BC50C6D96A /* Birds 3.mp3 */,
@@ -295,6 +304,7 @@
 				F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */,
 				C3DF721CCFE5BF5EA3AF9F05 /* AlarmTonePlayer.swift */,
 				FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */,
+				SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */,
 				TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */,
 				C47BD28A2BFED416769A000D /* AlertManager.swift */,
 				88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */,
@@ -332,6 +342,7 @@
 				CAF6A271B36245A9E88548DD /* SessionDetailView.swift */,
 				33D1DDE7F8E9E6DBA7BBDCA0 /* SessionsListView.swift */,
 				9DF99C03511A2D5234A814CD /* SettingsView.swift */,
+				SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */,
 				35A1C94A9E4F4D3CA9B9E2A2 /* SupportView.swift */,
 				69C2F7F64989DD486B79A682 /* SleepAnimationView.swift */,
 				A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */,
@@ -544,10 +555,12 @@
 				816A252C25E70F5AEA938D82 /* AlertSettingsChange.swift in Sources */,
 				0204F0527B08014F22F355E5 /* SnoreEvent.swift in Sources */,
 				73CF9829E4F68348FD3AA440 /* SnoreSession.swift in Sources */,
+				SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */,
 				692538E70ED9525590726985 /* WaveformSample.swift in Sources */,
 				C449FA418A604F5FD8CFDB9D /* SnoreGIFData.swift in Sources */,
 				2E28E782D7B3045FB6F2F177 /* AlarmTonePlayer.swift in Sources */,
 				FBAA00012EAA4B00C99A0003 /* AppAnalytics.swift in Sources */,
+				SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */,
 				TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */,
 				733C5279F76F30354CDA23D8 /* AlertManager.swift in Sources */,
 				619277A0FEAB50A31193F873 /* AudioMonitorService.swift in Sources */,
@@ -582,6 +595,7 @@
 				C784724E11F6B0A2E1CE2530 /* SessionDetailView.swift in Sources */,
 				D214018AD76AD8991A859992 /* SessionsListView.swift in Sources */,
 				D40D2F44182FA85C919E46D4 /* SettingsView.swift in Sources */,
+				SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */,
 				35A1C94A9E4F4D3CA9B9E2A1 /* SupportView.swift in Sources */,
 				462D2683E00D754D63ADE2AE /* SleepAnimationView.swift in Sources */,
 				25657F1F23E5AE334FB85ADB /* WaveformView.swift in Sources */,
@@ -830,7 +844,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -850,7 +864,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -876,7 +890,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -896,7 +910,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

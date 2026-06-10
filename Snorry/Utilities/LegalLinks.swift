@@ -4,6 +4,7 @@ import Foundation
 enum LegalLinks {
     static let termsOfUse   = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
     static let privacyPolicy = URL(string: "https://snorry.lintech.no")!
+    static let manageSubscriptions = URL(string: "https://apps.apple.com/account/subscriptions")!
 }
 
 // MARK: - In-app privacy copy (sleep data vs Firebase usage analytics)

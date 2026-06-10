@@ -52,6 +52,26 @@ enum AppAnalytics {
         log("tab_selected", ["tab": tab])
     }
 
+    // MARK: - Subscriptions
+
+    static func logPaywallViewed(source: String? = nil) {
+        var params: [String: Any] = [:]
+        if let source { params["source"] = source }
+        log("paywall_viewed", params.isEmpty ? nil : params)
+    }
+
+    static func logPurchaseStarted() {
+        log("purchase_started")
+    }
+
+    static func logPurchaseCompleted() {
+        log("purchase_completed")
+    }
+
+    static func logRestoreTapped() {
+        log("restore_tapped")
+    }
+
     // MARK: - Helpers
 
     private static func alarmMode(pushEnabled: Bool, soundEnabled: Bool) -> String {

@@ -68,6 +68,7 @@ struct SnorryApp: App {
                     let store = SessionStore(context: sharedModelContainer.mainContext)
                     store.recoverOrphanedSession()
                     store.reconcileEndedSessionsOnLaunch()
+                    await appEnv.subscription.refreshEntitlements()
                 }
         }
         .modelContainer(sharedModelContainer)
@@ -78,6 +79,7 @@ struct SnorryApp: App {
 @Observable
 final class AppEnvironment {
     let notifications = NotificationManager.shared
+    let subscription = SubscriptionManager()
     // Services that depend on SwiftData context are instantiated per-view-model.
 }
 

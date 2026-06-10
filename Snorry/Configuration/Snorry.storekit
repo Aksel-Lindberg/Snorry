@@ -1,0 +1,64 @@
+{
+  "identifier" : "Snorry",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "0",
+    "_developerTeamID" : "L675KNV756",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 793843200,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21482901",
+      "localizations" : [
+
+      ],
+      "name" : "Snorry Basic",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6738291001",
+          "introductoryOffer" : {
+            "internalID" : "6738291002",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "Full access to Sleep History and Analytics",
+              "displayName" : "Basic",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "app.Snorry.Snorry.basic.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Basic Monthly",
+          "subscriptionGroupID" : "21482901",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
