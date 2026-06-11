@@ -8,11 +8,12 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        // Set ATT/consent flags before SDK init so early auto-logged events include them.
+        MetaAnalytics.syncCollectionWithATT()
         ApplicationDelegate.shared.application(
             application,
             didFinishLaunchingWithOptions: launchOptions
         )
-        MetaAnalytics.configureAfterSDKLaunch()
         return true
     }
 

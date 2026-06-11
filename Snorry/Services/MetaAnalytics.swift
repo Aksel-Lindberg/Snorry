@@ -4,11 +4,6 @@ import FacebookCore
 /// Meta App Events wrapper — gated on the same ATT / debug rules as Firebase.
 enum MetaAnalytics {
 
-    /// Applies initial collection settings after the Meta SDK launches.
-    static func configureAfterSDKLaunch() {
-        syncCollectionWithATT()
-    }
-
     /// Keeps Meta auto-logging and advertiser settings aligned with ATT resolution.
     static func syncCollectionWithATT() {
         let collectionEnabled = TrackingAuthorizationManager.isAnalyticsCollectionEnabled

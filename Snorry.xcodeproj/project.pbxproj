@@ -92,11 +92,11 @@
 		FBAA00012EAA4B00C99A0006 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = FBAA00012EAA4B00C99A0008 /* FirebaseCore */; };
 		FBF5D5B5DD8B447E0C510FBE /* Raindrop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */; };
 		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
+		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
+		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
 		SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */; };
 		SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */; };
 		SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */; };
-		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
-		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
 		TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -203,12 +203,12 @@
 		FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppAnalytics.swift; path = Services/AppAnalytics.swift; sourceTree = "<group>"; };
 		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
+		META00012EAA4B00C99A0001 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionProductID.swift; path = Models/SubscriptionProductID.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionManager.swift; path = Services/SubscriptionManager.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionView.swift; path = Views/SubscriptionView.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0007 /* Snorry.storekit */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Snorry.storekit; path = Configuration/Snorry.storekit; sourceTree = "<group>"; };
-		META00012EAA4B00C99A0001 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
 		TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TrackingAuthorizationManager.swift; path = Services/TrackingAuthorizationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -876,7 +876,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -922,7 +922,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
