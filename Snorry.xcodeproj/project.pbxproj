@@ -11,6 +11,7 @@
 		126EEBF382F3787E48EAA38B /* GIFView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C3E57FFA2899D2DBB53474 /* GIFView.swift */; };
 		1277197B759EFC05E0B4695D /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF033425D8DA29B54123B2C1 /* NotificationManager.swift */; };
 		19C900D5FA475B6B4D0BA767 /* SnoreClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847E52E3C320BA4F7714D0B6 /* SnoreClassifier.swift */; };
+		1C8D663C2FDB00DD00C214C3 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1C8D663B2FDB00DD00C214C3 /* FacebookCore */; };
 		204A3710F3EFE4F903D04FEC /* SnoreClipSpectralAnalyzerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */; };
 		25657F1F23E5AE334FB85ADB /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */; };
 		28D85592CFB40755C5F689D7 /* SessionDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97CCF1673CF0A8A9A928601 /* SessionDetailViewModel.swift */; };
@@ -94,6 +95,8 @@
 		SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */; };
 		SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */; };
 		SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */; };
+		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
+		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
 		TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -204,6 +207,8 @@
 		SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionManager.swift; path = Services/SubscriptionManager.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionView.swift; path = Views/SubscriptionView.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0007 /* Snorry.storekit */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Snorry.storekit; path = Configuration/Snorry.storekit; sourceTree = "<group>"; };
+		META00012EAA4B00C99A0001 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
 		TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TrackingAuthorizationManager.swift; path = Services/TrackingAuthorizationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -215,6 +220,7 @@
 				E6AE4D1B1AD210053BE7E6FA /* Foundation.framework in Frameworks */,
 				FBAA00012EAA4B00C99A0005 /* FirebaseAnalytics in Frameworks */,
 				FBAA00012EAA4B00C99A0006 /* FirebaseCore in Frameworks */,
+				1C8D663C2FDB00DD00C214C3 /* FacebookCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -303,7 +309,9 @@
 				E8752C417837145970A7AE3E /* Tornado.mp3 */,
 				F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */,
 				C3DF721CCFE5BF5EA3AF9F05 /* AlarmTonePlayer.swift */,
+				META00012EAA4B00C99A0001 /* AppDelegate.swift */,
 				FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */,
+				META00012EAA4B00C99A0003 /* MetaAnalytics.swift */,
 				SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */,
 				TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */,
 				C47BD28A2BFED416769A000D /* AlertManager.swift */,
@@ -400,6 +408,7 @@
 			packageProductDependencies = (
 				FBAA00012EAA4B00C99A0007 /* FirebaseAnalytics */,
 				FBAA00012EAA4B00C99A0008 /* FirebaseCore */,
+				1C8D663B2FDB00DD00C214C3 /* FacebookCore */,
 			);
 			productName = Snorry;
 			productReference = A1C3C8E48A75DE8B17178BC1 /* Snorry.app */;
@@ -475,6 +484,7 @@
 			mainGroup = 36823818A3F0AFEBB82E9507;
 			packageReferences = (
 				FBAA00012EAA4B00C99A0009 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				1C8D663A2FDB00DD00C214C3 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
 			);
 			productRefGroup = 0B94D6212CAC6B31EDAC4ADE /* Products */;
 			projectDirPath = "";
@@ -559,7 +569,9 @@
 				692538E70ED9525590726985 /* WaveformSample.swift in Sources */,
 				C449FA418A604F5FD8CFDB9D /* SnoreGIFData.swift in Sources */,
 				2E28E782D7B3045FB6F2F177 /* AlarmTonePlayer.swift in Sources */,
+				META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */,
 				FBAA00012EAA4B00C99A0003 /* AppAnalytics.swift in Sources */,
+				META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */,
 				SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */,
 				TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */,
 				733C5279F76F30354CDA23D8 /* AlertManager.swift in Sources */,
@@ -969,6 +981,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		1C8D663A2FDB00DD00C214C3 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/facebook/facebook-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 18.0.0;
+			};
+		};
 		FBAA00012EAA4B00C99A0009 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -980,6 +1000,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		1C8D663B2FDB00DD00C214C3 /* FacebookCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1C8D663A2FDB00DD00C214C3 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookCore;
+		};
 		FBAA00012EAA4B00C99A0007 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FBAA00012EAA4B00C99A0009 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

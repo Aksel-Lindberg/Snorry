@@ -29,6 +29,7 @@ enum TrackingAuthorizationManager {
             ATTrackingManager.trackingAuthorizationStatus == .authorized
         )
         #endif
+        MetaAnalytics.syncCollectionWithATT()
     }
 
     /// Presents the system ATT dialog when status is `.notDetermined`, then syncs Firebase.

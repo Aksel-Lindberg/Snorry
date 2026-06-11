@@ -7,6 +7,7 @@ import FirebaseAnalytics
 @main
 struct SnorryApp: App {
 
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var appEnv = AppEnvironment()
 
     #if DEBUG

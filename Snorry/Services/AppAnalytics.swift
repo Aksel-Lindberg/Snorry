@@ -15,6 +15,7 @@ enum AppAnalytics {
             "mic_granted": micGranted,
             "notifications_granted": notificationsGranted
         ])
+        MetaAnalytics.logCompletedRegistration()
     }
 
     // MARK: - Monitoring
@@ -58,6 +59,7 @@ enum AppAnalytics {
         var params: [String: Any] = [:]
         if let source { params["source"] = source }
         log("paywall_viewed", params.isEmpty ? nil : params)
+        MetaAnalytics.logViewedContent(source: source)
     }
 
     static func logPurchaseStarted() {
