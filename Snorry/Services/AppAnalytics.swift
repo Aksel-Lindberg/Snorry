@@ -1,4 +1,5 @@
 import FirebaseAnalytics
+import StoreKit
 
 /// Firebase Analytics wrapper — distinct from the in-app Analytics tab (sleep trends).
 enum AppAnalytics {
@@ -62,12 +63,14 @@ enum AppAnalytics {
         MetaAnalytics.logViewedContent(source: source)
     }
 
-    static func logPurchaseStarted() {
+    static func logPurchaseStarted(product: Product) {
         log("purchase_started")
+        MetaAnalytics.logInitiatedCheckout(product: product)
     }
 
-    static func logPurchaseCompleted() {
+    static func logPurchaseCompleted(product: Product, transaction: Transaction) {
         log("purchase_completed")
+        MetaAnalytics.logSubscriptionSuccess(product: product, transaction: transaction)
     }
 
     static func logRestoreTapped() {

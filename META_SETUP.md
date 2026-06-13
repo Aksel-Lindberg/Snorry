@@ -55,14 +55,17 @@ Optional but recommended for Ads Manager:
 | App Launch | Each time the app becomes active |
 | Subscribe / Purchase | StoreKit 2 subscription completed (Basic monthly) |
 
-Auto-logging is enabled in Info.plist but **delayed until App Tracking Transparency (ATT) is granted** in Release builds (same gate as Firebase Analytics).
+Auto-logging is enabled in Info.plist but **delayed until App Tracking Transparency (ATT) is granted** in Release builds (same gate as Firebase Analytics). After ATT is granted, the app calls `AppEvents.shared.activateApp()` on the same session (no relaunch required).
 
 ### Manual standard events
 
 | Meta event | Snorry trigger |
 |------------|----------------|
 | Complete Registration | Onboarding finished |
-| View Content | Paywall shown |
+| View Content | Paywall shown (`content_id`: e.g. `paywall_settings`, `paywall_default`) |
+| Initiated Checkout | User taps Subscribe (purchase started) |
+| Start Trial | Successful purchase with introductory / free-trial offer |
+| Subscribe | Successful purchase without introductory offer (includes `value` + `currency`) |
 
 Implementation: [`MetaAnalytics.swift`](Snorry/Services/MetaAnalytics.swift) via [`AppAnalytics.swift`](Snorry/Services/AppAnalytics.swift).
 
@@ -89,6 +92,8 @@ Expected event names in Events Manager include:
 - `fb_mobile_activate_app`
 - `fb_mobile_complete_registration`
 - `fb_mobile_content_view`
+- `fb_mobile_initiated_checkout`
+- `fb_mobile_start_trial` or `fb_mobile_subscribe`
 - Subscription/purchase events after a sandbox StoreKit transaction
 
 ### StoreKit sandbox purchase

@@ -50,7 +50,7 @@ final class SubscriptionManager {
 
         purchaseState = .purchasing
         errorMessage = nil
-        AppAnalytics.logPurchaseStarted()
+        AppAnalytics.logPurchaseStarted(product: product)
 
         defer {
             if purchaseState == .purchasing {
@@ -66,7 +66,7 @@ final class SubscriptionManager {
                 await transaction.finish()
                 await updateAccessFromEntitlements()
                 if hasBasicAccess {
-                    AppAnalytics.logPurchaseCompleted()
+                    AppAnalytics.logPurchaseCompleted(product: product, transaction: transaction)
                 }
                 return hasBasicAccess
             case .userCancelled:
