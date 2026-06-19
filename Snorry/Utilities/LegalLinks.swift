@@ -3,7 +3,9 @@ import Foundation
 // MARK: - Canonical legal URLs shared by OnboardingView and SettingsView
 enum LegalLinks {
     static let termsOfUse   = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    static let privacyPolicy = URL(string: "https://snorry.lintech.no")!
+    static let privacyPolicy = URL(string: "https://snorry.lintech.no/privacy-policy/")!
+    static let support = URL(string: "https://snorry.lintech.no/support/")!
+    static let supportEmail = "Support@lintech.no"
     static let manageSubscriptions = URL(string: "https://apps.apple.com/account/subscriptions")!
 }
 

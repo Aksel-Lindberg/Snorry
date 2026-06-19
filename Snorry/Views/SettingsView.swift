@@ -384,9 +384,7 @@ struct SettingsView: View {
 
     private func supportSection() -> some View {
         Section {
-            NavigationLink {
-                SupportView()
-            } label: {
+            Link(destination: LegalLinks.support) {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "lifepreserver.fill")
                         .font(.body)
@@ -403,10 +401,32 @@ struct SettingsView: View {
                             .foregroundStyle(Theme.labelSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+
+                    Spacer()
+
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelTertiary)
+                        .padding(.top, 4)
                 }
                 .padding(.vertical, 2)
             }
-            .tint(Theme.labelPrimary)
+            .foregroundStyle(Theme.labelPrimary)
+
+            Link(destination: URL(string: "mailto:\(LegalLinks.supportEmail)")!) {
+                HStack(spacing: 12) {
+                    Image(systemName: "envelope.fill")
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 24)
+                    Text(LegalLinks.supportEmail)
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelTertiary)
+                }
+            }
+            .foregroundStyle(Theme.accent)
         } header: {
             Text("Support")
                 .foregroundStyle(Theme.labelSecondary)

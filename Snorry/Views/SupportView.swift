@@ -56,11 +56,11 @@ struct SupportView: View {
                 .font(.headline)
                 .foregroundStyle(Theme.labelPrimary)
 
-            Link(destination: URL(string: "mailto:aksel.lindberg@lintech.no")!) {
+            Link(destination: URL(string: "mailto:\(LegalLinks.supportEmail)")!) {
                 HStack(spacing: 10) {
                     Image(systemName: "envelope.fill")
                         .foregroundStyle(Theme.accent)
-                    Text("aksel.lindberg@lintech.no")
+                    Text(LegalLinks.supportEmail)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.accent)
                     Spacer()
