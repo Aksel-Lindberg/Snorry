@@ -96,6 +96,7 @@
 		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
 		SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */; };
 		SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */; };
+		MON00012EAA4B00C99A0002 /* MonitoringUsageTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */; };
 		SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */; };
 		TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */; };
 /* End PBXBuildFile section */
@@ -207,6 +208,7 @@
 		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionProductID.swift; path = Models/SubscriptionProductID.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionManager.swift; path = Services/SubscriptionManager.swift; sourceTree = "<group>"; };
+		MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitoringUsageTracker.swift; path = Services/MonitoringUsageTracker.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionView.swift; path = Views/SubscriptionView.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0007 /* Snorry.storekit */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Snorry.storekit; path = Configuration/Snorry.storekit; sourceTree = "<group>"; };
 		TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TrackingAuthorizationManager.swift; path = Services/TrackingAuthorizationManager.swift; sourceTree = "<group>"; };
@@ -313,6 +315,7 @@
 				FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */,
 				META00012EAA4B00C99A0003 /* MetaAnalytics.swift */,
 				SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */,
+				MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */,
 				TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */,
 				C47BD28A2BFED416769A000D /* AlertManager.swift */,
 				88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */,
@@ -573,6 +576,7 @@
 				FBAA00012EAA4B00C99A0003 /* AppAnalytics.swift in Sources */,
 				META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */,
 				SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */,
+				MON00012EAA4B00C99A0002 /* MonitoringUsageTracker.swift in Sources */,
 				TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */,
 				733C5279F76F30354CDA23D8 /* AlertManager.swift in Sources */,
 				619277A0FEAB50A31193F873 /* AudioMonitorService.swift in Sources */,

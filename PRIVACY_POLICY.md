@@ -1,12 +1,12 @@
 # Privacy Policy for Snorry
 
-**Effective date:** June 11, 2026
+**Effective date:** June 19, 2026
 
 Snorry ("the App") respects your privacy.
 
 **Summary:** Sleep audio, snore clips, session history, and waveforms stay on your iPhone — we do not upload them to our servers for storage or analysis. We use **Google Firebase Analytics** and **Meta App Events** to collect **anonymous app usage information** (for example which screens you use, whether monitoring was started, and whether you completed onboarding or viewed the subscription paywall) to improve the App and measure marketing performance. Sleep audio and detailed health session content are **not** sent to Firebase or Meta.
 
-**Subscriptions:** Snorry offers a free plan and an optional paid **Basic** subscription ($4.99/month after a 7-day free trial, where offered). **All payment and billing are handled by Apple** through your Apple ID. Snorry does not collect or store your payment card or bank details.
+**Subscriptions:** Snorry offers a free plan and optional paid **Premium** subscriptions: **Premium Yearly** ($29.99/year after a 7-day free trial, where offered) and **Premium Monthly** ($4.99/month, where offered). **All payment and billing are handled by Apple** through your Apple ID. Snorry does not collect or store your payment card or bank details.
 
 ## 1. What Snorry Does
 
@@ -42,7 +42,7 @@ We use **Google Firebase Analytics** (Google LLC / Google Ireland Limited, depen
   - Settings saved (which **categories** of settings changed, not exact values)
   - Tab navigation (e.g. Monitor, History, Analytics, Settings)
   - Subscription-related events (non-financial), such as:
-    - Paywall viewed (optional source, e.g. History, Analytics, or Settings — not tied to sleep content)
+    - Paywall viewed (optional source, e.g. History, Analytics, Settings, or monitoring limit — not tied to sleep content)
     - Purchase started, purchase completed, or restore purchases tapped
     - These events do **not** include payment amounts, Apple ID, receipt data, or subscription account identifiers
 - Technical diagnostics the Firebase SDK may collect (e.g. device model, OS version, app version, crash-related data if enabled by the SDK)
@@ -74,10 +74,10 @@ Meta App Events collection is **disabled in the App until you grant permission**
 - **Automatic events** logged by the Meta SDK when collection is enabled:
   - App install (first launch on a device)
   - App launch / activation
-  - In-app subscription purchases processed through Apple’s StoreKit (e.g. when you subscribe to Basic), which may include product identifiers and purchase-related signals used for ad measurement
+  - In-app subscription purchases processed through Apple’s StoreKit (e.g. when you subscribe to Premium Yearly or Premium Monthly), which may include product identifiers and purchase-related signals used for ad measurement
 - **Standard events** we log in the App:
   - Completion of onboarding (registration complete)
-  - Subscription paywall viewed (optional source, e.g. History, Analytics, or Settings — not tied to sleep content)
+  - Subscription paywall viewed (optional source, e.g. History, Analytics, Settings, or monitoring limit — not tied to sleep content)
 - Technical data the Meta SDK may collect for analytics and attribution (e.g. device model, OS version, app version, IP address, and — if you authorized tracking — advertising identifiers such as IDFA)
 
 **What we do not send to Meta through our integration:**
@@ -100,8 +100,17 @@ Meta may combine App Events with information it already holds if you use Meta se
 
 Snorry offers two usage tiers:
 
-- **Free plan** — Includes snoring monitoring and access to your **most recent** sleep session in Sleep History. Older sessions remain stored on your device but are not fully accessible without a subscription. The Analytics feature is not available on the Free plan.
-- **Basic plan** — Optional auto-renewable subscription that unlocks full Sleep History and Analytics. Pricing, free-trial eligibility, and renewal terms are shown in the App and on Apple’s purchase sheet before you subscribe.
+- **Free plan** — Includes up to **10 monitoring sessions**, access to your **most recent** sleep session in Sleep History, and local storage of older sessions on your device (older sessions are not fully accessible without Premium). The Analytics feature is not available on the Free plan.
+- **Premium plan** — Optional auto-renewable subscription (yearly or monthly) that unlocks **unlimited monitoring**, full Sleep History, and Analytics. Pricing, free-trial eligibility, and renewal terms are shown in the App and on Apple’s purchase sheet before you subscribe.
+
+### Premium subscription options
+
+| Plan | Price (US, example) | Free trial |
+|------|---------------------|------------|
+| **Premium Yearly** | $29.99/year (~$2.49/month) | 7-day free trial for eligible new subscribers, where offered |
+| **Premium Monthly** | $4.99/month | No free trial |
+
+Actual prices and trial eligibility depend on your App Store region and Apple’s rules.
 
 ### Payment processing
 
@@ -111,11 +120,11 @@ Snorry offers two usage tiers:
 
 ### What Snorry receives from Apple
 
-To enable paid features, the App uses Apple’s **StoreKit** framework to verify whether you have an active Basic subscription (including during a free trial). On your device, the App may receive and use:
+To enable paid features, the App uses Apple’s **StoreKit** framework to verify whether you have an active Premium subscription (including during a free trial on Premium Yearly). On your device, the App may receive and use:
 
-- Whether a valid subscription entitlement exists for the Basic plan
-- The subscription **product identifier** (e.g. monthly Basic plan)
-- Transaction and renewal status needed to grant or revoke access to Basic features
+- Whether a valid subscription entitlement exists for a Premium plan
+- The subscription **product identifier** (e.g. Premium Yearly or Premium Monthly)
+- Transaction and renewal status needed to grant or revoke access to Premium features
 
 This information is used **only** to unlock or restrict in-app features. We do **not** use subscription status for advertising or sell it to third parties.
 
@@ -123,17 +132,17 @@ When you authorize app tracking via ATT, the Meta SDK may also log subscription 
 
 ### Free trial and auto-renewal
 
-- New subscribers may be offered a **7-day free trial** for the Basic plan, where available and if eligible under Apple’s rules.
-- After the trial, the subscription renews automatically at the price shown in the App unless you cancel at least 24 hours before the end of the current period.
+- New subscribers may be offered a **7-day free trial** for **Premium Yearly**, where available and if eligible under Apple’s rules. **Premium Monthly** is billed immediately at the price shown in the App.
+- After any trial, the subscription renews automatically at the price shown in the App unless you cancel at least 24 hours before the end of the current period.
 - You can view, change, or cancel your subscription at any time in **Settings → Subscription** in the App, or through your Apple ID subscription settings at [https://apps.apple.com/account/subscriptions](https://apps.apple.com/account/subscriptions).
 
 ### Restore purchases
 
-If you reinstall the App or use a new device signed in with the same Apple ID, you can use **Restore Purchases** in the App to restore an active Basic subscription. Restoration is handled through Apple’s services.
+If you reinstall the App or use a new device signed in with the same Apple ID, you can use **Restore Purchases** in the App to restore an active Premium subscription. Restoration is handled through Apple’s services.
 
 ### Data not affected by your plan
 
-Regardless of whether you use the Free or Basic plan:
+Regardless of whether you use the Free or Premium plan:
 
 - Sleep audio, snore clips, session history, and waveforms remain processed and stored **on your iPhone** as described in Section 3.
 - Upgrading or cancelling a subscription does **not** cause us to upload your sleep recordings or session content to our servers.
@@ -176,11 +185,11 @@ Depending on where you live, you may have rights to access, rectify, erase, rest
 ## 11. Changes to This Privacy Policy
 
 We may update this Privacy Policy from time to time (for example when we add or change analytics events, marketing measurement tools, or subscription features).  
-If we make material changes, we will update the effective date above and publish the updated policy at [https://snorry.lintech.no](https://snorry.lintech.no) and with the App.
+If we make material changes, we will update the effective date above and publish the updated policy at [https://snorry.lintech.no/privacy-policy/](https://snorry.lintech.no/privacy-policy/) and with the App.
 
 ## 12. Contact
 
 If you have privacy questions about Snorry, contact:  
-[aksel.lindberg@lintech.no](mailto:aksel.lindberg@lintech.no)
+[Support@lintech.no](mailto:Support@lintech.no)
 
 All rights reserved: 2026 Lintech AS

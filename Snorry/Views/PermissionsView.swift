@@ -6,6 +6,10 @@ struct PermissionsView: View {
 
     let vm: MonitorViewModel
     @Binding var isPresented: Bool
+    @Binding var showMonitor: Bool
+    @Binding var showSubscription: Bool
+
+    @Environment(AppEnvironment.self) private var appEnv
 
     var body: some View {
         NavigationStack {
@@ -51,8 +55,7 @@ struct PermissionsView: View {
                             Task {
                                 await vm.requestMicrophonePermission()
                                 if vm.microphonePermission == .granted {
-                                    isPresented = false
-                                    vm.startMonitoring()
+                                    beginMonitoringIfAllowed()
                                 }
                             }
                         } label: {
@@ -83,6 +86,21 @@ struct PermissionsView: View {
                 await vm.syncNotificationAuthorizationFromSystem()
             }
         }
+    }
+
+    private func beginMonitoringIfAllowed() {
+        let hasPremium = appEnv.subscription.hasPremiumAccess
+        isPresented = false
+
+        guard MonitoringUsageTracker.canStartMonitoring(hasPremium: hasPremium) else {
+            AppAnalytics.logPaywallViewed(source: "monitoring_limit")
+            showSubscription = true
+            return
+        }
+
+        MonitoringUsageTracker.recordMonitoringStart(hasPremium: hasPremium)
+        vm.startMonitoring()
+        showMonitor = true
     }
 }
 

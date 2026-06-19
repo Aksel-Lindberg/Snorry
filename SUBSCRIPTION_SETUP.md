@@ -1,14 +1,18 @@
 # Snorry Subscription Setup (App Store Connect)
 
-This guide configures the **Free** and **Basic** plans for Snorry. The app uses StoreKit 2 with product ID `app.Snorry.Snorry.basic.monthly`.
+This guide configures the **Free** and **Premium** plans for Snorry. The app uses StoreKit 2 with product IDs:
+
+- `app.Snorry.Snorry.premium.yearly` — $29.99/year (7-day free trial)
+- `app.Snorry.Snorry.premium.monthly` — $4.99/month (no trial)
 
 ## Plan summary
 
 | Plan | Price | Features |
 |------|-------|----------|
-| **Free** | Included | Monitor, latest Sleep History session only |
-| **Basic** | $4.99/month | Full Sleep History, Analytics, all settings |
-| **Trial** | 7 days free | Applies when subscribing to Basic for the first time |
+| **Free** | Included | Up to 10 monitoring sessions, latest Sleep History session only |
+| **Premium Yearly** | $29.99/year (~$2.49/mo) | Unlimited monitoring, full Sleep History, Analytics |
+| **Premium Monthly** | $4.99/month | Unlimited monitoring, full Sleep History, Analytics |
+| **Trial** | 7 days free | Applies to **Premium Yearly** only (first-time eligible subscribers) |
 
 ---
 
@@ -38,43 +42,41 @@ This guide configures the **Free** and **Basic** plans for Snorry. The app uses 
 2. Sidebar → **Subscriptions**
 3. Click **+** (Create Subscription Group)
 4. Fill in:
-   - **Reference name:** `Snorry Basic`
-   - **Group name** (customer-facing): `Snorry Basic`
+   - **Reference name:** `Snorry Premium`
+   - **Group name** (customer-facing): `Snorry Premium`
 5. Save
 
 ---
 
-## Step 3 — Create Basic monthly subscription
+## Step 3 — Create Premium Yearly subscription
 
-Inside the **Snorry Basic** group:
+Inside the **Snorry Premium** group:
 
 1. Click **+** → **Create Subscription**
 2. Configure:
 
 | Field | Value |
 |-------|-------|
-| Reference name | `Basic Monthly` |
-| Product ID | `app.Snorry.Snorry.basic.monthly` |
-| Subscription duration | 1 month |
+| Reference name | `Premium Yearly` |
+| Product ID | `app.Snorry.Snorry.premium.yearly` |
+| Subscription duration | 1 year |
 
 3. **Subscription prices**
    - Base territory: **United States**
-   - Price: **$4.99**
+   - Price: **$29.99**
    - Use **Apply to all territories** or adjust per country
 
 4. **Localization** (English U.S. minimum):
-   - **Display name:** `Basic`
-   - **Description:** `Full access to Sleep History and Analytics.`
+   - **Display name:** `Premium Yearly`
+   - **Description:** `Unlimited monitoring, full Sleep History, and Analytics.`
 
 5. Save the subscription
 
-> **Important:** The Product ID must match [`SubscriptionProductID.swift`](Snorry/Models/SubscriptionProductID.swift) exactly.
-
 ---
 
-## Step 4 — Add 1-week free trial
+## Step 4 — Add 1-week free trial (Yearly only)
 
-1. Open the **Basic Monthly** subscription
+1. Open the **Premium Yearly** subscription
 2. Go to **Introductory Offers** → **+**
 3. Configure:
    - **Type:** Free
@@ -86,32 +88,59 @@ Apple shows trial terms automatically on the purchase sheet.
 
 ---
 
-## Step 5 — Subscription review information
+## Step 5 — Create Premium Monthly subscription
+
+Inside the **Snorry Premium** group:
+
+1. Click **+** → **Create Subscription**
+2. Configure:
+
+| Field | Value |
+|-------|-------|
+| Reference name | `Premium Monthly` |
+| Product ID | `app.Snorry.Snorry.premium.monthly` |
+| Subscription duration | 1 month |
+
+3. **Subscription prices**
+   - Base territory: **United States**
+   - Price: **$4.99**
+
+4. **Localization** (English U.S. minimum):
+   - **Display name:** `Premium Monthly`
+   - **Description:** `Unlimited monitoring, full Sleep History, and Analytics.`
+
+5. **Do not** add an introductory offer on the monthly plan.
+
+> **Important:** Product IDs must match [`SubscriptionProductID.swift`](Snorry/Models/SubscriptionProductID.swift) exactly.
+
+---
+
+## Step 6 — Subscription review information
 
 On the subscription group page, provide:
 
 | Field | Value |
 |-------|-------|
-| Subscription Privacy Policy URL | `https://snorry.lintech.no` |
+| Subscription Privacy Policy URL | `https://snorry.lintech.no/privacy-policy/` |
 | Terms of Use | Apple Standard EULA (or your custom URL) |
 
 Before App Store submission, update your privacy policy to mention:
 - Auto-renewable subscriptions are billed through Apple
 - Payment and subscription management are handled by Apple (not stored by Snorry)
-- Free vs Basic feature differences
+- Free vs Premium feature differences (10 monitoring sessions on Free)
 
 ---
 
-## Step 6 — Attach subscription to app version
+## Step 7 — Attach subscriptions to app version
 
-1. App Store Connect → Snorry → your app version (e.g. 1.1)
+1. App Store Connect → Snorry → your app version
 2. Scroll to **In-App Purchases and Subscriptions**
-3. Click **+** and select **Basic Monthly**
-4. Ensure subscription status is **Ready to Submit** before submitting the version
+3. Click **+** and select **Premium Yearly** and **Premium Monthly**
+4. Ensure both subscriptions are **Ready to Submit** before submitting the version
 
 ---
 
-## Step 7 — Local testing (Xcode StoreKit)
+## Step 8 — Local testing (Xcode StoreKit)
 
 1. The repo includes [`Snorry/Configuration/Snorry.storekit`](Snorry/Configuration/Snorry.storekit)
 2. In Xcode: **Product → Scheme → Edit Scheme → Run → Options**
@@ -121,28 +150,29 @@ Before App Store submission, update your privacy policy to mention:
 
 ---
 
-## Step 8 — Sandbox testing (App Store Connect)
+## Step 9 — Sandbox testing (App Store Connect)
 
 1. App Store Connect → **Users and Access** → **Sandbox** → **Testers**
 2. Create a Sandbox Apple ID
 3. On test device: **Settings → App Store → Sandbox Account** → sign in
 4. Remove the StoreKit configuration from the Xcode scheme (set to **None**) to hit real sandbox APIs
 5. Verify:
-   - Free user: older History rows are locked; Analytics shows upgrade screen
-   - Subscribe: 1-week trial starts; full access unlocks immediately
+   - Free user: 10 monitoring starts allowed, then paywall on 11th; older History rows locked; Analytics locked
+   - Subscribe (yearly): 1-week trial starts; full access unlocks immediately
+   - Subscribe (monthly): charged immediately; full access unlocks
    - **Restore Purchases** in Settings works on a second device
-   - Cancel subscription: access ends after the current period (check via StoreKit Transaction Manager or sandbox expiry)
+   - Cancel subscription: access ends after the current period
 
 ---
 
-## Step 9 — App Review checklist
+## Step 10 — App Review checklist
 
-- [ ] Product ID `app.Snorry.Snorry.basic.monthly` matches code
-- [ ] Subscription group + product status: **Ready to Submit**
+- [ ] Product IDs match code (`premium.yearly`, `premium.monthly`)
+- [ ] Subscription group + products status: **Ready to Submit**
 - [ ] Privacy policy mentions subscriptions and Apple billing
 - [ ] App includes **Restore Purchases** (Settings → Subscription)
-- [ ] App includes **Manage Subscription** link for Basic users
-- [ ] App description explains Free vs Basic tiers
+- [ ] App includes **Manage Subscription** link for Premium users
+- [ ] App description explains Free vs Premium tiers
 - [ ] Screenshots show paywall if requested by review
 
 ---
@@ -151,10 +181,11 @@ Before App Store submission, update your privacy policy to mention:
 
 | Issue | Fix |
 |-------|-----|
-| Product not loading in app | Confirm Product ID, Paid Apps agreement active, wait ~15 min after creating product |
+| Product not loading in app | Confirm Product IDs, Paid Apps agreement active, wait ~15 min after creating products |
 | "Subscription not available" | Check network; verify IAP capability enabled; test with `.storekit` file first |
 | Restore finds nothing | Ensure same Sandbox Apple ID; subscription not expired |
-| Trial not shown | Confirm introductory offer is saved and user is eligible (new subscriber) |
+| Trial not shown on yearly | Confirm introductory offer is saved and user is eligible (new subscriber) |
+| Monthly shows trial | Remove introductory offer from Premium Monthly in App Store Connect |
 
 ---
 
@@ -162,9 +193,11 @@ Before App Store submission, update your privacy policy to mention:
 
 | File | Role |
 |------|------|
-| `SubscriptionProductID.swift` | Product ID constant |
+| `SubscriptionProductID.swift` | Product ID constants and `PremiumPlan` enum |
 | `SubscriptionManager.swift` | StoreKit 2 purchase, restore, entitlements |
-| `SubscriptionView.swift` | Paywall UI |
+| `MonitoringUsageTracker.swift` | Free-tier 10 monitoring session limit |
+| `SubscriptionView.swift` | Paywall UI (yearly default, plan picker) |
+| `HomeView.swift` | Monitoring start gating |
 | `SessionsListView.swift` | History gating (latest session only on Free) |
 | `AnalyticsView.swift` | Analytics gating |
 | `SettingsView.swift` | Plan status, upgrade, restore, manage |

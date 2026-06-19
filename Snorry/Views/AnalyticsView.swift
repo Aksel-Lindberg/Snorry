@@ -10,13 +10,13 @@ struct AnalyticsView: View {
     @State private var vm: AnalyticsViewModel?
     @State private var showSubscription = false
 
-    private var hasBasicAccess: Bool { appEnv.subscription.hasBasicAccess }
+    private var hasPremiumAccess: Bool { appEnv.subscription.hasPremiumAccess }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Theme.nightGradient.ignoresSafeArea()
-                if hasBasicAccess {
+                if hasPremiumAccess {
                     if let vm {
                         AnalyticsContent(vm: vm)
                     } else {
@@ -34,12 +34,12 @@ struct AnalyticsView: View {
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
-                guard hasBasicAccess else { return }
+                guard hasPremiumAccess else { return }
                 if vm == nil { vm = AnalyticsViewModel(context: context) }
                 vm?.refresh()
             }
-            .onChange(of: hasBasicAccess) { _, isBasic in
-                guard isBasic else {
+            .onChange(of: hasPremiumAccess) { _, isPremium in
+                guard isPremium else {
                     vm = nil
                     return
                 }
@@ -47,7 +47,7 @@ struct AnalyticsView: View {
                 vm?.refresh()
             }
             .sheet(isPresented: $showSubscription) {
-                SubscriptionView()
+                SubscriptionView(paywallSource: "analytics_tab")
             }
         }
     }
@@ -63,19 +63,19 @@ private struct AnalyticsLockedView: View {
                 .font(.system(size: 56, weight: .thin))
                 .foregroundStyle(Theme.labelTertiary)
 
-            Text("Analytics is a Basic feature")
+            Text("Analytics is a Premium feature")
                 .font(.title3.bold())
                 .foregroundStyle(Theme.labelSecondary)
                 .multilineTextAlignment(.center)
 
-            Text("Upgrade to Basic to see snore trends, daily charts, and alert correlations.")
+            Text("Upgrade to Premium to see snore trends, daily charts, and alert correlations.")
                 .font(.subheadline)
                 .foregroundStyle(Theme.labelTertiary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
             Button(action: onUpgrade) {
-                Text("Upgrade to Basic")
+                Text("Upgrade to Premium")
                     .font(.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)

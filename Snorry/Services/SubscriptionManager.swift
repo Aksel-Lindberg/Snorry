@@ -1,7 +1,7 @@
 import Foundation
 import StoreKit
 
-// MARK: - StoreKit 2 subscription state for Snorry Basic
+// MARK: - StoreKit 2 subscription state for Snorry Premium
 
 enum SubscriptionPurchaseState: Equatable {
     case idle
@@ -14,8 +14,9 @@ enum SubscriptionPurchaseState: Equatable {
 @MainActor
 final class SubscriptionManager {
 
-    private(set) var hasBasicAccess = false
-    private(set) var basicProduct: Product?
+    private(set) var hasPremiumAccess = false
+    private(set) var yearlyProduct: Product?
+    private(set) var monthlyProduct: Product?
     private(set) var purchaseState: SubscriptionPurchaseState = .idle
     private(set) var errorMessage: String?
 
@@ -27,6 +28,13 @@ final class SubscriptionManager {
     }
 
     // MARK: - Public API
+
+    func product(for plan: PremiumPlan) -> Product? {
+        switch plan {
+        case .yearly: yearlyProduct
+        case .monthly: monthlyProduct
+        }
+    }
 
     func refreshEntitlements() async {
         if purchaseState == .idle {
@@ -42,8 +50,8 @@ final class SubscriptionManager {
     }
 
     @discardableResult
-    func purchaseBasic() async -> Bool {
-        guard let product = basicProduct else {
+    func purchase(plan: PremiumPlan) async -> Bool {
+        guard let product = product(for: plan) else {
             errorMessage = "Subscription is not available right now. Please try again later."
             return false
         }
@@ -65,10 +73,10 @@ final class SubscriptionManager {
                 let transaction = try checkVerified(verification)
                 await transaction.finish()
                 await updateAccessFromEntitlements()
-                if hasBasicAccess {
+                if hasPremiumAccess {
                     AppAnalytics.logPurchaseCompleted(product: product, transaction: transaction)
                 }
-                return hasBasicAccess
+                return hasPremiumAccess
             case .userCancelled:
                 return false
             case .pending:
@@ -97,8 +105,8 @@ final class SubscriptionManager {
         do {
             try await AppStore.sync()
             await updateAccessFromEntitlements()
-            if !hasBasicAccess {
-                errorMessage = "No active Basic subscription was found for this Apple ID."
+            if !hasPremiumAccess {
+                errorMessage = "No active Premium subscription was found for this Apple ID."
             }
         } catch {
             errorMessage = error.localizedDescription
@@ -116,20 +124,22 @@ final class SubscriptionManager {
 
         for await result in Transaction.currentEntitlements {
             guard let transaction = unwrapVerified(result),
-                  transaction.productID == SubscriptionProductID.basicMonthly,
+                  SubscriptionProductID.isPremium(transaction.productID),
                   transaction.revocationDate == nil else { continue }
             hasAccess = true
         }
 
-        hasBasicAccess = hasAccess
+        hasPremiumAccess = hasAccess
     }
 
     private func loadProducts() async {
         do {
             let products = try await Product.products(for: SubscriptionProductID.all)
-            basicProduct = products.first { $0.id == SubscriptionProductID.basicMonthly }
+            yearlyProduct = products.first { $0.id == SubscriptionProductID.premiumYearly }
+            monthlyProduct = products.first { $0.id == SubscriptionProductID.premiumMonthly }
         } catch {
-            basicProduct = nil
+            yearlyProduct = nil
+            monthlyProduct = nil
         }
     }
 

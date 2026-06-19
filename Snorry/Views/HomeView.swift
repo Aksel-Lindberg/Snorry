@@ -14,6 +14,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(AppEnvironment.self) private var appEnv
     @Query private var alertSettingsRows: [AlertSettings]
     /// Completed sessions only — stays valid when rows are deleted (avoids stale `SnoreSession` references).
     @Query(
@@ -26,6 +27,7 @@ struct HomeView: View {
     @State private var showMonitor = false
     @State private var showPermissions = false
     @State private var showHelp = false
+    @State private var showSubscription = false
     @State private var scrollAlertIntoView = false
 
     /// START button diameter on iPad portrait (default phone size is 172).
@@ -53,7 +55,12 @@ struct HomeView: View {
                             MonitorView(vm: vm)
                         }
                         .sheet(isPresented: $showPermissions) {
-                            PermissionsView(vm: vm, isPresented: $showPermissions)
+                            PermissionsView(
+                                vm: vm,
+                                isPresented: $showPermissions,
+                                showMonitor: $showMonitor,
+                                showSubscription: $showSubscription
+                            )
                         }
                 } else {
                     ProgressView()
@@ -90,6 +97,9 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showHelp) {
                 HelpCenterView()
+            }
+            .fullScreenCover(isPresented: $showSubscription) {
+                SubscriptionView(paywallSource: "monitoring_limit")
             }
         }
     }
@@ -278,8 +288,21 @@ struct HomeView: View {
             if vm.microphonePermission == .undetermined ||
                vm.microphonePermission == .denied {
                 permissionPrompt(vm: vm)
+            } else if !appEnv.subscription.hasPremiumAccess {
+                Text(freeMonitoringHint)
+                    .font(.caption)
+                    .foregroundStyle(Theme.labelTertiary)
+                    .multilineTextAlignment(.center)
             }
         }
+    }
+
+    private var freeMonitoringHint: String {
+        let remaining = MonitoringUsageTracker.remainingFreeStarts
+        if remaining == 0 {
+            return "Free monitoring limit reached. Upgrade to Premium to continue."
+        }
+        return "\(remaining) free monitoring \(remaining == 1 ? "session" : "sessions") remaining"
     }
 
     /// Ensures the singleton settings row exists so the home card can read alerts configuration.
@@ -357,8 +380,7 @@ struct HomeView: View {
     private func handleStartTap(vm: MonitorViewModel) {
         switch vm.microphonePermission {
         case .granted:
-            vm.startMonitoring()
-            showMonitor = true
+            beginMonitoringIfAllowed(vm: vm)
         case .undetermined:
             showPermissions = true
         case .denied:
@@ -366,5 +388,18 @@ struct HomeView: View {
                 UIApplication.shared.open(url)
             }
         }
+    }
+
+    private func beginMonitoringIfAllowed(vm: MonitorViewModel) {
+        let hasPremium = appEnv.subscription.hasPremiumAccess
+        guard MonitoringUsageTracker.canStartMonitoring(hasPremium: hasPremium) else {
+            AppAnalytics.logPaywallViewed(source: "monitoring_limit")
+            showSubscription = true
+            return
+        }
+
+        MonitoringUsageTracker.recordMonitoringStart(hasPremium: hasPremium)
+        vm.startMonitoring()
+        showMonitor = true
     }
 }

@@ -57,7 +57,7 @@ struct SettingsView: View {
                 vm?.stopAlarmStylePreview()
             }
             .sheet(isPresented: $showSubscription) {
-                SubscriptionView()
+                SubscriptionView(paywallSource: "settings")
             }
         }
     }
@@ -309,16 +309,16 @@ struct SettingsView: View {
                 Text("Current Plan")
                     .foregroundStyle(Theme.labelPrimary)
                 Spacer()
-                Text(subscription.hasBasicAccess ? "Basic" : "Free")
+                Text(subscription.hasPremiumAccess ? "Premium" : "Free")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(subscription.hasBasicAccess ? Theme.good : Theme.labelSecondary)
+                    .foregroundStyle(subscription.hasPremiumAccess ? Theme.good : Theme.labelSecondary)
             }
 
-            if subscription.hasBasicAccess {
+            if subscription.hasPremiumAccess {
                 Link("Manage Subscription", destination: LegalLinks.manageSubscriptions)
                     .foregroundStyle(Theme.accent)
             } else {
-                Button("Upgrade to Basic") {
+                Button("Upgrade to Premium") {
                     AppAnalytics.logPaywallViewed(source: "settings")
                     showSubscription = true
                 }
@@ -348,9 +348,9 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
             Text(
-                subscription.hasBasicAccess
-                    ? "Basic includes full Sleep History and Analytics. Manage billing in your Apple ID subscriptions."
-                    : "Free includes Monitor and your latest sleep session. Upgrade for full history and Analytics."
+                subscription.hasPremiumAccess
+                    ? "Premium includes unlimited monitoring, full Sleep History, and Analytics. Manage billing in your Apple ID subscriptions."
+                    : "Free includes up to 10 monitoring sessions and your latest sleep session. Upgrade for unlimited monitoring, full history, and Analytics."
             )
             .foregroundStyle(Theme.labelSecondary)
             .font(.caption)

@@ -14,7 +14,7 @@ struct SessionsListView: View {
     @Query(sort: \SnoreSession.startDate, order: .reverse)
     private var sessions: [SnoreSession]
 
-    private var hasBasicAccess: Bool { appEnv.subscription.hasBasicAccess }
+    private var hasPremiumAccess: Bool { appEnv.subscription.hasPremiumAccess }
 
     var body: some View {
         NavigationStack {
@@ -28,7 +28,7 @@ struct SessionsListView: View {
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(isPresented: $showSubscription) {
-                SubscriptionView()
+                SubscriptionView(paywallSource: "history_locked_session")
             }
         }
     }
@@ -48,11 +48,11 @@ struct SessionsListView: View {
                     }
                     .onDelete(perform: deleteSessions)
 
-                    if !hasBasicAccess, sessions.count > 1 {
+                    if !hasPremiumAccess, sessions.count > 1 {
                         Section {
                             EmptyView()
                         } footer: {
-                            Text("Upgrade to Basic to view older sleep sessions.")
+                            Text("Upgrade to Premium to view older sleep sessions.")
                                 .foregroundStyle(Theme.labelSecondary)
                                 .font(.caption)
                         }
@@ -69,7 +69,7 @@ struct SessionsListView: View {
 
     @ViewBuilder
     private func sessionRow(index: Int, session: SnoreSession, maxSnore: Double) -> some View {
-        if hasBasicAccess || index == 0 {
+        if hasPremiumAccess || index == 0 {
             NavigationLink(destination: SessionDetailView(session: session)) {
                 SessionRowView(session: session, maxSnoreDuration: maxSnore)
             }
@@ -206,7 +206,7 @@ private struct LockedSessionRowView: View {
                 .font(.caption)
                 .foregroundStyle(Theme.labelTertiary)
         }
-        .accessibilityLabel("Locked sleep session. Upgrade to Basic to view.")
+        .accessibilityLabel("Locked sleep session. Upgrade to Premium to view.")
         .accessibilityAddTraits(.isButton)
     }
 }
