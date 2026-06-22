@@ -161,8 +161,9 @@ struct SubscriptionView: View {
                         .font(.headline)
                         .foregroundStyle(Theme.labelPrimary)
 
+                    // Calculated monthly equivalent — subordinate to billed amount (App Store 3.1.2)
                     if plan == .yearly {
-                        Text(yearlyPriceDetail)
+                        Text(yearlyMonthlyEquivalentText)
                             .font(.caption)
                             .foregroundStyle(Theme.labelSecondary)
                     }
@@ -180,7 +181,8 @@ struct SubscriptionView: View {
                             .background(Theme.warning, in: Capsule())
                     }
 
-                    Text(plan == .yearly ? yearlyPriceRight : monthlyPriceRight)
+                    // Billed amount is the most prominent pricing element
+                    Text(plan == .yearly ? yearlyBilledPriceText : monthlyBilledPriceText)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.labelPrimary)
                 }
@@ -289,27 +291,27 @@ struct SubscriptionView: View {
         }
     }
 
-    private var yearlyPriceDetail: String {
+    private var yearlyBilledPriceText: String {
         if let product = subscription.yearlyProduct {
-            return "\(product.displayPrice)/yr"
+            return "\(product.displayPrice)/year"
         }
-        return "$29.99/yr"
+        return "$29.99/year"
     }
 
-    private var yearlyPriceRight: String {
+    private var yearlyMonthlyEquivalentText: String {
         if let product = subscription.yearlyProduct {
-            let monthly = NSDecimalNumber(decimal: product.price).doubleValue / 12.0
-            let formatted = String(format: "%.2f", monthly)
-            return "\(formatted)/mo."
+            let monthly = product.price / 12
+            let formatted = monthly.formatted(product.priceFormatStyle)
+            return "(≈ \(formatted)/month)"
         }
-        return "$2.49/mo."
+        return "(≈ $2.50/month)"
     }
 
-    private var monthlyPriceRight: String {
+    private var monthlyBilledPriceText: String {
         if let product = subscription.monthlyProduct {
-            return "\(product.displayPrice)/mo."
+            return "\(product.displayPrice)/month"
         }
-        return "$4.99/mo."
+        return "$4.99/month"
     }
 
     private var finePrint: String {
@@ -318,9 +320,9 @@ struct SubscriptionView: View {
         }
         switch selectedPlan {
         case .yearly:
-            return "7 days free, then \(yearlyPriceDetail.replacingOccurrences(of: "/yr", with: "/year")). Cancel anytime."
+            return "7 days free, then \(yearlyBilledPriceText). Cancel anytime."
         case .monthly:
-            return "\(monthlyPriceRight.replacingOccurrences(of: "/mo.", with: " per month")). Cancel anytime."
+            return "\(monthlyBilledPriceText.replacingOccurrences(of: "/month", with: " per month")). Cancel anytime."
         }
     }
 }

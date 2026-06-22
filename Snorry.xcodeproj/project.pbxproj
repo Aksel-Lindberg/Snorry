@@ -94,9 +94,9 @@
 		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
 		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
 		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
+		MON00012EAA4B00C99A0002 /* MonitoringUsageTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */; };
 		SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */; };
 		SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */; };
-		MON00012EAA4B00C99A0002 /* MonitoringUsageTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */; };
 		SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */; };
 		TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */; };
 /* End PBXBuildFile section */
@@ -206,9 +206,9 @@
 		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0001 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
+		MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitoringUsageTracker.swift; path = Services/MonitoringUsageTracker.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionProductID.swift; path = Models/SubscriptionProductID.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionManager.swift; path = Services/SubscriptionManager.swift; sourceTree = "<group>"; };
-		MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitoringUsageTracker.swift; path = Services/MonitoringUsageTracker.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionView.swift; path = Views/SubscriptionView.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0007 /* Snorry.storekit */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Snorry.storekit; path = Configuration/Snorry.storekit; sourceTree = "<group>"; };
 		TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TrackingAuthorizationManager.swift; path = Services/TrackingAuthorizationManager.swift; sourceTree = "<group>"; };
@@ -860,7 +860,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -906,7 +906,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
