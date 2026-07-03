@@ -62,12 +62,10 @@ struct MonitorView: View {
                 stoppingOverlay
             }
         }
-        .navigationTitle("Recording")
-        .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .toolbarBackground(Theme.background, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .accessibilityLabel("Recording")
         // Dismiss whenever recording stops (button tap or external cause)
         .onChange(of: vm.isMonitoring) { _, monitoring in
             if !monitoring { dismiss() }
@@ -264,19 +262,16 @@ struct MonitorView: View {
     @ViewBuilder
     private var timelineCard: some View {
         if !vm.timelinePoints.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Live Timeline")
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Live Timeline · last 10 min")
                     .font(.caption.bold())
                     .foregroundStyle(Theme.labelSecondary)
 
-                Text("Last 10 minutes · times mark snore events")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
-
                 LiveTimelineChart(points: vm.timelinePoints)
-                    .frame(height: 148)
+                    .frame(height: 88)
             }
-            .padding(16)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
         }
     }
@@ -537,12 +532,12 @@ private struct LiveTimelineChart: View {
                 RuleMark(x: .value("Snore", event.time))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     .foregroundStyle(Theme.snoring.opacity(0.65))
-                    .annotation(position: .bottom, spacing: 6) {
+                    .annotation(position: .top, spacing: 2) {
                         Text(event.time, format: .dateTime.hour(.defaultDigits(amPM: .narrow)).minute(.twoDigits))
-                            .font(Theme.monoDigit(size: 10, weight: .medium))
+                            .font(Theme.monoDigit(size: 9, weight: .medium))
                             .foregroundStyle(Theme.snoring)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
                             .background(Theme.surfaceSecondary.opacity(0.92), in: Capsule())
                     }
             }
