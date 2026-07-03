@@ -254,19 +254,16 @@ struct HomeView: View {
 
     private var headerSection: some View {
         VStack(spacing: 0) {
-            Text(
-                UserPreferences.tonightHomeGreeting(
+            HandwrittenGradientText(
+                text: UserPreferences.tonightHomeGreeting(
                     displayName: userDisplayName,
                     isFirstVisit: isFirstTonightVisit
+                ),
+                size: Theme.tonightGreetingFontSize(
+                    compressedPad: usesCompressedPadLayout,
+                    regularWidth: horizontalSizeClass == .regular
                 )
             )
-            .font(.system(
-                size: usesCompressedPadLayout ? 28 : 34,
-                weight: .bold,
-                design: .rounded
-            ))
-            .foregroundStyle(Theme.labelPrimary)
-            .multilineTextAlignment(.center)
 
             Text("Sleep Snore Alert & Tracking")
                 .font(Theme.handwritten(size: usesCompressedPadLayout ? 17 : 19))

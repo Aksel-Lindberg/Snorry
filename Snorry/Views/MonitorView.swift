@@ -64,6 +64,7 @@ struct MonitorView: View {
         }
         .navigationTitle("Recording")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .toolbarBackground(Theme.background, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
@@ -80,10 +81,10 @@ struct MonitorView: View {
 
     private var greetingHeader: some View {
         VStack(spacing: 6) {
-            Text(UserPreferences.goodNightGreeting(displayName: userDisplayName))
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(Theme.labelPrimary)
-                .multilineTextAlignment(.center)
+            HandwrittenGradientText(
+                text: UserPreferences.goodNightGreeting(displayName: userDisplayName),
+                size: Theme.recordingGreetingFontSize(regularWidth: horizontalSizeClass == .regular)
+            )
 
             Text("We're listening for snores.")
                 .font(Theme.handwritten(size: horizontalSizeClass == .regular ? 17 : 19))
@@ -265,11 +266,15 @@ struct MonitorView: View {
         if !vm.timelinePoints.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Live Timeline")
-                    .font(.caption)
+                    .font(.caption.bold())
                     .foregroundStyle(Theme.labelSecondary)
 
+                Text("Last 10 minutes · times mark snore events")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+
                 LiveTimelineChart(points: vm.timelinePoints)
-                    .frame(height: 132)
+                    .frame(height: 148)
             }
             .padding(16)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
@@ -486,42 +491,66 @@ private struct LiveTimelineChart: View {
         Array(points.suffix(600))   // show last 10 min
     }
 
+    /// Leading edge of each snoring bout in the visible window.
+    private var snoreEventStarts: [MonitorViewModel.TimelinePoint] {
+        var starts: [MonitorViewModel.TimelinePoint] = []
+        var wasSnoring = false
+        for point in visiblePoints {
+            if point.isSnoring, !wasSnoring {
+                starts.append(point)
+            }
+            wasSnoring = point.isSnoring
+        }
+        return starts
+    }
+
     var body: some View {
         Chart {
-            ForEach(visiblePoints) { pt in
+            ForEach(visiblePoints) { point in
                 AreaMark(
-                    x: .value("Time", pt.time),
-                    y: .value("dB", Double(AudioMath.normalisedLevel(pt.dBFS)))
+                    x: .value("Time", point.time),
+                    y: .value("dB", Double(AudioMath.normalisedLevel(point.dBFS)))
                 )
                 .foregroundStyle(
-                    pt.isSnoring
+                    point.isSnoring
                     ? Theme.snoringGlow
                     : Theme.accentGlow
                 )
                 .interpolationMethod(.catmullRom)
             }
 
-            ForEach(visiblePoints) { pt in
-                if pt.isSnoring {
-                    RuleMark(x: .value("Event", pt.time))
-                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [2]))
-                        .foregroundStyle(Theme.snoring.opacity(0.4))
-                }
+            ForEach(visiblePoints) { point in
+                LineMark(
+                    x: .value("Time", point.time),
+                    y: .value("dB", Double(AudioMath.normalisedLevel(point.dBFS)))
+                )
+                .foregroundStyle(
+                    point.isSnoring
+                    ? Theme.snoring.opacity(0.9)
+                    : Theme.accent.opacity(0.45)
+                )
+                .lineStyle(StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+                .interpolationMethod(.catmullRom)
+            }
+
+            ForEach(snoreEventStarts) { event in
+                RuleMark(x: .value("Snore", event.time))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                    .foregroundStyle(Theme.snoring.opacity(0.65))
+                    .annotation(position: .bottom, spacing: 6) {
+                        Text(event.time, format: .dateTime.hour(.defaultDigits(amPM: .narrow)).minute(.twoDigits))
+                            .font(Theme.monoDigit(size: 10, weight: .medium))
+                            .foregroundStyle(Theme.snoring)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Theme.surfaceSecondary.opacity(0.92), in: Capsule())
+                    }
             }
         }
         .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 5)) { value in
+            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                    .foregroundStyle(Theme.surfaceSecondary.opacity(0.9))
-                AxisValueLabel(centered: true) {
-                    if let t = value.as(Date.self) {
-                        Text(t, format: .dateTime.hour(.defaultDigits(amPM: .narrow))
-                            .minute(.twoDigits)
-                            .second(.twoDigits))
-                    }
-                }
-                .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                .font(.caption2)
+                    .foregroundStyle(Theme.surfaceSecondary.opacity(0.55))
             }
         }
         .chartYAxis(.hidden)

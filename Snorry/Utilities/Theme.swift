@@ -79,6 +79,18 @@ enum Theme {
         )
     }
 
+    /// Larger hero greeting on Tonight home (handwritten + gradient).
+    static func tonightGreetingFontSize(compressedPad: Bool, regularWidth: Bool) -> CGFloat {
+        if compressedPad { return 36 }
+        if regularWidth { return 44 }
+        return 40
+    }
+
+    /// Recording-screen greeting — slightly larger than home for focus.
+    static func recordingGreetingFontSize(regularWidth: Bool) -> CGFloat {
+        regularWidth ? 42 : 38
+    }
+
     // MARK: Corner radii
     static let radiusCard: CGFloat    = 20
     static let radiusButton: CGFloat  = 50
@@ -88,6 +100,21 @@ enum Theme {
         Rectangle()
             .fill(color.opacity(0.35))
             .blur(radius: 20)
+    }
+}
+
+// MARK: - Handwritten gradient label (Tonight hero + recording greeting)
+
+struct HandwrittenGradientText: View {
+    let text: String
+    var size: CGFloat
+    var bold: Bool = true
+
+    var body: some View {
+        Text(text)
+            .font(Theme.handwritten(size: size, bold: bold))
+            .foregroundStyle(Theme.handwrittenGradient)
+            .multilineTextAlignment(.center)
     }
 }
 
