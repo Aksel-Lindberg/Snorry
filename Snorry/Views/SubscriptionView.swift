@@ -26,7 +26,7 @@ struct SubscriptionView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     heroCard
-                    limitedOfferBadge
+                    trialBadge
                     headlineSection
                     planPicker
                     subscribeButton
@@ -110,8 +110,8 @@ struct SubscriptionView: View {
         .padding(.bottom, 4)
     }
 
-    private var limitedOfferBadge: some View {
-        Text("Limited Time Offer")
+    private var trialBadge: some View {
+        Text("7-Day Free Trial on Yearly")
             .font(.caption.weight(.semibold))
             .foregroundStyle(.black)
             .padding(.horizontal, 12)
@@ -127,7 +127,7 @@ struct SubscriptionView: View {
                 .multilineTextAlignment(.center)
 
             Text(
-                "Unlock unlimited recording, your full sleep history, and snore trend analytics — all processed on your iPhone."
+                "Unlock unlimited recording, your full sleep history, and snore trends in Insights — all processed on your iPhone."
             )
             .font(.subheadline)
             .foregroundStyle(Theme.labelSecondary)

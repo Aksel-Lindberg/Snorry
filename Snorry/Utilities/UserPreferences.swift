@@ -12,6 +12,11 @@ enum UserPreferences {
         personalized(prefix: "Good night", displayName: displayName)
     }
 
+    /// Onboarding consent screen — uses first name only when a multi-word name is entered.
+    static func welcomeGreeting(displayName: String) -> String {
+        personalized(prefix: "Welcome", displayName: displayName)
+    }
+
     /// Tonight home hero — Welcome on first visit, then morning / afternoon / night.
     static func tonightHomeGreeting(displayName: String, isFirstVisit: Bool, date: Date = Date()) -> String {
         if isFirstVisit {

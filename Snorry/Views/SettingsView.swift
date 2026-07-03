@@ -93,7 +93,7 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(
-                "This permanently removes every saved sleep session, snore clips, and settings-change markers used in analytics. Your current Settings values are not changed."
+                "This permanently removes every saved sleep session, snore clips, and settings-change markers used in Insights. Your current Settings values are not changed."
             )
         }
         .alert(

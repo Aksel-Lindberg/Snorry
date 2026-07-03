@@ -2,15 +2,17 @@ import SwiftUI
 import AVFoundation
 import UserNotifications
 
-// MARK: - First-launch onboarding (two pages: Welcome → Consent & Legal)
+// MARK: - First-launch onboarding (two pages: Name intro → Consent & Legal)
 struct OnboardingView: View {
 
     /// Called after the user completes the flow so RootView can clear the gate.
     var onComplete: () -> Void
 
+    @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var page = 0
     @State private var isRequestingPermissions = false
+    @State private var draftName = ""
 
     /// Extra space so page dots and CTAs do not overlap on iPad.
     private var pageBottomInset: CGFloat {
@@ -22,13 +24,16 @@ struct OnboardingView: View {
             Theme.nightGradient.ignoresSafeArea()
 
             TabView(selection: $page) {
-                WelcomePage(
+                NameIntroPage(
+                    draftName: $draftName,
                     bottomInset: pageBottomInset,
-                    onNext: { withAnimation { page = 1 } }
+                    onContinue: saveNameAndAdvance,
+                    onSkip: { withAnimation { page = 1 } }
                 )
                 .tag(0)
 
                 ConsentPage(
+                    displayName: userDisplayName,
                     bottomInset: pageBottomInset,
                     isRequestingPermissions: $isRequestingPermissions,
                     onComplete: onComplete
@@ -39,95 +44,115 @@ struct OnboardingView: View {
             .indexViewStyle(.page(backgroundDisplayMode: .always))
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            draftName = userDisplayName
+        }
+    }
+
+    private func saveNameAndAdvance() {
+        let trimmed = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+        userDisplayName = trimmed
+        withAnimation { page = 1 }
     }
 }
 
-// MARK: - Page 1: Welcome
+// MARK: - Page 1: Name intro
 
-private struct WelcomePage: View {
+private struct NameIntroPage: View {
 
+    @Binding var draftName: String
+    @FocusState private var isNameFieldFocused: Bool
     var bottomInset: CGFloat
-    var onNext: () -> Void
+    var onContinue: () -> Void
+    var onSkip: () -> Void
+
+    private var canSaveName: Bool {
+        !draftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-                // Hero icon + wordmark
-                VStack(spacing: 16) {
-                    ZStack {
-                        Circle()
-                            .fill(Theme.accentGradient)
-                            .frame(width: 96, height: 96)
-                            .shadow(color: Theme.accentGlow, radius: 24)
-
-                        Image(systemName: "waveform.and.mic")
-                            .font(.system(size: 40, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
+                Image("HomeAppIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 96, height: 96)
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .shadow(color: Theme.accentGlow, radius: 24)
+                    .accessibilityLabel("Snorry")
                     .padding(.top, 60)
 
-                    Text("Snorry")
-                        .font(.system(size: 42, weight: .bold, design: .rounded))
-                        .foregroundStyle(Theme.labelPrimary)
+                Text("Welcome to Snorry")
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.labelPrimary)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 24)
 
-                    Text("Sleep Smarter. Snore Less.")
-                        .font(Theme.handwritten(size: 18))
-                        .foregroundStyle(Theme.handwrittenGradient)
-                }
+                Text("Your smart snore companion")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.labelSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 8)
 
-                // Feature cards
-                VStack(spacing: 14) {
-                    FeatureCard(
-                        icon: "ear.fill",
-                        iconColor: Theme.accent,
-                        title: "Adaptive Snore Detection",
-                        description: "Listens while you sleep and learns your snoring patterns. " +
-                                     "All audio is processed on-device — nothing ever leaves your iPhone."
-                    )
+                Text("What's your name?")
+                    .font(.headline)
+                    .foregroundStyle(Theme.labelPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 36)
 
-                    FeatureCard(
-                        icon: "applewatch",
-                        iconColor: Theme.good,
-                        title: "Wrist Nudges via iOS-Compatible Smartwatch",
-                        description: "Snore alerts use standard iOS notifications, which may appear " +
-                                     "on your iOS-Compatible Smartwatch as a gentle haptic nudge — small enough to " +
-                                     "prompt a position change without fully waking you."
-                    )
+                TextField("Your name", text: $draftName)
+                    .textContentType(.givenName)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.words)
+                    .foregroundStyle(Theme.labelPrimary)
+                    .focused($isNameFieldFocused)
+                    .padding(16)
+                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+                    .padding(.horizontal, 24)
+                    .padding(.top, 12)
+                    .submitLabel(.continue)
+                    .onSubmit {
+                        dismissKeyboard()
+                        if canSaveName { onContinue() }
+                    }
 
-                    FeatureCard(
-                        icon: "bell.slash.fill",
-                        iconColor: Theme.warning,
-                        title: "Alerts Stop Automatically",
-                        description: "The moment snoring stops, alerts cease on their own. " +
-                                     "No alarm to dismiss, no disruption beyond the nudge itself."
-                    )
+                VStack(spacing: 12) {
+                    Button {
+                        dismissKeyboard()
+                        onContinue()
+                    } label: {
+                        Text("Continue")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Theme.accentGradient,
+                                        in: RoundedRectangle(cornerRadius: Theme.radiusButton))
+                    }
+                    .disabled(!canSaveName)
+                    .opacity(canSaveName ? 1 : 0.45)
 
-                    FeatureCard(
-                        icon: "chart.line.uptrend.xyaxis",
-                        iconColor: Theme.snoring,
-                        title: "Track Your Progress",
-                        description: "Session history and analytics show your snore patterns over time " +
-                                     "and how the alert feature is affecting them — see real improvement."
-                    )
+                    Button {
+                        dismissKeyboard()
+                        onSkip()
+                    } label: {
+                        Text("Skip for now")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Theme.labelSecondary)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 32)
-
-                // CTA
-                Button(action: onNext) {
-                    Text("Get Started")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Theme.accentGradient,
-                                    in: RoundedRectangle(cornerRadius: Theme.radiusButton))
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 36)
+                .padding(.top, 28)
                 .padding(.bottom, bottomInset)
             }
         }
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    private func dismissKeyboard() {
+        isNameFieldFocused = false
     }
 }
 
@@ -135,6 +160,7 @@ private struct WelcomePage: View {
 
 private struct ConsentPage: View {
 
+    let displayName: String
     var bottomInset: CGFloat
     @Binding var isRequestingPermissions: Bool
     var onComplete: () -> Void
@@ -142,30 +168,42 @@ private struct ConsentPage: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 28) {
-                // Header
                 VStack(spacing: 8) {
-                    Image(systemName: "hand.raised.fill")
-                        .font(.system(size: 48, weight: .thin))
-                        .foregroundStyle(Theme.accent)
-                        .padding(.top, 60)
+                    ZStack {
+                        Circle()
+                            .fill(Theme.accentGradient)
+                            .frame(width: 96, height: 96)
+                            .shadow(color: Theme.accentGlow, radius: 24)
 
-                    Text("Before You Start")
+                        Image(systemName: "hand.wave.fill")
+                            .font(.system(size: 40, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.top, 60)
+
+                    Text(UserPreferences.welcomeGreeting(displayName: displayName))
                         .font(.title2.bold())
                         .foregroundStyle(Theme.labelPrimary)
+                        .multilineTextAlignment(.center)
+
+                    Text("Before you start")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Theme.labelSecondary)
+                        .multilineTextAlignment(.center)
 
                     Text("Snorry needs two permissions to work. Here's exactly what each one is used for.")
                         .font(.subheadline)
                         .foregroundStyle(Theme.labelSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 8)
+                        .padding(.top, 4)
                 }
 
-                // Consent items
                 VStack(spacing: 14) {
                     ConsentRow(
                         icon: "mic.fill",
                         title: "Microphone",
-                        description: "Required to monitor breathing and detect snoring during sleep. " +
+                        description: "Required to listen for snoring during sleep. " +
                                      "Audio is analysed locally on your iPhone and never uploaded or shared."
                     )
 
@@ -178,13 +216,9 @@ private struct ConsentPage: View {
                     )
                 }
 
-                // Legal card
                 LegalCard()
-
-                // Charger tip
                 ChargerTipBanner()
 
-                // Primary action
                 VStack(spacing: 12) {
                     Button {
                         Task { await requestPermissions() }
@@ -245,40 +279,6 @@ private struct ConsentPage: View {
 
 // MARK: - Reusable sub-views
 
-private struct FeatureCard: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let description: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 48, height: 48)
-
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(iconColor)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.subheadline.bold())
-                    .foregroundStyle(Theme.labelPrimary)
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(Theme.labelSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
-    }
-}
-
 private struct ConsentRow: View {
     let icon: String
     let title: String
@@ -319,7 +319,7 @@ private struct ChargerTipBanner: View {
                 Text("Keep your iPhone plugged in")
                     .font(.subheadline.bold())
                     .foregroundStyle(Theme.labelPrimary)
-                Text("Snorry monitors audio all night. Connect to a charger before you fall asleep to prevent battery drain.")
+                Text("Snorry records audio all night. Connect to a charger before you fall asleep to prevent battery drain.")
                     .font(.caption)
                     .foregroundStyle(Theme.labelSecondary)
                     .fixedSize(horizontal: false, vertical: true)

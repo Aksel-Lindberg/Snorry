@@ -19,6 +19,8 @@ struct HelpCenterView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         introHero
 
+                        howSnorryWorksCard
+
                         helpAccordion(
                             section: .gettingStarted,
                             title: "First launch & privacy",
@@ -28,7 +30,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "hand.wave.fill",
                                 title: "Welcome flow",
-                                detail: "First launch is a two-page onboarding flow: Welcome, then Before You Start (microphone + notifications explained, legal links, charger tip). Tap Continue to request iOS permissions and reach the main tabs."
+                                detail: "First launch is a two-page onboarding flow: a short name intro (optional), then Before you start (microphone + notifications explained, legal links, charger tip). Tap Continue to request iOS permissions and reach the main tabs. See How Snorry works below for what the app does."
                             )
                             HelpBullet(
                                 icon: "mic.fill",
@@ -173,7 +175,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "mappin.and.ellipse",
                                 title: "Settings change markers",
-                                detail: "Expand the legend under the chart to read each saved change; you can also remove individual markers from analytics without touching your current Settings values."
+                                detail: "Expand the legend under the chart to read each saved change; you can also remove individual markers from Insights without touching your current Settings values."
                             )
                             HelpBullet(
                                 icon: "chart.bar.xaxis",
@@ -211,7 +213,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "arrow.counterclockwise",
                                 title: "Reset & delete logs",
-                                detail: "Reset to Defaults recreates alert preferences. Delete All Sleep & Settings Logs removes every session, clip, waveform, and analytics marker row—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
+                                detail: "Reset to Defaults recreates alert preferences. Delete All Sleep & Settings Logs removes every session, clip, waveform, and Insights marker row—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
                             )
                             HelpBullet(
                                 icon: "doc.text.fill",
@@ -375,6 +377,62 @@ struct HelpCenterView: View {
         .background(Theme.surfaceSecondary, in: RoundedRectangle(cornerRadius: 14))
     }
 
+    private var howSnorryWorksCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                    .font(.title3)
+                    .foregroundStyle(Theme.accent)
+                    .symbolRenderingMode(.hierarchical)
+                Text("How Snorry works")
+                    .font(.headline)
+                    .foregroundStyle(Theme.labelPrimary)
+            }
+
+            VStack(spacing: 14) {
+                HowSnorryWorksFeatureRow(
+                    icon: "ear.fill",
+                    iconColor: Theme.accent,
+                    title: "Adaptive Snore Detection",
+                    description: "Listens while you sleep and learns your snoring patterns. " +
+                                 "All audio is processed on-device — nothing ever leaves your iPhone."
+                )
+
+                HowSnorryWorksFeatureRow(
+                    icon: "applewatch",
+                    iconColor: Theme.good,
+                    title: "Wrist Nudges via iOS-Compatible Smartwatch",
+                    description: "Snore alerts use standard iOS notifications, which may appear " +
+                                 "on your iOS-Compatible Smartwatch as a gentle haptic nudge — small enough to " +
+                                 "prompt a position change without fully waking you."
+                )
+
+                HowSnorryWorksFeatureRow(
+                    icon: "bell.slash.fill",
+                    iconColor: Theme.warning,
+                    title: "Alerts Stop Automatically",
+                    description: "The moment snoring stops, alerts cease on their own. " +
+                                 "No alarm to dismiss, no disruption beyond the nudge itself."
+                )
+
+                HowSnorryWorksFeatureRow(
+                    icon: "chart.line.uptrend.xyaxis",
+                    iconColor: Theme.snoring,
+                    title: "Track Your Progress",
+                    description: "Session history and Insights show your snore patterns over time " +
+                                 "and how the alert feature is affecting them — see real improvement."
+                )
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.radiusCard)
+                .strokeBorder(Theme.accent.opacity(0.18), lineWidth: 1)
+        )
+    }
+
     private var overnightTipsCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
@@ -483,5 +541,39 @@ private struct HelpBullet: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.surfaceSecondary.opacity(0.85), in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+// MARK: - How Snorry works feature row
+
+private struct HowSnorryWorksFeatureRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let description: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 48, height: 48)
+
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(iconColor)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(Theme.labelPrimary)
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(Theme.labelSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
