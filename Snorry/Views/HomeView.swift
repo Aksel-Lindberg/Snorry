@@ -21,13 +21,20 @@ struct HomeView: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(AppEnvironment.self) private var appEnv
     @Query private var alertSettingsRows: [AlertSettings]
+    /// All sessions, newest first. Filter completed rows in-memory so `endDate` updates after stop
+    /// are visible immediately (SwiftData `#Predicate` queries can lag when optional fields change).
+    @Query(sort: \SnoreSession.startDate, order: .reverse)
+    private var allSessions: [SnoreSession]
+
     /// Completed sessions only — stays valid when rows are deleted (avoids stale `SnoreSession` references).
-    @Query(
-        filter: #Predicate<SnoreSession> { $0.endDate != nil },
-        sort: \SnoreSession.startDate,
-        order: .reverse
-    )
-    private var completedSessions: [SnoreSession]
+    private var completedSessions: [SnoreSession] {
+        allSessions.filter { $0.endDate != nil }
+    }
+
+    /// Most recent completed session worth showing on the Last Session card (skips empty accidental taps).
+    private var lastDisplayableSession: SnoreSession? {
+        completedSessions.first(where: \.hasLastSessionCardData)
+    }
     @State private var showPermissions = false
     @State private var showHelp = false
     @State private var showSubscription = false
@@ -368,14 +375,14 @@ struct HomeView: View {
     @ViewBuilder
     private func recentSessionCard(showShortcut: Bool) -> some View {
         let cardPadding: CGFloat = usesCompressedPadLayout ? 12 : (horizontalSizeClass == .regular ? 14 : 12)
-        let lastSession = completedSessions.first
+        let lastSession = lastDisplayableSession
 
         VStack(alignment: .leading, spacing: usesCompressedPadLayout ? 6 : (horizontalSizeClass == .regular ? 8 : 6)) {
             Label("Last Session", systemImage: "clock")
                 .font(.caption.bold())
                 .foregroundStyle(Theme.labelPrimary)
 
-            if let session = lastSession, session.hasLastSessionCardData {
+            if let session = lastSession {
                 lastSessionMetrics(session: session)
 
                 if showShortcut {

@@ -122,8 +122,11 @@ final class SnoreSession {
     }
 
     /// True when a completed session has enough data for the Tonight Last Session card (vs. em-dash placeholders).
+    /// Short accidental taps (< 1 min, no snores) stay hidden; nights with snoring or ≥ 1 min of sleep qualify.
     var hasLastSessionCardData: Bool {
-        guard endDate != nil, let dur = duration, dur >= 60 else { return false }
+        guard endDate != nil else { return false }
+        if eventCount > 0 { return true }
+        guard let dur = duration, dur >= 60 else { return false }
         return true
     }
 }
