@@ -47,7 +47,10 @@ struct SessionDetailView: View {
         .task(id: session.id) {
             vm = await SessionDetailViewModel.prepare(session: session, modelContext: modelContext)
         }
-        .onDisappear { vm?.tearDownPlayback() }
+        .onDisappear {
+            vm?.tearDownPlayback()
+            AppReviewPrompter.requestReviewIfPendingAfterSessionDetail()
+        }
     }
 
     // MARK: Stats row
@@ -316,7 +319,7 @@ private struct StatCard: View {
                 .foregroundStyle(Theme.labelPrimary)
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
-            Text(label)
+            Text(formattedLabel)
                 .font(.caption)
                 .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .multilineTextAlignment(.center)
@@ -327,6 +330,13 @@ private struct StatCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(Theme.surfaceSecondary, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    /// Two-word labels split onto two lines so all stat tiles share the same height.
+    private var formattedLabel: String {
+        let parts = label.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: false)
+        guard parts.count == 2 else { return label }
+        return "\(parts[0])\n\(parts[1])"
     }
 }
 

@@ -194,6 +194,7 @@ final class SessionDetailViewModel {
     private func playbackDidFinish() {
         clipPlayer.stop()
         playingEventID = nil
+        AppReviewPrompter.recordCompletedSnoreClipReplay()
         // Keep the replay session warm for the next tap — released in tearDownPlayback().
     }
 
