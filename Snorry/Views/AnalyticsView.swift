@@ -70,7 +70,7 @@ private struct AnalyticsLockedView: View {
 
             Text("Upgrade to Premium to see snore trends, daily charts, and alert correlations.")
                 .font(.subheadline)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
@@ -224,7 +224,7 @@ private struct AnalyticsContent: View {
                 .foregroundStyle(Theme.labelSecondary)
             Text("Start a recording session to see your snore trends here.")
                 .font(.caption)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
         }
@@ -572,7 +572,7 @@ private struct AlertCorrelationCard: View {
                 .foregroundStyle(Theme.labelSecondary)
             Text("Complete a recording session to see how your alert settings correlate with snore duration.")
                 .font(.caption)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 20)
         }

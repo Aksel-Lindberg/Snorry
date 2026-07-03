@@ -213,7 +213,7 @@ private struct ConsentPage: View {
 
                     Text("You can review and change permissions at any time in iOS Settings.")
                         .font(.caption)
-                        .foregroundStyle(Theme.labelTertiary)
+                        .foregroundStyle(Theme.labelSecondary)
                         .multilineTextAlignment(.center)
                 }
                 .padding(.bottom, bottomInset)
@@ -343,7 +343,7 @@ private struct LegalCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Legal")
                 .font(.caption.bold())
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelSecondary)
                 .textCase(.uppercase)
                 .tracking(1)
 

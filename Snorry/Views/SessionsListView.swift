@@ -101,7 +101,7 @@ struct SessionsListView: View {
                 .foregroundStyle(Theme.labelSecondary)
             Text("Start recording to capture your first sleep session.")
                 .font(.subheadline)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }

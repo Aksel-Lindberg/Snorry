@@ -108,7 +108,7 @@ struct SessionDetailView: View {
             if vm.snoreEvents.isEmpty {
                 Text("No snore events recorded this session")
                     .font(.caption)
-                    .foregroundStyle(Theme.labelTertiary)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, 4)
             }
@@ -148,7 +148,7 @@ struct SessionDetailView: View {
             if vm.chartTimelinePoints.isEmpty {
                 Text("No waveform data recorded.")
                     .font(.caption)
-                    .foregroundStyle(Theme.labelTertiary)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
                     .padding()
             } else {
                 SessionTimelineChart(samples: vm.chartTimelinePoints, events: vm.snoreEvents)
@@ -179,7 +179,7 @@ struct SessionDetailView: View {
             if vm.allCompletedEvents.isEmpty {
                 Text("No sound events detected this session.")
                     .font(.caption)
-                    .foregroundStyle(Theme.labelTertiary)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
                     .padding(.vertical, 8)
             } else {
                 ForEach(vm.allCompletedEvents) { event in

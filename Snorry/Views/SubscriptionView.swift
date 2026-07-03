@@ -251,7 +251,7 @@ struct SubscriptionView: View {
         VStack(spacing: 10) {
             Text(finePrint)
                 .font(.caption2)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelSecondary)
                 .multilineTextAlignment(.center)
 
             HStack(spacing: 16) {

@@ -81,11 +81,6 @@ struct HelpCenterView: View {
                                 detail: "When you have completed nights, the card summarises the most recent session: sleep duration, snore event count, and total snore time (counts confirmed snoring, not other sound categories). Before your first completed night, the card shows placeholders and “No recordings yet.”"
                             )
                             HelpBullet(
-                                icon: "lock.fill",
-                                title: "Overnight & locked iPhone",
-                                detail: "Start recording, then lock your phone. Background audio keeps capture running for that session. While locked, Snorry uses a lighter-weight detection path; after you stop, it may re-classify saved clips so History labels stay trustworthy."
-                            )
-                            HelpBullet(
                                 icon: "applewatch",
                                 title: "Apple Watch",
                                 detail: "Snorry is iPhone-only. Snore alerts are local notifications; they can mirror to your watch if iPhone alerts mirror to Apple Watch. " +
@@ -230,6 +225,7 @@ struct HelpCenterView: View {
                             )
                         }
 
+                        overnightTipsCard
                         tipFooter
                     }
                     .padding(.horizontal, horizontalSizeClass == .regular ? 32 : 18)
@@ -301,7 +297,7 @@ struct HelpCenterView: View {
                 "opening another section collapses the previous one so the guide stays easy to read."
             )
             .font(.footnote)
-            .foregroundStyle(Theme.labelTertiary)
+            .foregroundStyle(Theme.labelSecondary)
             .fixedSize(horizontal: false, vertical: true)
         }
         .padding(18)
@@ -343,7 +339,7 @@ struct HelpCenterView: View {
                             .multilineTextAlignment(.leading)
                         Text(subtitle)
                             .font(.caption)
-                            .foregroundStyle(Theme.labelTertiary)
+                            .foregroundStyle(Theme.labelSecondary)
                             .multilineTextAlignment(.leading)
                     }
                     Spacer(minLength: 0)
@@ -379,6 +375,60 @@ struct HelpCenterView: View {
         .background(Theme.surfaceSecondary, in: RoundedRectangle(cornerRadius: 14))
     }
 
+    private var overnightTipsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "lightbulb.fill")
+                    .font(.title3)
+                    .foregroundStyle(Theme.good)
+                    .symbolRenderingMode(.hierarchical)
+                Text("Overnight setup tips")
+                    .font(.headline)
+                    .foregroundStyle(Theme.labelPrimary)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                overnightTipRow(
+                    icon: "battery.100percent.bolt",
+                    text: "Keep your iPhone plugged in. Snorry records audio all night—connect to a charger before you fall asleep to prevent battery drain."
+                )
+                overnightTipRow(
+                    icon: "eye.slash.fill",
+                    text: "Place your phone face down on your nightstand so the screen won't disturb your sleep."
+                )
+                overnightTipRow(
+                    icon: "lock.fill",
+                    text: "After you start a session, recording continues when you lock your phone or switch away from the app. Don't force-quit Snorry until you stop the session."
+                )
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Theme.good.opacity(0.10),
+            in: RoundedRectangle(cornerRadius: Theme.radiusCard)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.radiusCard)
+                .strokeBorder(Theme.good.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    private func overnightTipRow(icon: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Theme.good)
+                .frame(width: 22, alignment: .center)
+                .padding(.top, 1)
+
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(Theme.labelSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var tipFooter: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "heart.text.square.fill")
@@ -395,12 +445,12 @@ struct HelpCenterView: View {
                     "a clinician if you have concerns about sleep apnoea or breathing."
                 )
                 .font(.caption)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(16)
-        .background(Theme.surface.opacity(0.65), in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
     }
 }
 

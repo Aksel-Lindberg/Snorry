@@ -391,7 +391,7 @@ struct HomeView: View {
                 lastSessionEmptyMetrics
                 Text("No recordings yet.")
                     .font(.caption2)
-                    .foregroundStyle(Theme.labelTertiary)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 4)

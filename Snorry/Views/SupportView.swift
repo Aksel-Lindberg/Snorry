@@ -74,7 +74,7 @@ struct SupportView: View {
 
             Text("Include your iPhone model, iOS version, app version, and a short issue description for faster support.")
                 .font(.caption)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(16)
