@@ -370,7 +370,7 @@ struct SettingsView: View {
             Text(
                 subscription.hasPremiumAccess
                     ? "Premium includes unlimited recording, full Sleep History, and Insights. Manage billing in your Apple ID subscriptions."
-                    : "Free includes up to 10 recording sessions and your latest sleep session. Upgrade for unlimited recording, full history, and Insights."
+                    : "Free includes up to \(MonitoringUsageTracker.freeLimit) recording sessions and your latest sleep session. Upgrade for unlimited recording, full history, and Insights."
             )
             .foregroundStyle(Theme.labelSecondary)
             .font(.caption)
