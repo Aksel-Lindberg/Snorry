@@ -4,27 +4,27 @@
 
 Snorry ("the App") respects your privacy.
 
-**Summary:** Sleep audio, snore clips, session history, and waveforms stay on your iPhone — we do not upload them to our servers for storage or analysis. We use **Google Firebase Analytics** and **Meta App Events** to collect **anonymous app usage information** (for example which screens you use, whether monitoring was started, and whether you completed onboarding or viewed the subscription paywall) to improve the App and measure marketing performance. Sleep audio and detailed health session content are **not** sent to Firebase or Meta.
+**Summary:** Sleep audio, snore clips, session history, and waveforms stay on your iPhone — we do not upload them to our servers for storage or analysis. We use **Google Firebase Analytics** and **Meta App Events** to collect **anonymous app usage information** (for example which screens you use, whether a recording session was started, and whether you completed onboarding or viewed the subscription paywall) to improve the App and measure marketing performance. Sleep audio and detailed health session content are **not** sent to Firebase or Meta.
 
 **Subscriptions:** Snorry offers a free plan and optional paid **Premium** subscriptions: **Premium Yearly** ($29.99/year after a 7-day free trial, where offered) and **Premium Monthly** ($4.99/month, where offered). **All payment and billing are handled by Apple** through your Apple ID. Snorry does not collect or store your payment card or bank details.
 
 ## 1. What Snorry Does
 
-Snorry is an on-device snoring monitoring and alert app.  
-The App listens for audio patterns related to snoring and can notify you locally on your iPhone and/or play an in-app alarm.
+Snorry is an on-device snore recording and alert app.  
+The App listens for audio patterns related to snoring during overnight recording sessions and can notify you locally on your iPhone and/or play an in-app alarm.
 
 ## 2. Not a Health App / Not Medical Use
 
 Snorry is **not** a Health app and is **not** a medical device.  
 Snorry does not provide medical advice, diagnosis, treatment, or health monitoring services.  
-It is intended only to monitor and alert the user regarding snoring behavior.
+It is intended only to detect snoring during recording sessions and alert you when snoring occurs.
 
 ## 3. Data Processed on Your Device
 
 Snorry is designed for local, on-device operation of sleep-related data:
 
 - Audio analysis is performed on your device.
-- App settings and app-generated monitoring data are retained locally on your device.
+- App settings and app-generated recording session data are retained locally on your device.
 - Snore session records, snore event clips, and waveform samples used for in-app charts remain stored locally unless you delete them or uninstall the App.
 
 **We do not operate a cloud service that receives or stores your sleep audio, snore recordings, or full session history.**
@@ -38,11 +38,11 @@ We use **Google Firebase Analytics** (Google LLC / Google Ireland Limited, depen
 - App opens and sessions (e.g. first open, session start)
 - Custom events, such as:
   - Completion of onboarding (whether microphone and notification permissions were granted — yes/no only)
-  - Start and stop of monitoring (whether push/sound alerts were enabled; **duration grouped into coarse buckets** such as under 30 minutes, 30 minutes to 2 hours, over 2 hours — not exact sleep timestamps)
+  - Start and stop of recording (whether push/sound alerts were enabled; **duration grouped into coarse buckets** such as under 30 minutes, 30 minutes to 2 hours, over 2 hours — not exact sleep timestamps)
   - Settings saved (which **categories** of settings changed, not exact values)
-  - Tab navigation (e.g. Monitor, History, Analytics, Settings)
+  - Tab navigation (e.g. Tonight, History, Insights, Settings)
   - Subscription-related events (non-financial), such as:
-    - Paywall viewed (optional source, e.g. History, Analytics, Settings, or monitoring limit — not tied to sleep content)
+    - Paywall viewed (optional source, e.g. History, Insights, Settings, or recording limit — not tied to sleep content)
     - Purchase started, purchase completed, or restore purchases tapped
     - These events do **not** include payment amounts, Apple ID, receipt data, or subscription account identifiers
 - Technical diagnostics the Firebase SDK may collect (e.g. device model, OS version, app version, crash-related data if enabled by the SDK)
@@ -77,7 +77,7 @@ Meta App Events collection is **disabled in the App until you grant permission**
   - In-app subscription purchases processed through Apple’s StoreKit (e.g. when you subscribe to Premium Yearly or Premium Monthly), which may include product identifiers and purchase-related signals used for ad measurement
 - **Standard events** we log in the App:
   - Completion of onboarding (registration complete)
-  - Subscription paywall viewed (optional source, e.g. History, Analytics, Settings, or monitoring limit — not tied to sleep content)
+  - Subscription paywall viewed (optional source, e.g. History, Insights, Settings, or recording limit — not tied to sleep content)
 - Technical data the Meta SDK may collect for analytics and attribution (e.g. device model, OS version, app version, IP address, and — if you authorized tracking — advertising identifiers such as IDFA)
 
 **What we do not send to Meta through our integration:**
@@ -161,7 +161,7 @@ If you deny these permissions, parts of the App may not function as intended.
 
 **On-device sleep data:**
 
-- You can stop monitoring at any time in the App.
+- You can stop recording at any time in the App.
 - You can reset app settings from within the App where available.
 - You can delete saved sleep sessions, clips, and related data using **Settings → Delete All Sleep & Settings Logs**.
 - You can delete all locally retained app data by uninstalling the App.

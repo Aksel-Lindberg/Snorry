@@ -2,13 +2,15 @@
 
 Welcome to Snorry support.
 
-Snorry helps you monitor snoring during sleep, review session history, and manage alerts.
+Snorry helps you **record snoring overnight**, review **Sleep History**, explore trends in **Insights** (Premium), and manage snore alerts. All sleep audio and session data stay on your iPhone.
 
 ## Contact Support
 
-If you need help, contact:
+If you need help with recording, alerts, logs, or playback, contact:
 
-- Email: aksel.lindberg@lintech.no
+- Email: [Support@lintech.no](mailto:Support@lintech.no)
+
+Include your iPhone model, iOS version, app version, and a short issue description for faster support.
 
 We aim to respond as quickly as possible.
 
@@ -16,37 +18,46 @@ We aim to respond as quickly as possible.
 
 ### Microphone Permission
 
-Snorry needs microphone access to detect snoring.
+Snorry needs microphone access to detect snoring on your device.
 
-If monitoring does not start:
+If recording does not start:
 
-1. Open `Settings` on iPhone.
-2. Go to `Privacy & Security` > `Microphone`.
-3. Enable access for `Snorry`.
+1. Open **Settings** on iPhone.
+2. Go to **Privacy & Security** > **Microphone**.
+3. Enable access for **Snorry**.
+
+On the **Tonight** tab, Snorry also shows a short prompt when microphone access is still pending or denied.
 
 ### Notifications Not Showing
 
-Snorry can send local push alerts when snoring is detected.
+Snorry sends **local push notifications** when snoring is detected (if push alerts are enabled in app Settings).
 
 If you do not receive alerts:
 
-1. Open `Settings` on iPhone.
-2. Go to `Notifications` > `Snorry`.
-3. Enable `Allow Notifications`.
-4. In Snorry, verify alert settings are enabled.
+1. Open **Settings** on iPhone.
+2. Go to **Notifications** > **Snorry**.
+3. Enable **Allow Notifications**.
+4. In Snorry, open **Settings** and verify **Push notifications** and/or **Sound alarm** are enabled.
+
+Alerts may also appear on a paired Apple Watch like other iOS notifications. Snorry does not include a watchOS app.
 
 ### Delete Logs
 
 You can delete all sleep and settings logs in the app:
 
-- Open `Settings` in Snorry.
-- Tap `Delete All Sleep & Settings Logs`.
+1. Open **Settings** in Snorry.
+2. Tap **Delete All Sleep & Settings Logs**.
 
-This permanently removes saved sleep sessions, snore events, and related log history.
+This permanently removes every saved sleep session, snore clip, waveform, and **Insights** settings-change marker. Your current Settings values are not changed. You must **stop recording** before deleting logs.
 
 ### Audio Clips
 
-Snore clips are stored locally on your device and are used to support session review features.
+Snore clips are stored locally on your device and used for session review features in **Sleep History**.
+
+### Free and Premium Plans
+
+- **Free** — Up to **20 recording sessions**, your latest sleep session in Sleep History, and local storage of older sessions (older sessions are locked without Premium). **Insights** is not available on the Free plan.
+- **Premium** — Unlimited recording, full Sleep History, and Insights. Manage or restore subscriptions in **Settings → Subscription** or through your [Apple ID subscriptions](https://apps.apple.com/account/subscriptions).
 
 ## Troubleshooting
 
@@ -54,16 +65,13 @@ If the app behaves unexpectedly:
 
 1. Close and reopen Snorry.
 2. Restart your iPhone.
-3. Confirm you are using the latest app version.
-4. Contact support and include:
-   - iPhone model
-   - iOS version
-   - App version
-   - A short description of the issue
+3. Update to the latest app version.
+4. If still unresolved, contact support by email.
 
 ## Privacy
 
-Snorry is designed to process and store session data on-device.
+Sleep sessions, snore clips, and waveforms are processed and stored on your iPhone. They are not uploaded for cloud storage or analysis.
 
-For privacy details, refer to the app Privacy Policy URL listed on the App Store page.
+Snorry may send anonymous app usage data (such as screens visited and feature use) to Google Firebase Analytics and Meta App Events to improve the app and measure marketing performance. Sleep audio and health session content are not included. On first launch, iOS asks for tracking permission via App Tracking Transparency before analytics are collected.
 
+For full details, see the [Privacy Policy](https://snorry.lintech.no/privacy-policy/).

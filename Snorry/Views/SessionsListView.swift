@@ -152,7 +152,7 @@ struct SessionRowView: View {
                     Text("\(session.displayEventCount)")
                         .fontWeight(.bold)
                         .frame(width: 24, alignment: .trailing)
-                    Text("events")
+                    Text("snore events")
                 }
                 .font(.caption)
                 .foregroundStyle(Theme.snoring)

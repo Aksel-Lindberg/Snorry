@@ -82,7 +82,7 @@ struct SettingsView: View {
         .frame(maxWidth: horizontalSizeClass == .regular ? 820 : .infinity)
         .frame(maxWidth: .infinity)
         .confirmationDialog(
-            "Delete all sleep logs and settings history?",
+            "Delete all sleep and settings logs?",
             isPresented: $confirmDeleteAllLogs,
             titleVisibility: .visible
         ) {
@@ -93,7 +93,7 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(
-                "This permanently removes every saved sleep session, snore clips, and settings-change markers used in Insights. Your current Settings values are not changed."
+                "This permanently removes every saved sleep session, snore clip, waveform, and Insights settings-change marker. Your current Settings values are not changed. Stop recording before deleting."
             )
         }
         .alert(
@@ -182,7 +182,7 @@ struct SettingsView: View {
             .tint(Theme.accent)
 
             SliderRow(
-                label: "Repeat Push notification every",
+                label: "Repeat push notification every",
                 value: Binding(get: { vm.pushRepeatInterval },
                                set: { vm.pushRepeatInterval = $0 }),
                 range: 1...10,
@@ -192,7 +192,7 @@ struct SettingsView: View {
             .disabled(!vm.pushNotificationEnabled)
             .opacity(vm.pushNotificationEnabled ? 1 : 0.45)
         } header: {
-            Text("Alert channels")
+            Text("Alert Channels")
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
             VStack(alignment: .leading, spacing: 6) {
@@ -313,7 +313,7 @@ struct SettingsView: View {
             }
         } footer: {
             Text(
-                "Delete All removes every sleep session, waveform, snore clip, and settings-change history. Current preferences stay as they are."
+                "Removes every sleep session, snore clip, waveform, and Insights settings-change marker. Current Settings values are not changed."
             )
             .foregroundStyle(Theme.labelSecondary)
             .font(.caption)
@@ -370,7 +370,7 @@ struct SettingsView: View {
             Text(
                 subscription.hasPremiumAccess
                     ? "Premium includes unlimited recording, full Sleep History, and Insights. Manage billing in your Apple ID subscriptions."
-                    : "Free includes up to \(MonitoringUsageTracker.freeLimit) recording sessions and your latest sleep session. Upgrade for unlimited recording, full history, and Insights."
+                    : "Free includes up to \(MonitoringUsageTracker.freeLimit) recording sessions and your latest sleep session. Upgrade for unlimited recording, full Sleep History, and Insights."
             )
             .foregroundStyle(Theme.labelSecondary)
             .font(.caption)

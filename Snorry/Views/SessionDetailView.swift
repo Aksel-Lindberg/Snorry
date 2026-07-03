@@ -2,16 +2,13 @@ import SwiftUI
 import SwiftData
 import Charts
 import AVFoundation
-import UserNotifications
 
 // MARK: - Detailed session replay screen
 struct SessionDetailView: View {
 
     let session: SnoreSession
     @Environment(\.modelContext) private var modelContext
-    @Query private var alertSettingsRows: [AlertSettings]
     @State private var vm: SessionDetailViewModel?
-    @State private var notificationsAuthorized = false
 
     var body: some View {
         ZStack {
@@ -22,12 +19,8 @@ struct SessionDetailView: View {
                     VStack(spacing: 20) {
                         statsCards(vm: vm)
                         watchSnoreCard(vm: vm)
-                        if let settings = alertSettingsRows.first {
-                            AlertSetupSummaryCard(
-                                settings: settings,
-                                notificationsAuthorized: notificationsAuthorized,
-                                caption: "Current preferences · same as Tonight tab"
-                            )
+                        if let alertCard = AlertSetupSummaryCard.forSession(session) {
+                            alertCard
                         }
                         timelineChart(vm: vm)
                         eventsList(vm: vm)
@@ -51,28 +44,16 @@ struct SessionDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .onAppear {
-            ensureAlertSettingsRowExists()
-        }
         .task(id: session.id) {
             vm = await SessionDetailViewModel.prepare(session: session, modelContext: modelContext)
         }
-        .task {
-            let status = await NotificationManager.shared.checkAuthorisationStatus()
-            notificationsAuthorized = (status == .authorized)
-        }
         .onDisappear { vm?.tearDownPlayback() }
-    }
-
-    private func ensureAlertSettingsRowExists() {
-        guard alertSettingsRows.isEmpty else { return }
-        _ = AlertSettings.load(context: modelContext)
     }
 
     // MARK: Stats row
 
     private func statsCards(vm: SessionDetailViewModel) -> some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             StatCard(label: "Sleep duration", value: vm.durationString, icon: "clock")
             // Snore events / duration use snoring-only counts from the session rollup.
             StatCard(label: "Snore events", value: "\(session.displayEventCount)", icon: "waveform.badge.exclamationmark")
@@ -339,9 +320,9 @@ private struct StatCard: View {
                 .font(.caption)
                 .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .multilineTextAlignment(.center)
-                .lineLimit(2)
-                // Same label footprint for every card so row height stays uniform when a label wraps.
-                .frame(maxWidth: .infinity, minHeight: 30, alignment: .top)
+                .lineLimit(2, reservesSpace: true)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)

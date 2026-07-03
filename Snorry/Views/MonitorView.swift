@@ -85,7 +85,7 @@ struct MonitorView: View {
                 .foregroundStyle(Theme.labelPrimary)
                 .multilineTextAlignment(.center)
 
-            Text("We're listening for snores")
+            Text("We're listening for snores.")
                 .font(Theme.handwritten(size: horizontalSizeClass == .regular ? 17 : 19))
                 .foregroundStyle(Theme.handwrittenGradient)
                 .multilineTextAlignment(.center)
@@ -350,7 +350,7 @@ struct MonitorView: View {
         switch vm.alertPhase {
         case .notified:   return "Push notification sent"
         case .alarming:   return "Alarm active"
-        case .cleared:    return "Alert Cleared"
+        case .cleared:    return "Alert cleared"
         default:          return ""
         }
     }

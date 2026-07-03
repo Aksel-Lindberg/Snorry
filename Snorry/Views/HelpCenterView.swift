@@ -24,7 +24,7 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .gettingStarted,
                             title: "First launch & privacy",
-                            subtitle: "Onboarding, microphone, notifications, analytics, legal",
+                            subtitle: "Onboarding, microphone, notifications, usage analytics, legal",
                             systemImage: "sparkles"
                         ) {
                             HelpBullet(
@@ -35,12 +35,12 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "mic.fill",
                                 title: "Microphone",
-                                detail: "Snorry analyses audio on-device to detect snoring-like patterns. Recording cannot run without access—if permission is still pending or denied, the Tonight tab shows a short prompt; undetermined access opens a permissions sheet when you tap Start."
+                                detail: "Snorry analyzes audio on-device to detect snoring-like patterns. Recording cannot run without access—if permission is still pending or denied, the Tonight tab shows a short prompt; undetermined access opens a permissions sheet when you tap Start."
                             )
                             HelpBullet(
                                 icon: "bell.badge.fill",
                                 title: "Notifications",
-                                detail: "Snore alerts use standard local notifications on this iPhone (they can mirror to a paired watch like any iOS alert). Onboarding requests notification permission together with the microphone; later you can enable or disable push alerts in Settings."
+                                detail: "Snore alerts use standard local notifications on this iPhone (they can mirror to your paired watch like any iOS alert). Onboarding requests notification permission together with the microphone; later you can enable or disable push notifications in Settings."
                             )
                             HelpBullet(
                                 icon: "chart.bar.doc.horizontal",
@@ -55,7 +55,7 @@ struct HelpCenterView: View {
                             subtitle: "Four tabs — Tonight, History, Insights, Settings",
                             systemImage: "square.grid.2x2.fill"
                         ) {
-                            tabChip(icon: "moon.stars.fill", name: "Tonight", hint: "Start sessions and see your latest summary.")
+                            tabChip(icon: "moon.stars.fill", name: "Tonight", hint: "Start recording and see your latest summary.")
                             tabChip(icon: "clock.arrow.circlepath", name: "History", hint: "Browse past nights and open session details.")
                             tabChip(icon: "chart.line.uptrend.xyaxis", name: "Insights", hint: "Trends, charts, and how settings relate to snore duration.")
                             tabChip(icon: "gearshape", name: "Settings", hint: "Alert channels and timings, alarm style, support, reset/delete logs, and legal links.")
@@ -80,12 +80,12 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "clock.fill",
                                 title: "Last Session",
-                                detail: "When you have completed nights, the card summarises the most recent session: sleep duration, snore event count, and total snore time (counts confirmed snoring, not other sound categories). Before your first completed night, the card shows placeholders and “No recordings yet.”"
+                                detail: "When you have completed nights, the card summarizes the most recent session: sleep duration, snore event count, and total snore time (counts confirmed snoring, not other sound categories). Before your first completed night, the card shows placeholders and “No recordings yet.”"
                             )
                             HelpBullet(
                                 icon: "applewatch",
                                 title: "Apple Watch",
-                                detail: "Snorry is iPhone-only. Snore alerts are local notifications; they can mirror to your watch if iPhone alerts mirror to Apple Watch. " +
+                                detail: "Snorry is iPhone-only. Snore alerts are local notifications; they can mirror to your paired watch (including Apple Watch) if iPhone alerts mirror to the watch. " +
                                     "There is no watchOS app—wrist delivery is not guaranteed."
                             )
                         }
@@ -119,7 +119,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chart.line.uptrend.xyaxis",
                                 title: "Live timeline",
-                                detail: "Charts roughly the last ten minutes of loudness with snoring stretches emphasised so you can see recent dynamics at a glance."
+                                detail: "Charts roughly the last ten minutes of loudness with snoring stretches emphasized so you can see recent dynamics at a glance."
                             )
                             HelpBullet(
                                 icon: "stop.circle.fill",
@@ -147,7 +147,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chevron.right.circle.fill",
                                 title: "Session detail",
-                                detail: "Shows duration stats, Snore Clock (snoring bouts only), a Session Timeline chart from saved waveform samples, and a Sound Events list. After nights with background recording, each event may be labelled Snoring, Sleep Talking, or Environment; tap a row with playback available to hear its AAC clip."
+                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, a Session Timeline chart from saved waveform samples, and a Sound Events list. After nights with background recording, each event may be labeled Snoring, Sleep Talking, or Environment; tap a row with playback available to hear its AAC clip."
                             )
                         }
 
@@ -160,7 +160,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "calendar",
                                 title: "Time range",
-                                detail: "Pick week, month, or three months to focus the charts and summary pills."
+                                detail: "Pick Week, Month, or 3 Months to focus the charts and summary pills."
                             )
                             HelpBullet(
                                 icon: "timer",
@@ -213,7 +213,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "arrow.counterclockwise",
                                 title: "Reset & delete logs",
-                                detail: "Reset to Defaults recreates alert preferences. Delete All Sleep & Settings Logs removes every session, clip, waveform, and Insights marker row—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
+                                detail: "Reset to Defaults recreates alert preferences. Delete All Sleep & Settings Logs removes every sleep session, snore clip, waveform, and Insights settings-change marker—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
                             )
                             HelpBullet(
                                 icon: "doc.text.fill",
@@ -405,10 +405,10 @@ struct HelpCenterView: View {
                 HowSnorryWorksFeatureRow(
                     icon: "applewatch",
                     iconColor: Theme.good,
-                    title: "Wrist Nudges via iOS-Compatible Smartwatch",
-                    description: "Snore alerts use standard iOS notifications, which may appear " +
-                                 "on your iOS-Compatible Smartwatch as a gentle haptic nudge — small enough to " +
-                                 "prompt a position change without fully waking you."
+                    title: "Snore alerts on your wrist",
+                    description: "Connect your watch and get Snore alerts on your wrist. Snore alerts use standard iOS notifications, which may appear " +
+                                 "on your paired watch as a gentle haptic nudge — small enough to " +
+                                 "prompt a position change without fully waking you. There is no watchOS app."
                 )
 
                 HowSnorryWorksFeatureRow(
@@ -504,7 +504,7 @@ struct HelpCenterView: View {
                     .foregroundStyle(Theme.labelPrimary)
                 Text(
                     "Snorry helps you notice patterns overnight. It does not replace medical advice—speak with " +
-                    "a clinician if you have concerns about sleep apnoea or breathing."
+                    "a clinician if you have concerns about sleep apnea or breathing."
                 )
                 .font(.caption)
                 .foregroundStyle(Theme.labelSecondary)

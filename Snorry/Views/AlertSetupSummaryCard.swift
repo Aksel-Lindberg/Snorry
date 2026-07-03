@@ -1,12 +1,46 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Alert summary values (live Settings or per-session snapshot)
+
+struct AlertSetupDisplay {
+    let pushNotificationEnabled: Bool
+    let soundAlarmEnabled: Bool
+    let alarmStyleRaw: Int
+    let pushRepeatIntervalSeconds: Double
+    let soundAlarmAfterSeconds: Double
+
+    init(settings: AlertSettings) {
+        pushNotificationEnabled = settings.pushNotificationEnabled
+        soundAlarmEnabled = settings.soundAlarmEnabled
+        alarmStyleRaw = settings.alarmStyleRaw
+        pushRepeatIntervalSeconds = settings.pushRepeatIntervalSeconds
+        soundAlarmAfterSeconds = settings.soundAlarmAfterSeconds
+    }
+
+    /// Builds from fields captured when a recording session started.
+    init?(session: SnoreSession) {
+        guard let push = session.snapshotPushEnabled,
+              let sound = session.snapshotSoundEnabled,
+              let style = session.snapshotAlarmStyleRaw else {
+            return nil
+        }
+        pushNotificationEnabled = push
+        soundAlarmEnabled = sound
+        alarmStyleRaw = style
+        soundAlarmAfterSeconds = session.snapshotSoundAlarmAfterSeconds ?? 10
+        pushRepeatIntervalSeconds = session.snapshotPushRepeatIntervalSeconds ?? 3
+    }
+}
+
 // MARK: - Shared alert / notification summary (Monitor tab, Session detail, etc.)
 
 struct AlertSetupSummaryCard: View {
 
-    let settings: AlertSettings
+    let display: AlertSetupDisplay
     var notificationsAuthorized: Bool
+    /// When true, omits live notification-permission warnings (session detail snapshot).
+    var isSessionSnapshot: Bool = false
     /// Short line under the title (context-specific copy).
     var caption: String
     /// Tighter padding and typography on Monitor home (saves vertical space above tab bar).
@@ -34,8 +68,9 @@ struct AlertSetupSummaryCard: View {
         footerLinkTitle: String? = nil,
         onFooterLinkTap: (() -> Void)? = nil
     ) {
-        self.settings = settings
+        self.display = AlertSetupDisplay(settings: settings)
         self.notificationsAuthorized = notificationsAuthorized
+        self.isSessionSnapshot = false
         self.caption = caption
         self.compact = compact
         self.collapsible = collapsible
@@ -44,6 +79,34 @@ struct AlertSetupSummaryCard: View {
         self.footerLinkTitle = footerLinkTitle
         self.onFooterLinkTap = onFooterLinkTap
         _isExpanded = State(initialValue: collapsible ? !startsCollapsed : true)
+    }
+
+    /// Session detail — nil when the session has no alert snapshot (legacy rows).
+    static func forSession(_ session: SnoreSession) -> AlertSetupSummaryCard? {
+        guard AlertSetupDisplay(session: session) != nil else { return nil }
+        return AlertSetupSummaryCard(
+            display: AlertSetupDisplay(session: session)!,
+            caption: "Alert setup for this recording",
+            isSessionSnapshot: true
+        )
+    }
+
+    private init(
+        display: AlertSetupDisplay,
+        caption: String,
+        isSessionSnapshot: Bool
+    ) {
+        self.display = display
+        self.notificationsAuthorized = false
+        self.isSessionSnapshot = isSessionSnapshot
+        self.caption = caption
+        self.compact = false
+        self.collapsible = false
+        self.startsCollapsed = true
+        self.onExpandedChange = nil
+        self.footerLinkTitle = nil
+        self.onFooterLinkTap = nil
+        _isExpanded = State(initialValue: true)
     }
 
     var body: some View {
@@ -120,7 +183,7 @@ struct AlertSetupSummaryCard: View {
 
     private var collapsedSummary: some View {
         VStack(alignment: .leading, spacing: compact ? 4 : 6) {
-            Text(Self.oneLineSummary(settings: settings))
+            Text(Self.oneLineSummary(display: display))
                 .font(compact ? .caption2 : .caption)
                 .foregroundStyle(Theme.labelPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -140,11 +203,16 @@ struct AlertSetupSummaryCard: View {
     }
 
     private var collapsedWarningText: (icon: String, message: String)? {
-        if settings.pushNotificationEnabled && !notificationsAuthorized {
+        if !isSessionSnapshot,
+           display.pushNotificationEnabled,
+           !notificationsAuthorized {
             return ("exclamationmark.triangle.fill", "Enable notifications for Snorry in Settings.")
         }
-        if !settings.pushNotificationEnabled && !settings.soundAlarmEnabled {
-            return ("exclamationmark.circle.fill", "No alerts will fire until you enable push and/or sound.")
+        if !display.pushNotificationEnabled, !display.soundAlarmEnabled {
+            let message = isSessionSnapshot
+                ? "No push or sound alerts were enabled for this recording."
+                : "No alerts will fire until you enable push and/or sound."
+            return ("exclamationmark.circle.fill", message)
         }
         return nil
     }
@@ -152,7 +220,7 @@ struct AlertSetupSummaryCard: View {
     // MARK: - Expanded content
 
     private var cardContent: some View {
-        let style = AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic
+        let style = AlarmStyle(rawValue: display.alarmStyleRaw) ?? .classic
 
         return VStack(alignment: .leading, spacing: blockSpacing) {
             if !collapsible {
@@ -162,17 +230,17 @@ struct AlertSetupSummaryCard: View {
             VStack(alignment: .leading, spacing: rowSpacing) {
                 summaryRow(
                     icon: "bell.badge.fill",
-                    iconTint: settings.pushNotificationEnabled ? Theme.accent : Theme.labelTertiary,
+                    iconTint: display.pushNotificationEnabled ? Theme.accent : Theme.labelTertiary,
                     title: "Push notifications",
-                    detail: Self.pushNotificationSummary(settings: settings),
+                    detail: Self.pushNotificationSummary(display: display),
                     compact: compact
                 )
 
                 summaryRow(
                     icon: "speaker.wave.3.fill",
-                    iconTint: settings.soundAlarmEnabled ? Theme.accent : Theme.labelTertiary,
+                    iconTint: display.soundAlarmEnabled ? Theme.accent : Theme.labelTertiary,
                     title: "Sound alarm",
-                    detail: Self.soundAlarmSummary(settings: settings),
+                    detail: Self.soundAlarmSummary(display: display),
                     compact: compact
                 )
             }
@@ -200,9 +268,11 @@ struct AlertSetupSummaryCard: View {
                 }
                 Spacer(minLength: 0)
             }
-            .opacity(settings.soundAlarmEnabled ? 1 : 0.45)
+            .opacity(display.soundAlarmEnabled ? 1 : 0.45)
 
-            if settings.pushNotificationEnabled && !notificationsAuthorized {
+            if !isSessionSnapshot,
+               display.pushNotificationEnabled,
+               !notificationsAuthorized {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(Theme.snoring)
@@ -213,11 +283,15 @@ struct AlertSetupSummaryCard: View {
                 }
             }
 
-            if !settings.pushNotificationEnabled && !settings.soundAlarmEnabled {
+            if !display.pushNotificationEnabled, !display.soundAlarmEnabled {
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.circle.fill")
                         .foregroundStyle(Theme.snoring)
-                    Text("No alerts will fire until you enable push and/or sound in Settings.")
+                    Text(
+                        isSessionSnapshot
+                            ? "No push or sound alerts were enabled for this recording."
+                            : "No alerts will fire until you enable push and/or sound in Settings."
+                    )
                         .font(compact ? .caption2 : .caption)
                         .foregroundStyle(Theme.snoring.opacity(0.95))
                         .fixedSize(horizontal: false, vertical: true)
@@ -262,26 +336,26 @@ struct AlertSetupSummaryCard: View {
         }
     }
 
-    private static func oneLineSummary(settings: AlertSettings) -> String {
-        let push = settings.pushNotificationEnabled ? "Push on" : "Push off"
-        let sound = settings.soundAlarmEnabled ? "Sound on" : "Sound off"
-        let style = AlarmStyle(rawValue: settings.alarmStyleRaw) ?? .classic
+    private static func oneLineSummary(display: AlertSetupDisplay) -> String {
+        let push = display.pushNotificationEnabled ? "Push on" : "Push off"
+        let sound = display.soundAlarmEnabled ? "Sound on" : "Sound off"
+        let style = AlarmStyle(rawValue: display.alarmStyleRaw) ?? .classic
         return "\(push) · \(sound) · \(style.displayName)"
     }
 
-    private static func pushNotificationSummary(settings: AlertSettings) -> String {
-        guard settings.pushNotificationEnabled else {
+    private static func pushNotificationSummary(display: AlertSetupDisplay) -> String {
+        guard display.pushNotificationEnabled else {
             return "Off"
         }
-        let repeatEvery = Int(settings.pushRepeatIntervalSeconds)
+        let repeatEvery = Int(display.pushRepeatIntervalSeconds)
         return "On · first push after 2 s of snoring · repeats every \(repeatEvery) s"
     }
 
-    private static func soundAlarmSummary(settings: AlertSettings) -> String {
-        guard settings.soundAlarmEnabled else {
+    private static func soundAlarmSummary(display: AlertSetupDisplay) -> String {
+        guard display.soundAlarmEnabled else {
             return "Off"
         }
-        let delay = Int(settings.soundAlarmAfterSeconds)
+        let delay = Int(display.soundAlarmAfterSeconds)
         return "On · starts after \(delay) s"
     }
 

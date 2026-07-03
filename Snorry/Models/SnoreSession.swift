@@ -25,6 +25,17 @@ final class SnoreSession {
     var snapshotSoundEnabled: Bool?
     /// Raw value of `AlarmStyle` active when monitoring began.
     var snapshotAlarmStyleRaw: Int?
+    /// Sound-alarm delay (seconds) when recording began; nil on legacy rows.
+    var snapshotSoundAlarmAfterSeconds: Double?
+    /// Push repeat interval (seconds) when recording began; nil on legacy rows.
+    var snapshotPushRepeatIntervalSeconds: Double?
+
+    /// True when alert channels were captured at recording start.
+    var hasAlertSnapshot: Bool {
+        snapshotPushEnabled != nil &&
+        snapshotSoundEnabled != nil &&
+        snapshotAlarmStyleRaw != nil
+    }
 
     /// True when the device was locked or the app was backgrounded at any point
     /// during this session — triggers post-stop SoundAnalysis clip classification.

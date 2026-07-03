@@ -206,7 +206,7 @@ private struct AnalyticsContent: View {
             if !vm.settingsChanges.isEmpty {
                 HStack(spacing: 4) {
                     Circle().fill(Theme.warning).frame(width: 8, height: 8)
-                    Text("Settings changed")
+                    Text("Settings changes")
                         .font(.caption2)
                         .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 }
@@ -242,7 +242,7 @@ private struct AnalyticsContent: View {
                 .padding(.top, 1)
             Text(
                 "Settings change markers will appear on the chart once you save changes in " +
-                "Settings. This lets you track which Push Notification or Alarm settings " +
+                "Settings. This lets you track which push notification or alarm settings " +
                 "affected your snore duration and event count."
             )
             .font(.caption)
@@ -494,7 +494,7 @@ private struct SettingsChangeLegend: View {
     private var header: some View {
         HStack(spacing: 8) {
             Circle().fill(Theme.warning).frame(width: 8, height: 8)
-            Text("Settings Changes")
+            Text("Settings changes")
                 .font(.headline)
                 .foregroundStyle(Theme.labelPrimary)
         }

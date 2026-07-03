@@ -288,6 +288,8 @@ final class MonitorViewModel {
         session.snapshotPushEnabled    = settings.pushNotificationEnabled
         session.snapshotSoundEnabled   = settings.soundAlarmEnabled
         session.snapshotAlarmStyleRaw  = settings.alarmStyleRaw
+        session.snapshotSoundAlarmAfterSeconds = settings.soundAlarmAfterSeconds
+        session.snapshotPushRepeatIntervalSeconds = settings.pushRepeatIntervalSeconds
 
         sessionPushEnabled        = settings.pushNotificationEnabled
         sessionSoundEnabled       = settings.soundAlarmEnabled

@@ -204,15 +204,15 @@ private struct ConsentPage: View {
                         icon: "mic.fill",
                         title: "Microphone",
                         description: "Required to listen for snoring during sleep. " +
-                                     "Audio is analysed locally on your iPhone and never uploaded or shared."
+                                     "Audio is analyzed locally on your iPhone and never uploaded or shared."
                     )
 
                     ConsentRow(
                         icon: "bell.badge.fill",
                         title: "Notifications",
                         description: "Used to send snore alerts while you sleep. Standard iOS local " +
-                                     "notifications — they can appear on your iOS-Compatible Smartwatch so you get " +
-                                     "wrist nudges that help you stop snoring without waking up."
+                                     "notifications — they can mirror to your paired watch (including Apple Watch) " +
+                                     "so you get Snore alerts on your wrist. There is no watchOS app."
                     )
                 }
 

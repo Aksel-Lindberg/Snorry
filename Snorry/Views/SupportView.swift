@@ -101,7 +101,7 @@ struct SupportView: View {
             supportBullet(
                 icon: "trash.fill",
                 title: "Delete Logs",
-                detail: "Use Settings > Delete All Sleep & Settings Logs to permanently remove saved sessions, snore events, and settings-change history."
+                detail: "Use Settings > Delete All Sleep & Settings Logs to permanently remove every saved sleep session, snore clip, waveform, and Insights settings-change marker."
             )
             supportBullet(
                 icon: "waveform",
