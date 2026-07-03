@@ -100,8 +100,8 @@ Meta may combine App Events with information it already holds if you use Meta se
 
 Snorry offers two usage tiers:
 
-- **Free plan** — Includes up to **10 monitoring sessions**, access to your **most recent** sleep session in Sleep History, and local storage of older sessions on your device (older sessions are not fully accessible without Premium). The Analytics feature is not available on the Free plan.
-- **Premium plan** — Optional auto-renewable subscription (yearly or monthly) that unlocks **unlimited monitoring**, full Sleep History, and Analytics. Pricing, free-trial eligibility, and renewal terms are shown in the App and on Apple’s purchase sheet before you subscribe.
+- **Free plan** — Includes up to **20 recording sessions**, access to your **most recent** sleep session in Sleep History, and local storage of older sessions on your device (older sessions are not fully accessible without Premium). The Insights feature is not available on the Free plan.
+- **Premium plan** — Optional auto-renewable subscription (yearly or monthly) that unlocks **unlimited recording**, full Sleep History, and Insights. Pricing, free-trial eligibility, and renewal terms are shown in the App and on Apple’s purchase sheet before you subscribe.
 
 ### Premium subscription options
 

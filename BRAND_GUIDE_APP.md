@@ -15,7 +15,7 @@ Use consistent user-facing language. Internal Swift names (`MonitorViewModel`, `
 | Context | Term | Example |
 |---------|------|---------|
 | Tab label | **Tonight** | Bottom nav (formerly Monitor) |
-| Session limits / counts | **recording** | "8 free recording sessions remaining" |
+| Session limits / counts | **recording** | "20 free recording sessions remaining" |
 | Start / stop actions | **recording** | Nav title **Recording**; "Stop Recording"; VoiceOver "Start recording" |
 | Live session reassurance | **listening** | Subline **We're listening for snores.** (not the nav title) |
 | Marketing primary | **Understand your Nights** | Future header/onboarding pass |

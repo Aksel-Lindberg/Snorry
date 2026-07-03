@@ -264,19 +264,6 @@ struct HelpCenterView: View {
         var id: String { rawValue }
     }
 
-    private func binding(for section: HelpSection) -> Binding<Bool> {
-        Binding(
-            get: { openSection == section },
-            set: { isOn in
-                if isOn {
-                    openSection = section
-                } else if openSection == section {
-                    openSection = nil
-                }
-            }
-        )
-    }
-
     private var introHero: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
@@ -321,12 +308,11 @@ struct HelpCenterView: View {
         systemImage: String,
         @ViewBuilder content: @escaping () -> some View
     ) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            DisclosureGroup(isExpanded: binding(for: section)) {
-                VStack(alignment: .leading, spacing: 14) {
-                    content()
-                }
-                .padding(.top, 12)
+        let isExpanded = openSection == section
+
+        return VStack(alignment: .leading, spacing: 0) {
+            Button {
+                openSection = isExpanded ? nil : section
             } label: {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: systemImage)
@@ -344,11 +330,29 @@ struct HelpCenterView: View {
                             .foregroundStyle(Theme.labelSecondary)
                             .multilineTextAlignment(.leading)
                     }
+
                     Spacer(minLength: 0)
+
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .padding(.top, 2)
+                        .accessibilityHidden(true)
                 }
                 .padding(.vertical, 4)
             }
-            .tint(Theme.accent)
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityLabel(title)
+            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+            .accessibilityHint(isExpanded ? "Collapse section" : "Expand section")
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 14) {
+                    content()
+                }
+                .padding(.top, 12)
+            }
         }
         .padding(16)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
