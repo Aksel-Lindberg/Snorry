@@ -1,9 +1,11 @@
 # Snorry — Feature Description & Use Cases
 
-**Snorry** is an iPhone app for overnight snore monitoring, gentle alerts, and personal sleep-noise insights. Audio is analysed **on your device**; sleep sessions, clips, and charts are stored **locally**. Anonymous **usage analytics** (Firebase) may be collected to improve the app — not sleep recordings.
+**Snorry** is an iPhone app for overnight snore recording and insight, gentle alerts, and personal sleep-noise trends. Audio is analysed **on your device**; sleep sessions, clips, and charts are stored **locally**. Anonymous **usage analytics** (Firebase) may be collected to improve the app — not sleep recordings.
 
 **Platform:** iPhone (iOS). No watchOS app; alerts may mirror to Apple Watch via standard iOS notifications.  
 **Category:** Sleep / wellness tool — **not** a medical device or HealthKit clinical app.
+
+**Brand & UI copy:** [BRAND_GUIDE_APP.md](BRAND_GUIDE_APP.md) · Marketing PDF: [docs/resources/README.md](docs/resources/README.md)
 
 ---
 
@@ -11,12 +13,12 @@
 
 1. [App structure](#1-app-structure)
 2. [First launch & onboarding](#2-first-launch--onboarding)
-3. [Monitor — start & home](#3-monitor--start--home)
-4. [Live monitoring](#4-live-monitoring)
+3. [Tonight — start & home](#3-tonight--start--home)
+4. [Live recording session](#4-live-recording-session)
 5. [Alerts & escalation](#5-alerts--escalation)
 6. [History (Sleep History)](#6-history-sleep-history)
 7. [Session detail & playback](#7-session-detail--playback)
-8. [Analytics (trends)](#8-analytics-trends)
+8. [Insights (trends)](#8-insights-trends)
 9. [Settings](#9-settings)
 10. [Help & support](#10-help--support)
 11. [Privacy & data](#11-privacy--data)
@@ -31,12 +33,12 @@ After onboarding, Snorry uses a **four-tab** layout:
 
 | Tab | Purpose |
 |-----|---------|
-| **Monitor** | Start/stop overnight monitoring; alert summary; last session snapshot |
+| **Tonight** | Start/stop overnight recording; alert summary; last session snapshot |
 | **History** | List of past nights (“Sleep History”); open any session for detail |
-| **Analytics** | Charts and trends over time; settings-change markers; alert-profile comparison |
+| **Insights** | Charts and trends over time; settings-change markers; alert-profile comparison |
 | **Settings** | Alert channels, timings, alarm tone, support, reset/delete data, legal links |
 
-A contextual **Help** sheet is available from the Monitor tab (toolbar).
+A contextual **Help** sheet is available from the Tonight tab (toolbar).
 
 ---
 
@@ -64,13 +66,15 @@ A contextual **Help** sheet is available from the Monitor tab (toolbar).
 
 ---
 
-## 3. Monitor — start & home
+## 3. Tonight — start & home
 
 ### Features
 
-- **Large start control** (sleep animation) — tap to begin monitoring  
+- **Large start control** (sleep animation) — tap to begin recording; caption *Tap to start recording* below the circle  
+- **Free tier hint** — remaining recording sessions (Premium users omit this line)  
+- **Watch hint** — *Connect your watch · get Snore alerts on your wrist* below the hero stack  
 - **Alert setup summary card** — mirrors saved Settings: push on/off, sound alarm on/off, push delay (fixed 2 s), sound-alarm delay, repeat-push interval  
-- **Last Session card** — when available: sleep duration, snore event count, total snore time for the most recent **completed** night  
+- **Last Session card** — always visible; shows sleep duration, snore event count, and total snore time for the most recent **completed** night, or an empty state with em-dash placeholders and *No recordings yet.*
 - **Help** (toolbar) — opens Help Center  
 - **Permissions handling** — if mic access is missing, a sheet or system Settings prompt appears when you tap Start  
 
@@ -78,25 +82,27 @@ A contextual **Help** sheet is available from the Monitor tab (toolbar).
 
 | Scenario | How to use |
 |----------|------------|
-| Every night | Open Monitor → tap Start → lock phone (optional) → sleep |
+| Every night | Open Tonight → tap Start → lock phone (optional) → sleep |
 | Check tonight’s alert plan | Read Alert setup summary before starting; change in Settings if needed |
 | Quick recap of last night | Glance at Last Session without opening History |
 | Mic denied earlier | Tap Start → follow prompt to open iOS Settings and enable Microphone |
 
 ---
 
-## 4. Live monitoring
+## 4. Live recording session
 
 ### Features
 
-Opened automatically when monitoring starts. Stays active until you tap **Stop Monitoring** or monitoring ends.
+Opened automatically when recording starts. Nav title **Recording**; tab bar hidden. Greeting *Good night, {name}.* or *Good night.* (name optional in Settings → Profile); subline *We're listening for snores.* Stays active until you tap **Stop Recording** or the session ends.
 
 - **Status badge** — progresses through quiet / detecting / **snoring detected** (confirmation reduces false alarms)  
-- **Live power spectrum** — frequency-band view; breath-tempo harmonic highlighted when a bout is confirmed  
+- **Live power spectrum** — frequency-band view with short on-card subtext; tap ⓘ for technical detail; breath-tempo harmonic highlighted when a bout is confirmed  
 - **Metrics** — input level (dBFS), breath rate (BRPM) when available, **event count** (completed snore bouts)  
 - **Alert phase card** — shows push sent, alarm active, alert cleared, etc., when alerts are enabled  
 - **Live timeline** — ~last 10 minutes of loudness with snoring periods emphasised  
-- **Stop Monitoring** — ends session, saves to History; may show brief “finishing audio” / “classifying sounds” for background nights  
+- **Stop Recording** — sticky at bottom; ends session, saves to History; may show brief “finishing audio” / “classifying sounds” for background nights  
+
+**Leaving Recording while session runs:** A **Recording in progress · Return** banner appears on all tabs; Tonight shows **Return to recording** on the hero instead of Start.
 
 ### Background & locked iPhone
 
@@ -117,7 +123,7 @@ Opened automatically when monitoring starts. Stays active until you tap **Stop M
 
 ## 5. Alerts & escalation
 
-Configured in **Settings**; applied on the next monitoring session (and shown on Monitor home summary).
+Configured in **Settings**; applied on the next recording session (and shown on Tonight home summary).
 
 ### Channels
 
@@ -141,7 +147,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 | Subtle nudge | Push on, sound off; optional Watch mirroring |
 | Harder to ignore | Sound alarm on with shorter sound delay; pick a noticeable alarm style |
 | Avoid waking partner | Push-only; longer repeat interval |
-| Test what works | Change Settings → Save → run several nights → compare in **Analytics** (alert profile vs snore duration) |
+| Test what works | Change Settings → Save → run several nights → compare in **Insights** (alert profile vs snore duration) |
 
 ---
 
@@ -189,7 +195,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 ---
 
-## 8. Analytics (trends)
+## 8. Insights (trends)
 
 **Note:** This tab is **on-device sleep analytics** (charts from your sessions), not the Firebase usage dashboard.
 
@@ -213,6 +219,10 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 ---
 
 ## 9. Settings
+
+### Profile
+
+- **Your name** (optional) — used for *Good night, {name}.* on the live recording screen; first name only if you enter a full name  
 
 ### Alert configuration
 
@@ -247,7 +257,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 ### Features
 
-- **Help Center** (Monitor toolbar) — accordion sections: getting started, tabs, Monitor home, live monitoring, History, Analytics, Settings  
+- **Help Center** (Tonight toolbar) — accordion sections: getting started, tabs, Tonight home, live recording session, History, Insights, Settings  
 - **Support** (Settings) — email link, common topics (mic, notifications, delete logs, clips), troubleshooting steps, privacy text  
 
 ### Typical use
@@ -282,7 +292,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 1. Plug in iPhone.  
 2. Monitor → Start → lock phone.  
 3. Morning → Stop (if still running) or review Last Session / History.  
-4. Weekly → Analytics tab for trends.
+4. Weekly → Insights tab for trends.
 
 ---
 
@@ -312,10 +322,10 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 **Goal:** Find what reduces snore duration for you.
 
-1. Note current Analytics trend (week view).  
+1. Note current Insights trend (week view).  
 2. Change one setting (e.g. enable repeat push) → **Save**.  
 3. Use app for 7–14 nights.  
-4. Analytics → check new **settings marker** on chart and **Alert type vs snore duration** card.  
+4. Insights → check new **settings marker** on chart and **Alert type vs snore duration** card.  
 5. Interpret as personal correlation, not proven causation.
 
 ---
@@ -381,7 +391,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 - **iPhone-only app** — no native watchOS companion.  
 - **Partner / room noise** — may affect detection; classification helps but is not perfect.  
 - **Battery** — overnight mic use; charger recommended.  
-- **Analytics tab ≠ Firebase** — in-app charts are local; Firebase is product analytics only.  
+- **Insights tab ≠ Firebase** — in-app charts are local; Firebase is product analytics only.  
 - **No cloud backup of sessions** — device loss or delete removes history unless you use full device backup.
 
 ### Good practices

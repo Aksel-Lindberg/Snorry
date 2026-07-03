@@ -1,28 +1,29 @@
 import SwiftUI
 import Charts
 
-// MARK: - Live monitoring screen
+// MARK: - Live recording session screen
 struct MonitorView: View {
 
     @Bindable var vm: MonitorViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
 
     @State private var pulseAnimation = false
+    @State private var showSpectrumInfo = false
 
     /// Vertical gap between status, spectrum, metrics, and timeline cards.
     private var cardStackSpacing: CGFloat {
         horizontalSizeClass == .regular ? 20 : 12
     }
 
-    /// Gap between Live Timeline and Stop Monitoring.
-    private var stopButtonTopGap: CGFloat {
-        horizontalSizeClass == .regular ? 24 : 14
+    /// Visible gap between Stop Recording and the bottom safe area (tab bar hidden on this screen).
+    private var stopButtonBottomGap: CGFloat {
+        horizontalSizeClass == .regular ? 28 : 20
     }
 
-    /// Visible gap between Stop Monitoring and the tab bar.
-    private var stopButtonBottomGap: CGFloat {
-        horizontalSizeClass == .regular ? 20 : 24
+    private var horizontalPadding: CGFloat {
+        horizontalSizeClass == .regular ? 28 : 16
     }
 
     var body: some View {
@@ -31,37 +32,68 @@ struct MonitorView: View {
 
             ScrollView {
                 VStack(spacing: cardStackSpacing) {
+                    greetingHeader
                     statusBadge
                     spectrumCard
                     metricsRow
                     alertPhaseCard
-                    timelineAndStopSection
+                    timelineCard
                 }
-                .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
+                .padding(.horizontal, horizontalPadding)
                 .padding(.top, 12)
-                .padding(.bottom, stopButtonBottomGap)
+                .padding(.bottom, 8)
                 .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
                 .frame(maxWidth: .infinity)
             }
             .scrollIndicators(.hidden)
-            .clearsFloatingTabBar()
             .allowsHitTesting(!vm.isStoppingMonitoring)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                stopButton
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.top, 12)
+                    .padding(.bottom, stopButtonBottomGap)
+                    .background(
+                        Theme.background.opacity(0.92)
+                            .ignoresSafeArea(edges: .bottom)
+                    )
+            }
 
             if vm.isStoppingMonitoring {
                 stoppingOverlay
             }
         }
-        .navigationTitle("Monitoring")
+        .navigationTitle("Recording")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .toolbarBackground(Theme.background, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        // Dismiss whenever monitoring stops (button tap or external cause)
+        // Dismiss whenever recording stops (button tap or external cause)
         .onChange(of: vm.isMonitoring) { _, monitoring in
             if !monitoring { dismiss() }
+        }
+        .sheet(isPresented: $showSpectrumInfo) {
+            LiveSpectrumInfoSheet()
         }
     }
 
     // MARK: Sub-views
+
+    private var greetingHeader: some View {
+        VStack(spacing: 6) {
+            Text(UserPreferences.goodNightGreeting(displayName: userDisplayName))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Theme.labelPrimary)
+                .multilineTextAlignment(.center)
+
+            Text("We're listening for snores")
+                .font(Theme.handwritten(size: horizontalSizeClass == .regular ? 17 : 19))
+                .foregroundStyle(Theme.handwrittenGradient)
+                .multilineTextAlignment(.center)
+                .padding(.top, 3)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
 
     private var statusBadge: some View {
         HStack(spacing: 8) {
@@ -106,13 +138,29 @@ struct MonitorView: View {
 
     private var spectrumCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Live Power Spectrum")
-                .font(.caption.bold())
-                .foregroundStyle(Theme.labelSecondary)
+            HStack(alignment: .center, spacing: 8) {
+                Text("Live Power Spectrum")
+                    .font(.caption.bold())
+                    .foregroundStyle(Theme.labelSecondary)
 
-            Text("Log‑scaled power spectrum (45 Hz … Nyquist); red bars/rings = BRPM harmonic of breath tempo.")
+                Spacer(minLength: 0)
+
+                Button {
+                    showSpectrumInfo = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.accent)
+                        .symbolRenderingMode(.hierarchical)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Live power spectrum info")
+                .accessibilityHint("Opens technical details about the frequency view")
+            }
+
+            Text("Frequency view of tonight’s audio")
                 .font(.caption2)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             LivePowerSpectrumView(
@@ -127,7 +175,7 @@ struct MonitorView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("45 Hz")
                     .font(.caption2.monospacedDigit())
-                    .foregroundStyle(Theme.labelTertiary)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 Spacer()
                 if let hz = vm.spectrumBRPMHighlightHz, vm.detectionPhase == .confirmed, vm.brpmAvailable {
                     Text(String(format: "~%.0f Hz harmonic", hz))
@@ -137,7 +185,7 @@ struct MonitorView: View {
                 Spacer()
                 Text("\(nyquistLabel) Hz")
                     .font(.caption2.monospacedDigit())
-                    .foregroundStyle(Theme.labelTertiary)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
             }
         }
         .padding(16)
@@ -212,18 +260,6 @@ struct MonitorView: View {
         .animation(.spring(duration: 0.4), value: vm.alertPhase)
     }
 
-    /// Live timeline + stop control — equal gap above and below the stop button (iPhone).
-    private var timelineAndStopSection: some View {
-        VStack(spacing: 0) {
-            timelineCard
-
-            Color.clear
-                .frame(height: stopButtonTopGap)
-
-            stopButton
-        }
-    }
-
     @ViewBuilder
     private var timelineCard: some View {
         if !vm.timelinePoints.isEmpty {
@@ -249,7 +285,7 @@ struct MonitorView: View {
             HStack(spacing: 10) {
                 Image(systemName: "stop.circle.fill")
                     .font(.title2)
-                Text(vm.isStoppingMonitoring ? "Stopping…" : "Stop Monitoring")
+                Text(vm.isStoppingMonitoring ? "Stopping…" : "Stop Recording")
                     .font(.headline)
             }
             .foregroundStyle(.white)
@@ -258,6 +294,8 @@ struct MonitorView: View {
             .background(Theme.stopGradient, in: RoundedRectangle(cornerRadius: Theme.radiusButton))
         }
         .disabled(vm.isStoppingMonitoring)
+        .accessibilityLabel("Stop recording")
+        .accessibilityHint("Ends the session and saves to Sleep History")
     }
 
     private var stoppingOverlay: some View {
@@ -361,7 +399,7 @@ private struct MetricTile: View {
 
             Text(label)
                 .font(.caption2)
-                .foregroundStyle(Theme.labelSecondary)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
@@ -482,7 +520,7 @@ private struct LiveTimelineChart: View {
                             .second(.twoDigits))
                     }
                 }
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .font(.caption2)
             }
         }

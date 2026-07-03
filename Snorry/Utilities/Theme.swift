@@ -18,8 +18,12 @@ enum Theme {
     static let warning          = Color(red: 1.00, green: 0.80, blue: 0.20)   // amber (detecting pattern)
 
     static let labelPrimary     = Color.white
-    static let labelSecondary   = Color.white.opacity(0.60)
-    static let labelTertiary    = Color.white.opacity(0.35)
+    /// Body subtext — ~4.5:1 on background (WCAG AA).
+    static let labelSecondary   = Color.white.opacity(0.75)
+    /// Hints and footnotes — de-emphasized but readable on dark cards.
+    static let labelTertiary    = Color.white.opacity(0.52)
+    /// Sublabels on `surface` cards — higher opacity for WCAG AA on lighter card backgrounds.
+    static let labelOnSurfaceSecondary = Color.white.opacity(0.68)
 
     static let waveformBar      = Color(red: 0.50, green: 0.70, blue: 1.00)
     static let waveformSnore    = Color(red: 1.00, green: 0.55, blue: 0.40)

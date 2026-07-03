@@ -1,6 +1,8 @@
 # Snorry Subscription Setup (App Store Connect)
 
-This guide configures the **Free** and **Premium** plans for Snorry. The app uses StoreKit 2 with product IDs:
+This guide configures the **Free** and **Premium** plans for Snorry. See also [BRAND_GUIDE_APP.md](BRAND_GUIDE_APP.md) for user-facing copy standards.
+
+The app uses StoreKit 2 with product IDs:
 
 - `app.Snorry.Snorry.premium.yearly` — $29.99/year (7-day free trial)
 - `app.Snorry.Snorry.premium.monthly` — $4.99/month (no trial)
@@ -9,9 +11,9 @@ This guide configures the **Free** and **Premium** plans for Snorry. The app use
 
 | Plan | Price | Features |
 |------|-------|----------|
-| **Free** | Included | Up to 10 monitoring sessions, latest Sleep History session only |
-| **Premium Yearly** | $29.99/year (~$2.49/mo) | Unlimited monitoring, full Sleep History, Analytics |
-| **Premium Monthly** | $4.99/month | Unlimited monitoring, full Sleep History, Analytics |
+| **Free** | Included | Up to 10 recording sessions, latest Sleep History session only |
+| **Premium Yearly** | $29.99/year (~$2.49/mo) | Unlimited recording, full Sleep History, Insights |
+| **Premium Monthly** | $4.99/month | Unlimited recording, full Sleep History, Insights |
 | **Trial** | 7 days free | Applies to **Premium Yearly** only (first-time eligible subscribers) |
 
 ---
@@ -68,7 +70,7 @@ Inside the **Snorry Premium** group:
 
 4. **Localization** (English U.S. minimum):
    - **Display name:** `Premium Yearly`
-   - **Description:** `Unlimited monitoring, full Sleep History, and Analytics.`
+   - **Description:** `Unlimited recording, full Sleep History, and Insights.`
 
 5. Save the subscription
 
@@ -107,7 +109,7 @@ Inside the **Snorry Premium** group:
 
 4. **Localization** (English U.S. minimum):
    - **Display name:** `Premium Monthly`
-   - **Description:** `Unlimited monitoring, full Sleep History, and Analytics.`
+   - **Description:** `Unlimited recording, full Sleep History, and Insights.`
 
 5. **Do not** add an introductory offer on the monthly plan.
 
@@ -127,7 +129,7 @@ On the subscription group page, provide:
 Before App Store submission, update your privacy policy to mention:
 - Auto-renewable subscriptions are billed through Apple
 - Payment and subscription management are handled by Apple (not stored by Snorry)
-- Free vs Premium feature differences (10 monitoring sessions on Free)
+- Free vs Premium feature differences (10 recording sessions on Free)
 
 ---
 
@@ -157,7 +159,7 @@ Before App Store submission, update your privacy policy to mention:
 3. On test device: **Settings → App Store → Sandbox Account** → sign in
 4. Remove the StoreKit configuration from the Xcode scheme (set to **None**) to hit real sandbox APIs
 5. Verify:
-   - Free user: 10 monitoring starts allowed, then paywall on 11th; older History rows locked; Analytics locked
+   - Free user: 10 monitoring starts allowed, then paywall on 11th; older History rows locked; Insights locked
    - Subscribe (yearly): 1-week trial starts; full access unlocks immediately
    - Subscribe (monthly): charged immediately; full access unlocks
    - **Restore Purchases** in Settings works on a second device
@@ -199,5 +201,5 @@ Before App Store submission, update your privacy policy to mention:
 | `SubscriptionView.swift` | Paywall UI (yearly default, plan picker) |
 | `HomeView.swift` | Monitoring start gating |
 | `SessionsListView.swift` | History gating (latest session only on Free) |
-| `AnalyticsView.swift` | Analytics gating |
+| `AnalyticsView.swift` | Insights tab gating |
 | `SettingsView.swift` | Plan status, upgrade, restore, manage |

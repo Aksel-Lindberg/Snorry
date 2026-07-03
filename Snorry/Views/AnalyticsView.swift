@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 import SwiftData
 
-// MARK: - Analytics tab root (lazy-initialises the view model)
+// MARK: - Insights tab root (lazy-initialises the view model)
 struct AnalyticsView: View {
 
     @Environment(\.modelContext) private var context
@@ -24,12 +24,12 @@ struct AnalyticsView: View {
                     }
                 } else {
                     AnalyticsLockedView {
-                        AppAnalytics.logPaywallViewed(source: "analytics_tab")
+                        AppAnalytics.logPaywallViewed(source: "insights_tab")
                         showSubscription = true
                     }
                 }
             }
-            .navigationTitle("Analytics")
+            .navigationTitle("Insights")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
@@ -47,7 +47,7 @@ struct AnalyticsView: View {
                 vm?.refresh()
             }
             .sheet(isPresented: $showSubscription) {
-                SubscriptionView(paywallSource: "analytics_tab")
+                SubscriptionView(paywallSource: "insights_tab")
             }
         }
     }
@@ -63,7 +63,7 @@ private struct AnalyticsLockedView: View {
                 .font(.system(size: 56, weight: .thin))
                 .foregroundStyle(Theme.labelTertiary)
 
-            Text("Analytics is a Premium feature")
+            Text("Insights is a Premium feature")
                 .font(.title3.bold())
                 .foregroundStyle(Theme.labelSecondary)
                 .multilineTextAlignment(.center)
@@ -161,7 +161,7 @@ private struct AnalyticsContent: View {
                 .foregroundStyle(color)
             Text(title)
                 .font(.caption2)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .textCase(.uppercase)
                 .tracking(0.5)
         }
@@ -200,7 +200,7 @@ private struct AnalyticsContent: View {
                     .foregroundStyle(Theme.labelPrimary)
                 Text("Daily totals · \(vm.selectedRange.rawValue.lowercased())")
                     .font(.caption)
-                    .foregroundStyle(Theme.labelTertiary)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
             }
             Spacer()
             if !vm.settingsChanges.isEmpty {
@@ -208,7 +208,7 @@ private struct AnalyticsContent: View {
                     Circle().fill(Theme.warning).frame(width: 8, height: 8)
                     Text("Settings changed")
                         .font(.caption2)
-                        .foregroundStyle(Theme.labelTertiary)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 }
             }
         }
@@ -222,7 +222,7 @@ private struct AnalyticsContent: View {
             Text("No sessions in this period")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(Theme.labelSecondary)
-            Text("Start a monitoring session to see your snore trends here.")
+            Text("Start a recording session to see your snore trends here.")
                 .font(.caption)
                 .foregroundStyle(Theme.labelTertiary)
                 .multilineTextAlignment(.center)
@@ -246,7 +246,7 @@ private struct AnalyticsContent: View {
                 "affected your snore duration and event count."
             )
             .font(.caption)
-            .foregroundStyle(Theme.labelTertiary)
+            .foregroundStyle(Theme.labelOnSurfaceSecondary)
             .fixedSize(horizontal: false, vertical: true)
         }
         .padding(14)
@@ -388,7 +388,7 @@ private struct SnoreDailyBarsChart: View {
                 if let n = yAxisInt(from: value) {
                     Text("\(n)")
                         .font(Theme.monoDigit(size: 11))
-                        .foregroundStyle(Theme.labelTertiary)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
                         .frame(width: Layout.trailingYLabelWidth, alignment: .trailing)
                 }
             }
@@ -407,7 +407,7 @@ private struct SnoreDailyBarsChart: View {
                 if let v = value.as(Double.self) {
                     Text("\(Int(v))m")
                         .font(Theme.monoDigit(size: 11))
-                        .foregroundStyle(Theme.labelTertiary)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
                         .frame(width: Layout.trailingYLabelWidth, alignment: .trailing)
                 }
             }
@@ -468,7 +468,7 @@ private struct SettingsChangeLegend: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Numbered markers on the chart correspond to rows below.")
                         .font(.caption)
-                        .foregroundStyle(Theme.labelTertiary)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
                     VStack(spacing: 10) {
                         ForEach(Array(changes.enumerated()), id: \.offset) { index, change in
                             changeRow(index: index, change: change)
@@ -558,7 +558,7 @@ private struct AlertCorrelationCard: View {
                 .foregroundStyle(Theme.labelPrimary)
             Text("Average per alert configuration · sessions in this period")
                 .font(.caption)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
         }
     }
 
@@ -570,7 +570,7 @@ private struct AlertCorrelationCard: View {
             Text("No data yet")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(Theme.labelSecondary)
-            Text("Complete a monitoring session to see how your alert settings correlate with snore duration.")
+            Text("Complete a recording session to see how your alert settings correlate with snore duration.")
                 .font(.caption)
                 .foregroundStyle(Theme.labelTertiary)
                 .multilineTextAlignment(.center)
@@ -583,7 +583,7 @@ private struct AlertCorrelationCard: View {
     private var disclaimer: some View {
         Text("Shorter is better. Correlation only — not a causal measure.")
             .font(.caption2)
-            .foregroundStyle(Theme.labelTertiary)
+            .foregroundStyle(Theme.labelOnSurfaceSecondary)
             .padding(.top, 2)
     }
 }
@@ -627,7 +627,7 @@ private struct AlertCorrelationChart: View {
                         .foregroundStyle(Theme.labelPrimary)
                     Text("n=\(point.sessionCount)")
                         .font(.system(size: 10, weight: .regular, design: .monospaced))
-                        .foregroundStyle(point.isLowConfidence ? Theme.warning : Theme.labelTertiary)
+                        .foregroundStyle(point.isLowConfidence ? Theme.warning : Theme.labelOnSurfaceSecondary)
                 }
             }
         }
@@ -639,7 +639,7 @@ private struct AlertCorrelationChart: View {
                     if let v = value.as(Double.self) {
                         Text("\(Int(v))m")
                             .font(.caption2)
-                            .foregroundStyle(Theme.labelTertiary)
+                            .foregroundStyle(Theme.labelOnSurfaceSecondary)
                     }
                 }
             }

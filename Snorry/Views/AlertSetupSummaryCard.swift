@@ -17,6 +17,9 @@ struct AlertSetupSummaryCard: View {
     var startsCollapsed: Bool = true
     /// Called when the user expands or collapses (collapsible mode only).
     var onExpandedChange: ((Bool) -> Void)?
+    /// Optional footer text link (Tonight home — e.g. open Settings).
+    var footerLinkTitle: String?
+    var onFooterLinkTap: (() -> Void)?
 
     @State private var isExpanded: Bool
 
@@ -27,7 +30,9 @@ struct AlertSetupSummaryCard: View {
         compact: Bool = false,
         collapsible: Bool = false,
         startsCollapsed: Bool = true,
-        onExpandedChange: ((Bool) -> Void)? = nil
+        onExpandedChange: ((Bool) -> Void)? = nil,
+        footerLinkTitle: String? = nil,
+        onFooterLinkTap: (() -> Void)? = nil
     ) {
         self.settings = settings
         self.notificationsAuthorized = notificationsAuthorized
@@ -36,15 +41,27 @@ struct AlertSetupSummaryCard: View {
         self.collapsible = collapsible
         self.startsCollapsed = startsCollapsed
         self.onExpandedChange = onExpandedChange
+        self.footerLinkTitle = footerLinkTitle
+        self.onFooterLinkTap = onFooterLinkTap
         _isExpanded = State(initialValue: collapsible ? !startsCollapsed : true)
     }
 
     var body: some View {
-        Group {
-            if collapsible {
-                collapsibleCard
-            } else {
-                cardContent
+        VStack(alignment: .leading, spacing: 0) {
+            Group {
+                if collapsible {
+                    collapsibleCard
+                } else {
+                    cardContent
+                }
+            }
+
+            if let footerLinkTitle, let onFooterLinkTap {
+                Button(action: onFooterLinkTap) {
+                    CardFooterTextLink(title: footerLinkTitle)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, compact ? 8 : 10)
             }
         }
         .padding(outerPadding)
@@ -63,19 +80,42 @@ struct AlertSetupSummaryCard: View {
     // MARK: - Collapsible (Monitor home)
 
     private var collapsibleCard: some View {
-        DisclosureGroup(isExpanded: $isExpanded) {
-            cardContent
-                .padding(.top, blockSpacing)
-        } label: {
-            VStack(alignment: .leading, spacing: compact ? 4 : 6) {
-                headerBlock
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack(alignment: .top, spacing: 8) {
+                    VStack(alignment: .leading, spacing: compact ? 4 : 6) {
+                        headerBlock
 
-                if !isExpanded {
-                    collapsedSummary
+                        if !isExpanded {
+                            collapsedSummary
+                        }
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                        .padding(.top, 2)
+                        .accessibilityHidden(true)
                 }
             }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityLabel("Alert setup")
+            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+            .accessibilityHint(isExpanded ? "Collapse alert details" : "Expand alert details")
+
+            if isExpanded {
+                cardContent
+                    .padding(.top, blockSpacing)
+            }
         }
-        .tint(Theme.accent)
     }
 
     private var collapsedSummary: some View {
@@ -154,8 +194,8 @@ struct AlertSetupSummaryCard: View {
                         .font(compact ? .footnote.weight(.semibold) : .subheadline.weight(.semibold))
                         .foregroundStyle(Theme.labelPrimary)
                     Text(Self.alarmSoundFootnote(for: style))
-                        .font(.caption2)
-                        .foregroundStyle(Theme.labelTertiary)
+                        .font(compact ? .caption2 : .caption)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
@@ -167,7 +207,7 @@ struct AlertSetupSummaryCard: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(Theme.snoring)
                     Text("Turn on notifications for Snorry in Settings so pushes can appear.")
-                        .font(.caption2)
+                        .font(compact ? .caption2 : .caption)
                         .foregroundStyle(Theme.snoring.opacity(0.95))
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -178,7 +218,7 @@ struct AlertSetupSummaryCard: View {
                     Image(systemName: "exclamationmark.circle.fill")
                         .foregroundStyle(Theme.snoring)
                     Text("No alerts will fire until you enable push and/or sound in Settings.")
-                        .font(.caption2)
+                        .font(compact ? .caption2 : .caption)
                         .foregroundStyle(Theme.snoring.opacity(0.95))
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -189,11 +229,11 @@ struct AlertSetupSummaryCard: View {
     private var headerBlock: some View {
         VStack(alignment: .leading, spacing: compact ? 2 : 4) {
             Label("Alert setup", systemImage: "bell.and.waves.left.and.right")
-                .font(.caption.bold())
-                .foregroundStyle(Theme.labelSecondary)
+                .font(compact ? .caption.bold() : .subheadline.bold())
+                .foregroundStyle(Theme.labelPrimary)
             Text(caption)
-                .font(.caption2)
-                .foregroundStyle(Theme.labelTertiary)
+                .font(compact ? .caption2 : .caption)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
         }
     }
 
@@ -211,10 +251,10 @@ struct AlertSetupSummaryCard: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.caption.bold())
-                    .foregroundStyle(Theme.labelSecondary)
+                    .font(compact ? .caption.bold() : .subheadline.weight(.semibold))
+                    .foregroundStyle(compact ? Theme.labelSecondary : Theme.labelPrimary)
                 Text(detail)
-                    .font(compact ? .caption2 : .caption)
+                    .font(compact ? .caption2 : .footnote)
                     .foregroundStyle(Theme.labelPrimary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -250,5 +290,22 @@ struct AlertSetupSummaryCard: View {
             return "\(clip).mp3"
         }
         return style.subtitle
+    }
+}
+
+// MARK: - Card footer link (Tonight home shortcuts)
+
+struct CardFooterTextLink: View {
+    let title: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(title)
+            Image(systemName: "chevron.right")
+                .font(.caption2.weight(.semibold))
+        }
+        .font(.caption.weight(.medium))
+        .foregroundStyle(Theme.accent)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

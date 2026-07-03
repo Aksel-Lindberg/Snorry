@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Help & How-To (Monitor tab toolbar sheet)
+// MARK: - Help & How-To (Tonight tab toolbar sheet)
 
 struct HelpCenterView: View {
 
@@ -33,7 +33,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "mic.fill",
                                 title: "Microphone",
-                                detail: "Snorry analyses audio on-device to detect snoring-like patterns. Monitoring cannot run without access—if permission is still pending or denied, the Monitor tab shows a short prompt; undetermined access opens a permissions sheet when you tap Start."
+                                detail: "Snorry analyses audio on-device to detect snoring-like patterns. Recording cannot run without access—if permission is still pending or denied, the Tonight tab shows a short prompt; undetermined access opens a permissions sheet when you tap Start."
                             )
                             HelpBullet(
                                 icon: "bell.badge.fill",
@@ -50,24 +50,24 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .tabBar,
                             title: "Bottom navigation",
-                            subtitle: "Four tabs — Monitor, History, Analytics, Settings",
+                            subtitle: "Four tabs — Tonight, History, Insights, Settings",
                             systemImage: "square.grid.2x2.fill"
                         ) {
-                            tabChip(icon: "waveform", name: "Monitor", hint: "Start sessions and see your latest summary.")
+                            tabChip(icon: "moon.stars.fill", name: "Tonight", hint: "Start sessions and see your latest summary.")
                             tabChip(icon: "clock.arrow.circlepath", name: "History", hint: "Browse past nights and open session details.")
-                            tabChip(icon: "chart.line.uptrend.xyaxis", name: "Analytics", hint: "Trends, charts, and how settings relate to snore duration.")
+                            tabChip(icon: "chart.line.uptrend.xyaxis", name: "Insights", hint: "Trends, charts, and how settings relate to snore duration.")
                             tabChip(icon: "gearshape", name: "Settings", hint: "Alert channels and timings, alarm style, support, reset/delete logs, and legal links.")
                         }
 
                         helpAccordion(
                             section: .monitorHome,
-                            title: "Monitor tab (home)",
+                            title: "Tonight tab (home)",
                             subtitle: "Start control, alert summary, last session",
-                            systemImage: "waveform"
+                            systemImage: "moon.stars.fill"
                         ) {
                             HelpBullet(
                                 icon: "play.circle.fill",
-                                title: "Start monitoring",
+                                title: "Start recording",
                                 detail: "Tap the large sleep animation (moon and waves) to begin. If the microphone is not yet allowed, a permissions sheet appears first; if iOS access was denied, the same tap opens the system Settings app so you can enable the mic."
                             )
                             HelpBullet(
@@ -78,12 +78,12 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "clock.fill",
                                 title: "Last Session",
-                                detail: "When you have completed nights, the card summarises the most recent session: sleep duration, snore event count, and total snore time (counts confirmed snoring, not other sound categories)."
+                                detail: "When you have completed nights, the card summarises the most recent session: sleep duration, snore event count, and total snore time (counts confirmed snoring, not other sound categories). Before your first completed night, the card shows placeholders and “No recordings yet.”"
                             )
                             HelpBullet(
                                 icon: "lock.fill",
                                 title: "Overnight & locked iPhone",
-                                detail: "Start monitoring, then lock your phone. Background audio keeps capture running for that session. While locked, Snorry uses a lighter-weight detection path; after you stop, it may re-classify saved clips so History labels stay trustworthy."
+                                detail: "Start recording, then lock your phone. Background audio keeps capture running for that session. While locked, Snorry uses a lighter-weight detection path; after you stop, it may re-classify saved clips so History labels stay trustworthy."
                             )
                             HelpBullet(
                                 icon: "applewatch",
@@ -95,7 +95,7 @@ struct HelpCenterView: View {
 
                         helpAccordion(
                             section: .monitorLive,
-                            title: "Live monitoring screen",
+                            title: "Live recording session",
                             subtitle: "Spectrum, metrics, alerts, timeline",
                             systemImage: "dot.radiowaves.left.and.right"
                         ) {
@@ -126,7 +126,7 @@ struct HelpCenterView: View {
                             )
                             HelpBullet(
                                 icon: "stop.circle.fill",
-                                title: "Stop monitoring",
+                                title: "Stop recording",
                                 detail: "Tears down audio, saves the session to Sleep History, and dismisses this screen. A short overlay can appear while clips finish encoding; if the night included locked or background recording, you may briefly see a “classifying sounds” step before returning home."
                             )
                         }
@@ -156,7 +156,7 @@ struct HelpCenterView: View {
 
                         helpAccordion(
                             section: .analytics,
-                            title: "Analytics tab",
+                            title: "Insights tab",
                             subtitle: "Ranges, trends, settings markers",
                             systemImage: "chart.line.uptrend.xyaxis"
                         ) {
@@ -216,7 +216,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "arrow.counterclockwise",
                                 title: "Reset & delete logs",
-                                detail: "Reset to Defaults recreates alert preferences. Delete All Sleep & Settings Logs removes every session, clip, waveform, and analytics marker row—you must stop monitoring first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
+                                detail: "Reset to Defaults recreates alert preferences. Delete All Sleep & Settings Logs removes every session, clip, waveform, and analytics marker row—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
                             )
                             HelpBullet(
                                 icon: "doc.text.fill",
@@ -226,7 +226,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "xmark.circle.fill",
                                 title: "Cancel / Save",
-                                detail: "Cancel reloads the last saved values; Save persists changes and posts them to the next monitoring session (and to the summary cards on Monitor and session detail)."
+                                detail: "Cancel reloads the last saved values; Save persists changes and posts them to the next recording session (and to the summary cards on Tonight and session detail)."
                             )
                         }
 

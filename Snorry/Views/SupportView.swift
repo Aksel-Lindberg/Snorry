@@ -36,7 +36,7 @@ struct SupportView: View {
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.accent)
 
-            Text("Need help with monitoring, alerts, logs, or playback? You can find quick answers below and contact support anytime.")
+            Text("Need help with recording, alerts, logs, or playback? You can find quick answers below and contact support anytime.")
                 .font(.footnote)
                 .foregroundStyle(Theme.labelSecondary)
                 .fixedSize(horizontal: false, vertical: true)

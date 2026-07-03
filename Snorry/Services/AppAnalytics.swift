@@ -1,7 +1,7 @@
 import FirebaseAnalytics
 import StoreKit
 
-/// Firebase Analytics wrapper — distinct from the in-app Analytics tab (sleep trends).
+/// Firebase Analytics wrapper — distinct from the in-app Insights tab (sleep trends).
 enum AppAnalytics {
 
     static func log(_ name: String, _ params: [String: Any]? = nil) {

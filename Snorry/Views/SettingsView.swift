@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var vm: SettingsViewModel?
     @State private var confirmDeleteAllLogs = false
     @State private var showSubscription = false
+    @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
 
     var body: some View {
         NavigationStack {
@@ -66,6 +67,7 @@ struct SettingsView: View {
 
     private func settingsContent(vm: SettingsViewModel) -> some View {
         List {
+            profileSection
             alertChannelsSection(vm: vm)
             alertTimingsSection(vm: vm)
             alarmStyleSection(vm: vm)
@@ -126,6 +128,24 @@ struct SettingsView: View {
 
     // MARK: Sections
 
+    private var profileSection: some View {
+        Section {
+            TextField("Your name", text: $userDisplayName)
+                .textContentType(.givenName)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.words)
+                .foregroundStyle(Theme.labelPrimary)
+        } header: {
+            Text("Profile")
+                .foregroundStyle(Theme.labelSecondary)
+        } footer: {
+            Text("Optional. Used for a personal “Good night” greeting when you start recording.")
+                .foregroundStyle(Theme.labelSecondary)
+                .font(.caption)
+        }
+        .listRowBackground(Theme.surface)
+    }
+
     private func alertChannelsSection(vm: SettingsViewModel) -> some View {
         Section {
             Toggle(isOn: Binding(
@@ -154,7 +174,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sound alarm")
                         .font(.subheadline)
-                    Text("In-app alarm tone while monitoring")
+                    Text("In-app alarm tone while recording")
                         .font(.caption)
                         .foregroundStyle(Theme.labelSecondary)
                 }
@@ -349,8 +369,8 @@ struct SettingsView: View {
         } footer: {
             Text(
                 subscription.hasPremiumAccess
-                    ? "Premium includes unlimited monitoring, full Sleep History, and Analytics. Manage billing in your Apple ID subscriptions."
-                    : "Free includes up to 10 monitoring sessions and your latest sleep session. Upgrade for unlimited monitoring, full history, and Analytics."
+                    ? "Premium includes unlimited recording, full Sleep History, and Insights. Manage billing in your Apple ID subscriptions."
+                    : "Free includes up to 10 recording sessions and your latest sleep session. Upgrade for unlimited recording, full history, and Insights."
             )
             .foregroundStyle(Theme.labelSecondary)
             .font(.caption)

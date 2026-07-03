@@ -1,9 +1,15 @@
 import Foundation
 
-// MARK: - Free-tier monitoring start limit (10 sessions before paywall)
+// MARK: - Free-tier monitoring start limit (10 sessions before paywall; 30 in Debug)
 enum MonitoringUsageTracker {
 
-    static let freeLimit = 10
+    static var freeLimit: Int {
+        #if DEBUG
+        30
+        #else
+        10
+        #endif
+    }
 
     private static let countKey = "freeMonitoringStartCount"
 

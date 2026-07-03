@@ -20,6 +20,21 @@ struct SleepAnimationView: View {
         return diameter / 172
     }
 
+    /// Extra layout room so the pulsing halo can extend past the purple disk.
+    private var startButtonLayoutSize: CGFloat {
+        diameter * 1.38
+    }
+
+    /// Matches Theme.accentGradient endpoints.
+    private var accentBlue: Color { Color(red: 0.35, green: 0.55, blue: 1.0) }
+    private var accentPurple: Color { Color(red: 0.55, green: 0.35, blue: 1.0) }
+
+    /// Vertical bob for moon + wave bars + START row (shared motion).
+    private var startContentFloatY: CGFloat {
+        let scale = startLayoutScale
+        return moonFloat ? -5 * scale : 3 * scale
+    }
+
     @State private var glowPulse  = false
     @State private var moonFloat  = false
     @State private var barPhase   = false
@@ -67,6 +82,7 @@ struct SleepAnimationView: View {
 
         return ZStack {
             outerGlowStartButton
+            startButtonHaloRing
             Circle()
                 .fill(Theme.accentGradient)
                 .frame(width: diameter, height: diameter)
@@ -74,29 +90,40 @@ struct SleepAnimationView: View {
                     Circle()
                         .strokeBorder(Color.white.opacity(0.28), lineWidth: max(1, 2 * scale))
                 )
-                .shadow(color: .black.opacity(0.35), radius: 12 * scale, y: 6 * scale)
+                .shadow(
+                    color: accentPurple.opacity(glowPulse ? 0.75 : 0.28),
+                    radius: glowPulse ? 26 * scale : 10 * scale
+                )
+                .shadow(
+                    color: accentBlue.opacity(glowPulse ? 0.50 : 0.18),
+                    radius: glowPulse ? 14 * scale : 6 * scale
+                )
+                .shadow(color: .black.opacity(0.28), radius: 8 * scale, y: 4 * scale)
 
             VStack(spacing: 0) {
                 Spacer(minLength: edgeInset)
-                moonIconStartButton
-                Spacer(minLength: 4 * scale)
-                audioWaveBarsLight
-                    .padding(.bottom, 8 * scale)
-                HStack(spacing: labelSpacing) {
-                    Image(systemName: "mic.fill")
-                        .font(.system(size: 19 * scale, weight: .semibold))
-                    Text("START")
-                        .font(.system(size: 15 * scale, weight: .bold, design: .rounded))
-                        .tracking(3)
+                VStack(spacing: 0) {
+                    moonIconStartButton
+                    Spacer(minLength: 4 * scale)
+                    audioWaveBarsLight
+                        .padding(.bottom, 8 * scale)
+                    HStack(spacing: labelSpacing) {
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 19 * scale, weight: .semibold))
+                        Text("START")
+                            .font(.system(size: 15 * scale, weight: .bold, design: .rounded))
+                            .tracking(3)
+                    }
+                    .foregroundStyle(.white)
                 }
-                .foregroundStyle(.white)
+                .offset(y: startContentFloatY)
                 Spacer(minLength: edgeInset)
             }
             .frame(width: diameter, height: diameter)
 
             floatingZsLight
         }
-        .frame(width: diameter, height: diameter)
+        .frame(width: startButtonLayoutSize, height: startButtonLayoutSize)
     }
 
     // MARK: Outer pulsing glow ring
@@ -113,18 +140,51 @@ struct SleepAnimationView: View {
             .scaleEffect(glowPulse ? 1.20 : 0.90)
     }
 
+    /// Soft bloom — ring-weighted so light sits outside the disk, not under it.
     private var outerGlowStartButton: some View {
         let scale = startLayoutScale
+        let outerR = (diameter / 2) * 1.32
         return Circle()
             .fill(
                 RadialGradient(
-                    colors: [Color.white.opacity(0.22), Color.clear],
+                    gradient: Gradient(stops: [
+                        .init(color: .clear, location: 0.0),
+                        .init(color: .clear, location: 0.62),
+                        .init(color: accentPurple.opacity(0.55), location: 0.78),
+                        .init(color: accentBlue.opacity(0.42), location: 0.88),
+                        .init(color: accentPurple.opacity(0.22), location: 0.96),
+                        .init(color: .clear, location: 1.0)
+                    ]),
                     center: .center,
-                    startRadius: 70 * scale, endRadius: 118 * scale
+                    startRadius: 0,
+                    endRadius: outerR
                 )
             )
-            .frame(width: diameter, height: diameter)
-            .scaleEffect(glowPulse ? 1.14 : 0.94)
+            .frame(width: diameter * 1.22, height: diameter * 1.22)
+            .blur(radius: 3 * scale)
+            .scaleEffect(glowPulse ? 1.22 : 0.94)
+    }
+
+    /// Crisp accent ring that pulses with the halo (visible on the dark home background).
+    private var startButtonHaloRing: some View {
+        let scale = startLayoutScale
+        let line = max(2.5, 3.5 * scale)
+        return Circle()
+            .stroke(
+                LinearGradient(
+                    colors: [
+                        accentBlue.opacity(glowPulse ? 0.85 : 0.45),
+                        accentPurple.opacity(glowPulse ? 0.90 : 0.50)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: line
+            )
+            .frame(width: diameter * 1.06, height: diameter * 1.06)
+            .blur(radius: 1.5 * scale)
+            .scaleEffect(glowPulse ? 1.14 : 0.96)
+            .opacity(glowPulse ? 1.0 : 0.72)
     }
 
     // MARK: Main surface circle (standalone only)
@@ -178,7 +238,6 @@ struct SleepAnimationView: View {
                     startPoint: .top, endPoint: .bottom
                 )
             )
-            .offset(y: moonFloat ? -5 : 3)
             .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
     }
 

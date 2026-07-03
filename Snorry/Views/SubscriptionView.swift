@@ -127,7 +127,7 @@ struct SubscriptionView: View {
                 .multilineTextAlignment(.center)
 
             Text(
-                "Unlock unlimited monitoring, your full sleep history, and snore trend analytics — all processed on your iPhone."
+                "Unlock unlimited recording, your full sleep history, and snore trend analytics — all processed on your iPhone."
             )
             .font(.subheadline)
             .foregroundStyle(Theme.labelSecondary)
@@ -275,7 +275,7 @@ struct SubscriptionView: View {
         case .yearly:
             return "Get Snorry Premium for $0 if you start your trial today"
         case .monthly:
-            return "Get unlimited monitoring and full sleep insights"
+            return "Get unlimited recording and full sleep insights"
         }
     }
 

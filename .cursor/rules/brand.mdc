@@ -1,0 +1,22 @@
+---
+description: Snorry brand and UI copy standards for app development
+globs:
+  - Snorry/**/*.swift
+  - "**/*.md"
+---
+
+# Snorry brand (app)
+
+Before changing user-facing UI copy, colors, or tab labels, read [BRAND_GUIDE_APP.md](../../BRAND_GUIDE_APP.md).
+
+## Vocabulary (hybrid)
+
+- Tab: **Tonight** (not Monitor)
+- Sessions / limits / start-stop: **recording** (not monitoring)
+- Live session nav title: **Recording**
+- Live session reassurance subline: **listening** ("We're listening for snores.")
+- Do not rename Swift types (`MonitorViewModel`, `MonitoringUsageTracker`) or analytics keys for copy changes.
+
+## Design tokens
+
+Use [Theme.swift](../../Snorry/Utilities/Theme.swift). Marketing hex values are in BRAND_GUIDE_APP.md §2.

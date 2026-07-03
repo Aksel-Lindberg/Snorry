@@ -147,7 +147,7 @@ final class SettingsViewModel {
                 )
                 let hasActiveSession = try !self.context.fetch(activeDescriptor).isEmpty
                 if hasActiveSession {
-                    self.deleteLogsFailedMessage = "Stop monitoring before deleting logs."
+                    self.deleteLogsFailedMessage = "Stop recording before deleting logs."
                     return
                 }
             } catch {

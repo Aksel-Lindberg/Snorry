@@ -109,4 +109,10 @@ final class SnoreSession {
         }
         return "\(minutes)m"
     }
+
+    /// True when a completed session has enough data for the Tonight Last Session card (vs. em-dash placeholders).
+    var hasLastSessionCardData: Bool {
+        guard endDate != nil, let dur = duration, dur >= 60 else { return false }
+        return true
+    }
 }

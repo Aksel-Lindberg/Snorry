@@ -26,7 +26,7 @@ struct SessionDetailView: View {
                             AlertSetupSummaryCard(
                                 settings: settings,
                                 notificationsAuthorized: notificationsAuthorized,
-                                caption: "Current preferences · same as Monitor tab"
+                                caption: "Current preferences · same as Tonight tab"
                             )
                         }
                         timelineChart(vm: vm)
@@ -91,14 +91,14 @@ struct SessionDetailView: View {
 
     private func watchSnoreCard(vm: SessionDetailViewModel) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
+            HStack(alignment: .top, spacing: 8) {
                 Text("Snore Clock")
-                    .font(.caption.bold())
-                    .foregroundStyle(Theme.labelSecondary)
-                Spacer()
-                Text("Arc position = time  ·  length = duration")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelTertiary)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(Theme.labelPrimary)
+
+                Spacer(minLength: 0)
+
+                snoreClockLegend
             }
             .padding(.horizontal, 4)
 
@@ -117,13 +117,32 @@ struct SessionDetailView: View {
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
     }
 
+    /// Snore Clock legend — one line when space allows; otherwise breaks after "time".
+    private var snoreClockLegend: some View {
+        ViewThatFits(in: .horizontal) {
+            Text("Arc position = time  ·  length = duration")
+                .font(.footnote)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                .multilineTextAlignment(.trailing)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("Arc position = time")
+                Text("·  length = duration")
+            }
+            .font(.footnote)
+            .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            .multilineTextAlignment(.trailing)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+
     // MARK: Timeline chart
 
     private func timelineChart(vm: SessionDetailViewModel) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Session Timeline")
-                .font(.caption.bold())
-                .foregroundStyle(Theme.labelSecondary)
+                .font(.subheadline.bold())
+                .foregroundStyle(Theme.labelPrimary)
                 .padding(.horizontal, 4)
 
             if vm.chartTimelinePoints.isEmpty {
@@ -147,13 +166,13 @@ struct SessionDetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Sound Events (\(vm.allCompletedEvents.count))")
-                    .font(.caption.bold())
-                    .foregroundStyle(Theme.labelSecondary)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(Theme.labelPrimary)
                 Spacer()
                 if vm.allCompletedEvents.count > vm.snoreEvents.count {
                     Text("\(vm.snoreEvents.count) snoring")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.labelTertiary)
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 }
             }
 
@@ -317,8 +336,8 @@ private struct StatCard: View {
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
             Text(label)
-                .font(.caption2)
-                .foregroundStyle(Theme.labelTertiary)
+                .font(.caption)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 // Same label footprint for every card so row height stays uniform when a label wraps.
@@ -369,7 +388,7 @@ private struct SessionTimelineChart: View {
                 .symbolSize(0)
                 .annotation(position: .bottom, spacing: 4) {
                     Text("BRPM trend")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundStyle(Theme.accent.opacity(0.9))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 3)
@@ -393,7 +412,7 @@ private struct SessionTimelineChart: View {
             AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                 AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
                 AxisValueLabel(format: .dateTime.hour().minute())
-                    .foregroundStyle(Theme.labelTertiary)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
             }
         }
         .chartYAxis(.hidden)
@@ -535,7 +554,7 @@ private struct SoundKindBadge: View {
             Image(systemName: kind.systemImage)
             Text(kind.displayName)
         }
-        .font(.caption2.weight(.medium))
+        .font(.caption.weight(.medium))
         .foregroundStyle(foregroundColor)
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
@@ -560,7 +579,7 @@ private struct EventMetricBar: View {
     let color: Color
     var systemImage: String? = nil
 
-    private let barHeight: CGFloat = 9
+    private let barHeight: CGFloat = 11
 
     private var clampedFill: CGFloat {
         CGFloat(max(0, min(1, fill)))
@@ -598,42 +617,40 @@ private struct EventMetricBar: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            if let systemImage {
-                Label(label, systemImage: systemImage)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelTertiary)
-            } else {
-                Text(label)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelTertiary)
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                if let systemImage {
+                    Label(label, systemImage: systemImage)
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                } else {
+                    Text(label)
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                }
+
+                Spacer(minLength: 0)
+
+                Text(value)
+                    .font(Theme.monoDigit(size: 12, weight: .medium))
+                    .foregroundStyle(Theme.labelPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
 
             GeometryReader { geo in
                 let fillWidth = geo.size.width * clampedFill
 
-                ZStack {
+                ZStack(alignment: .leading) {
                     trackFill
 
-                    HStack(spacing: 0) {
-                        Capsule()
-                            .fill(fillGradient)
-                            .frame(width: fillWidth, height: barHeight)
-                            .overlay {
-                                Capsule()
-                                    .strokeBorder(color.opacity(0.22), lineWidth: 0.5)
-                            }
-                        Spacer(minLength: 0)
-                    }
-                    .frame(height: barHeight)
-
-                    Text(value)
-                        .font(Theme.monoDigit(size: 9, weight: .medium))
-                        .foregroundStyle(Color.white.opacity(0.92))
-                        .shadow(color: .black.opacity(0.45), radius: 1.2, y: 0.5)
-                        .minimumScaleFactor(0.85)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity)
+                    Capsule()
+                        .fill(fillGradient)
+                        .frame(width: fillWidth, height: barHeight)
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(color.opacity(0.22), lineWidth: 0.5)
+                        }
                 }
             }
             .frame(height: barHeight)

@@ -2,7 +2,7 @@ import SwiftUI
 import AVFoundation
 import SwiftData
 
-// MARK: - Home screen with big start button
+// MARK: - Tonight home screen with big start button
 struct HomeView: View {
 
     private enum ScrollTarget: String {
@@ -10,6 +10,11 @@ struct HomeView: View {
         case lastSession
         case scrollEnd
     }
+
+    @Bindable var vm: MonitorViewModel
+    @Binding var showRecordingScreen: Bool
+    /// Switches to the Settings tab (Tonight footer shortcut).
+    var onOpenSettings: () -> Void = {}
 
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -23,14 +28,15 @@ struct HomeView: View {
         order: .reverse
     )
     private var completedSessions: [SnoreSession]
-    @State private var vm: MonitorViewModel?
-    @State private var showMonitor = false
     @State private var showPermissions = false
     @State private var showHelp = false
     @State private var showSubscription = false
     @State private var scrollAlertIntoView = false
+    @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
+    @AppStorage(UserPreferences.hasSeenTonightWelcomeKey) private var hasSeenTonightWelcome = false
+    @State private var isFirstTonightVisit = false
 
-    /// START button diameter on iPad portrait (default phone size is 172).
+    /// START button diameter on iPad portrait (iPhone default is 172).
     private let padStartButtonDiameter: CGFloat = 118
 
     /// Side-by-side start + cards only in iPad landscape — portrait stacks vertically to avoid tab-bar overlap.
@@ -48,27 +54,21 @@ struct HomeView: View {
             ZStack {
                 Theme.nightGradient.ignoresSafeArea()
 
-                if let vm {
-                    mainContent(vm: vm)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                        .navigationDestination(isPresented: $showMonitor) {
-                            MonitorView(vm: vm)
-                        }
-                        .sheet(isPresented: $showPermissions) {
-                            PermissionsView(
-                                vm: vm,
-                                isPresented: $showPermissions,
-                                showMonitor: $showMonitor,
-                                showSubscription: $showSubscription
-                            )
-                        }
-                } else {
-                    ProgressView()
-                        .tint(Theme.accent)
-                }
+                mainContent(vm: vm)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .navigationDestination(isPresented: $showRecordingScreen) {
+                        MonitorView(vm: vm)
+                    }
+                    .sheet(isPresented: $showPermissions) {
+                        PermissionsView(
+                            vm: vm,
+                            isPresented: $showPermissions,
+                            showMonitor: $showRecordingScreen,
+                            showSubscription: $showSubscription
+                        )
+                    }
             }
             .onAppear {
-                setupViewModel()
                 ensureAlertSettingsRowExists()
             }
             .toolbarBackground(Theme.background, for: .navigationBar)
@@ -213,14 +213,19 @@ struct HomeView: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// Alert setup (collapsed by default) and last session — shared by phone and iPad layouts.
+    /// Last session and alert setup (collapsed by default) — shared by phone and iPad layouts.
     private func monitorBottomCards(vm: MonitorViewModel) -> some View {
-        VStack(alignment: .leading, spacing: usesCompressedPadLayout ? 10 : 16) {
+        let showCardShortcuts = !vm.isMonitoring
+
+        return VStack(alignment: .leading, spacing: usesCompressedPadLayout ? 10 : 16) {
+            recentSessionCard(showShortcut: showCardShortcuts)
+                .id(ScrollTarget.lastSession)
+
             if let settings = alertSettingsRows.first {
                 AlertSetupSummaryCard(
                     settings: settings,
                     notificationsAuthorized: vm.notificationAuthorized,
-                    caption: "Used for the next monitoring session",
+                    caption: "Used for the next recording session",
                     compact: true,
                     collapsible: true,
                     startsCollapsed: true,
@@ -228,13 +233,12 @@ struct HomeView: View {
                         if expanded {
                             scrollAlertIntoView = true
                         }
-                    }
+                    },
+                    footerLinkTitle: showCardShortcuts ? "Change in Settings" : nil,
+                    onFooterLinkTap: showCardShortcuts ? onOpenSettings : nil
                 )
                 .id(ScrollTarget.alertSetup)
             }
-
-            recentSessionCard()
-                .id(ScrollTarget.lastSession)
         }
         .padding(.top, usesCompressedPadLayout ? 6 : 10)
     }
@@ -243,26 +247,35 @@ struct HomeView: View {
 
     private var headerSection: some View {
         VStack(spacing: 0) {
-            Text("Snorry")
-                .font(.system(
-                    size: usesCompressedPadLayout ? 34 : 40,
-                    weight: .bold,
-                    design: .rounded
-                ))
-                .foregroundStyle(Theme.labelPrimary)
+            Text(
+                UserPreferences.tonightHomeGreeting(
+                    displayName: userDisplayName,
+                    isFirstVisit: isFirstTonightVisit
+                )
+            )
+            .font(.system(
+                size: usesCompressedPadLayout ? 28 : 34,
+                weight: .bold,
+                design: .rounded
+            ))
+            .foregroundStyle(Theme.labelPrimary)
+            .multilineTextAlignment(.center)
 
             Text("Sleep Snore Alert & Tracking")
                 .font(Theme.handwritten(size: usesCompressedPadLayout ? 17 : 19))
                 .foregroundStyle(Theme.handwrittenGradient)
                 .padding(.top, usesCompressedPadLayout ? 3 : 5)
-
-            Text("Connect your watch · get Snore alerts on your wrist")
-                .font(Theme.handwritten(size: usesCompressedPadLayout ? 12 : 13, bold: false))
-                .italic()
-                .foregroundStyle(Color.white.opacity(0.52))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-                .padding(.top, usesCompressedPadLayout ? 4 : 6)
+        }
+        .onAppear {
+            if !hasSeenTonightWelcome {
+                isFirstTonightVisit = true
+            }
+        }
+        .onDisappear {
+            if isFirstTonightVisit {
+                hasSeenTonightWelcome = true
+                isFirstTonightVisit = false
+            }
         }
     }
 
@@ -272,27 +285,54 @@ struct HomeView: View {
             if horizontalSizeClass == .regular { return 160 }
             return 172
         }()
+        let captionSpacing: CGFloat = usesCompressedPadLayout ? 6 : 8
+        let sessionActiveOnHome = vm.isMonitoring && !showRecordingScreen
 
-        return VStack(spacing: usesCompressedPadLayout ? 8 : 14) {
+        return VStack(spacing: captionSpacing) {
             Button {
                 handleStartTap(vm: vm)
             } label: {
                 SleepAnimationView(presentation: .startButton, diameter: buttonSize)
-                    .accessibilityLabel("Start monitoring")
-                    .accessibilityHint("Begins snore detection using the microphone")
             }
             .disabled(vm.microphonePermission == .denied)
             .buttonStyle(.plain)
             .opacity(vm.microphonePermission == .denied ? 0.42 : 1)
+            .accessibilityLabel(sessionActiveOnHome ? "Return to recording" : "Start recording")
+            .accessibilityHint(
+                sessionActiveOnHome
+                    ? "Opens the active recording session"
+                    : "Begins an overnight snore recording session"
+            )
+
+            if sessionActiveOnHome {
+                Text("Return to recording")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.labelSecondary)
+                    .multilineTextAlignment(.center)
+            } else if isFirstTonightVisit {
+                Text("Tap to start recording")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.labelSecondary)
+                    .multilineTextAlignment(.center)
+            }
 
             if vm.microphonePermission == .undetermined ||
                vm.microphonePermission == .denied {
                 permissionPrompt(vm: vm)
-            } else if !appEnv.subscription.hasPremiumAccess {
+            } else if !sessionActiveOnHome, !appEnv.subscription.hasPremiumAccess {
                 Text(freeMonitoringHint)
                     .font(.caption)
-                    .foregroundStyle(Theme.labelTertiary)
+                    .foregroundStyle(Theme.labelSecondary)
                     .multilineTextAlignment(.center)
+            }
+
+            if !sessionActiveOnHome {
+                Text("Connect your watch · get Snore alerts on your wrist")
+                    .font(Theme.handwritten(size: usesCompressedPadLayout ? 12 : 13, bold: true))
+                    .foregroundStyle(Theme.handwrittenGradient)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 2)
             }
         }
     }
@@ -300,9 +340,9 @@ struct HomeView: View {
     private var freeMonitoringHint: String {
         let remaining = MonitoringUsageTracker.remainingFreeStarts
         if remaining == 0 {
-            return "Free monitoring limit reached. Upgrade to Premium to continue."
+            return "Free recording limit reached. Upgrade to Premium to continue."
         }
-        return "\(remaining) free monitoring \(remaining == 1 ? "session" : "sessions") remaining"
+        return "\(remaining) free recording \(remaining == 1 ? "session" : "sessions") remaining"
     }
 
     /// Ensures the singleton settings row exists so the home card can read alerts configuration.
@@ -317,7 +357,7 @@ struct HomeView: View {
                 .foregroundStyle(Theme.snoring)
             Text(vm.microphonePermission == .denied
                  ? "Microphone access denied — enable in Settings"
-                 : "Microphone access required to monitor snoring")
+                 : "Microphone access required to record snoring")
                 .font(.caption)
                 .foregroundStyle(Theme.labelSecondary)
                 .multilineTextAlignment(.center)
@@ -326,18 +366,46 @@ struct HomeView: View {
     }
 
     @ViewBuilder
-    private func recentSessionCard() -> some View {
-        if let session = completedSessions.first {
-            let cardPadding: CGFloat = usesCompressedPadLayout ? 12 : (horizontalSizeClass == .regular ? 14 : 12)
-            VStack(alignment: .leading, spacing: usesCompressedPadLayout ? 6 : (horizontalSizeClass == .regular ? 8 : 6)) {
-                Label("Last Session", systemImage: "clock")
-                    .font(.caption.bold())
-                    .foregroundStyle(Theme.labelSecondary)
+    private func recentSessionCard(showShortcut: Bool) -> some View {
+        let cardPadding: CGFloat = usesCompressedPadLayout ? 12 : (horizontalSizeClass == .regular ? 14 : 12)
+        let lastSession = completedSessions.first
 
+        VStack(alignment: .leading, spacing: usesCompressedPadLayout ? 6 : (horizontalSizeClass == .regular ? 8 : 6)) {
+            Label("Last Session", systemImage: "clock")
+                .font(.caption.bold())
+                .foregroundStyle(Theme.labelPrimary)
+
+            if let session = lastSession, session.hasLastSessionCardData {
                 lastSessionMetrics(session: session)
+
+                if showShortcut {
+                    NavigationLink {
+                        SessionDetailView(session: session)
+                    } label: {
+                        CardFooterTextLink(title: "View details")
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 2)
+                }
+            } else {
+                lastSessionEmptyMetrics
+                Text("No recordings yet.")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelTertiary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 4)
             }
-            .padding(cardPadding)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+        }
+        .padding(cardPadding)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+    }
+
+    private var lastSessionEmptyMetrics: some View {
+        HStack(alignment: .top, spacing: 0) {
+            summaryItem(label: "Sleep duration", value: "—")
+            summaryItem(label: "Snore events", value: "—")
+            summaryItem(label: "Snore duration", value: "—")
         }
     }
 
@@ -359,7 +427,7 @@ struct HomeView: View {
                 .lineLimit(1)
             Text(label)
                 .font(.caption2)
-                .foregroundStyle(Theme.labelTertiary)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
@@ -369,13 +437,6 @@ struct HomeView: View {
     }
 
     // MARK: Actions
-
-    private func setupViewModel() {
-        guard vm == nil else { return }
-        let newVM = MonitorViewModel(modelContext: context)
-        vm = newVM
-        Task { await newVM.syncNotificationAuthorizationFromSystem() }
-    }
 
     private func handleStartTap(vm: MonitorViewModel) {
         switch vm.microphonePermission {
@@ -391,6 +452,11 @@ struct HomeView: View {
     }
 
     private func beginMonitoringIfAllowed(vm: MonitorViewModel) {
+        if vm.isMonitoring {
+            showRecordingScreen = true
+            return
+        }
+
         let hasPremium = appEnv.subscription.hasPremiumAccess
         guard MonitoringUsageTracker.canStartMonitoring(hasPremium: hasPremium) else {
             AppAnalytics.logPaywallViewed(source: "monitoring_limit")
@@ -400,6 +466,6 @@ struct HomeView: View {
 
         MonitoringUsageTracker.recordMonitoringStart(hasPremium: hasPremium)
         vm.startMonitoring()
-        showMonitor = true
+        showRecordingScreen = true
     }
 }

@@ -99,7 +99,7 @@ struct SessionsListView: View {
             Text("No sessions yet")
                 .font(.title3.bold())
                 .foregroundStyle(Theme.labelSecondary)
-            Text("Start monitoring to record your first sleep session.")
+            Text("Start recording to capture your first sleep session.")
                 .font(.subheadline)
                 .foregroundStyle(Theme.labelTertiary)
                 .multilineTextAlignment(.center)

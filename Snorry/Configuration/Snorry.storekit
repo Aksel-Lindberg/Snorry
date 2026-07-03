@@ -43,7 +43,7 @@
           },
           "localizations" : [
             {
-              "description" : "Unlimited monitoring, full Sleep History, and Analytics",
+              "description" : "Unlimited recording, full Sleep History, and Insights",
               "displayName" : "Premium Yearly",
               "locale" : "en_US"
             }
@@ -67,7 +67,7 @@
           "internalID" : "6738291005",
           "localizations" : [
             {
-              "description" : "Unlimited monitoring, full Sleep History, and Analytics",
+              "description" : "Unlimited recording, full Sleep History, and Insights",
               "displayName" : "Premium Monthly",
               "locale" : "en_US"
             }
