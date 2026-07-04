@@ -239,7 +239,8 @@ struct MonitorView: View {
 
     private var alertPhaseCard: some View {
         Group {
-            if vm.alertPhase != .idle {
+            // Sound alarm runs silently in the UI — only surface the push-notification card.
+            if vm.alertPhase == .notified {
                 HStack(spacing: 10) {
                     Image(systemName: alertIcon)
                         .font(.title3)

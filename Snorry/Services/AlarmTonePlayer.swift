@@ -196,6 +196,21 @@ final class AlarmTonePlayer: @unchecked Sendable {
     /// Starts playback and jumps to `volume` immediately — use for live alarm firing.
     /// Restarts the engine so it picks up the current output route (e.g. Bluetooth).
     func playImmediate(volume: Float) {
+        playImmediate(volume: volume, loop: true)
+    }
+
+    /// Plays a single alarm burst (no loop) — used for snore alarms with pauses between bursts.
+    func playBurstImmediate(volume: Float) {
+        playImmediate(volume: volume, loop: false)
+    }
+
+    /// Length of one alarm burst in seconds (synthesized tone or bundled clip).
+    var burstDurationSeconds: TimeInterval {
+        guard let buffer = toneBuffer, buffer.frameLength > 0 else { return 2.0 }
+        return Double(buffer.frameLength) / buffer.format.sampleRate
+    }
+
+    private func playImmediate(volume: Float, loop: Bool) {
         rampTimer?.invalidate()
         rampTimer = nil
         targetVolume  = volume
@@ -206,7 +221,7 @@ final class AlarmTonePlayer: @unchecked Sendable {
             engine.stop()
             isRunning = false
         }
-        startEngine()
+        startEngine(loop: loop)
     }
 
     /// Hard-stop with no fade — use when snoring ends.
@@ -228,12 +243,16 @@ final class AlarmTonePlayer: @unchecked Sendable {
 
     // MARK: Private engine helpers
 
-    private func startEngine() {
+    private func startEngine(loop: Bool = true) {
         do {
             engine.prepare()
             try engine.start()
             isRunning = true
-            scheduleLoop()
+            if loop {
+                scheduleLoop()
+            } else {
+                scheduleOnce()
+            }
         } catch {
             logger.error("Alarm engine start failed: \(error)")
         }
@@ -249,6 +268,12 @@ final class AlarmTonePlayer: @unchecked Sendable {
     private func scheduleLoop() {
         guard let buffer = toneBuffer, isRunning else { return }
         playerNode.scheduleBuffer(buffer, at: nil, options: .loops)
+        if !playerNode.isPlaying { playerNode.play() }
+    }
+
+    private func scheduleOnce() {
+        guard let buffer = toneBuffer, isRunning else { return }
+        playerNode.scheduleBuffer(buffer, at: nil, options: [])
         if !playerNode.isPlaying { playerNode.play() }
     }
 

@@ -140,27 +140,22 @@ final class AudioSessionManager: @unchecked Sendable {
         try applyMonitoringOutputRoute(for: session)
     }
 
-    /// Keeps the monitoring category (A2DP-only) so the built-in mic is not stolen by HFP.
+    private var alarmOutputRoutePrepared = false
+
+    /// Ensures alarm audio routes to speaker (or connected headset) without changing session
+    /// category — monitoring already uses `.playAndRecord`. Full category churn here was stalling
+    /// the mic tap and hanging the UI when the alarm fired.
     func prepareOutputRouteForAlarm() {
+        guard !alarmOutputRoutePrepared else { return }
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(
-                .playAndRecord,
-                mode: .default,
-                options: [.allowBluetoothA2DP, .duckOthers]
-            )
             try preferBuiltInMicrophone()
             if shouldRouteAlarmToExternalDevice(session) {
                 try session.overrideOutputAudioPort(.none)
             } else {
-                try session.setCategory(
-                    .playAndRecord,
-                    mode: .default,
-                    options: [.allowBluetoothA2DP, .defaultToSpeaker, .duckOthers]
-                )
-                try preferBuiltInMicrophone()
                 try session.overrideOutputAudioPort(.speaker)
             }
+            alarmOutputRoutePrepared = true
         } catch {
             logger.error("Failed to prepare alarm output route: \(error)")
         }
@@ -168,6 +163,7 @@ final class AudioSessionManager: @unchecked Sendable {
 
     /// Re-applies monitoring session routing after alarm playback ends.
     func restoreMonitoringAfterAlarm() {
+        alarmOutputRoutePrepared = false
         AudioMonitorService.shared.restoreMonitoringAfterAlarm()
     }
 

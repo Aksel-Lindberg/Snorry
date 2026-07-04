@@ -181,6 +181,24 @@ final class AudioMonitorService: @unchecked Sendable {
         reconfigureAfterRouteChange()
     }
 
+    /// Restarts the mic tap without touching `AVAudioSession` category — safe during alarm bursts.
+    func restartMicTapPreservingSession() {
+        guard stream != nil else { return }
+
+        if engine.isRunning { engine.stop() }
+        if inputTapInstalled {
+            engine.inputNode.removeTap(onBus: 0)
+            inputTapInstalled = false
+        }
+
+        do {
+            try installInputTap()
+            try engine.start()
+        } catch {
+            logger.error("Mic tap restart failed: \(error)")
+        }
+    }
+
     func stop() {
         AudioSessionManager.shared.setMonitoringAudioActive(false)
         if inputTapInstalled {
