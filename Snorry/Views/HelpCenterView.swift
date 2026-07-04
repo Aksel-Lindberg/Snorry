@@ -228,6 +228,7 @@ struct HelpCenterView: View {
                         }
 
                         overnightTipsCard
+                        earbudPartnerTipsCard
                         tipFooter
                     }
                     .padding(.horizontal, horizontalSizeClass == .regular ? 32 : 18)
@@ -484,6 +485,76 @@ struct HelpCenterView: View {
             Image(systemName: icon)
                 .font(.body.weight(.semibold))
                 .foregroundStyle(Theme.good)
+                .frame(width: 22, alignment: .center)
+                .padding(.top, 1)
+
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(Theme.labelSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var earbudPartnerTipsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "earbuds")
+                    .font(.title3)
+                    .foregroundStyle(Theme.accent)
+                    .symbolRenderingMode(.hierarchical)
+                Text("Private snore alerts for couples")
+                    .font(.headline)
+                    .foregroundStyle(Theme.labelPrimary)
+            }
+
+            Text(
+                "If you share a bed, the in-app sound alarm can wake your partner when it plays " +
+                "from the iPhone speaker. Wearing sleep earbuds lets only you hear the nudge."
+            )
+            .font(.caption)
+            .foregroundStyle(Theme.labelSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 10) {
+                earbudTipRow(
+                    icon: "moon.zzz.fill",
+                    text: "Soundcore Sleep A30 sleep earbuds are very comfortable for overnight use—" +
+                          "they stay comfortable when side-sleeping and are designed for wearing in bed."
+                )
+                earbudTipRow(
+                    icon: "mic.fill",
+                    text: "Snorry keeps listening through your iPhone’s built-in microphone for snore " +
+                          "detection, even when earbuds are connected."
+                )
+                earbudTipRow(
+                    icon: "speaker.wave.2.fill",
+                    text: "When paired, the sound alarm plays through your earbuds instead of the " +
+                          "phone speaker—so your partner is less likely to be disturbed."
+                )
+                earbudTipRow(
+                    icon: "gearshape.fill",
+                    text: "Turn on the sound alarm in Settings, connect your earbuds before you tap " +
+                          "Start, and keep your iPhone on the nightstand within range."
+                )
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Theme.accent.opacity(0.10),
+            in: RoundedRectangle(cornerRadius: Theme.radiusCard)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.radiusCard)
+                .strokeBorder(Theme.accent.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    private func earbudTipRow(icon: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Theme.accent)
                 .frame(width: 22, alignment: .center)
                 .padding(.top, 1)
 
