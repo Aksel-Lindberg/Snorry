@@ -312,7 +312,9 @@ struct HelpCenterView: View {
 
         return VStack(alignment: .leading, spacing: 0) {
             Button {
-                openSection = isExpanded ? nil : section
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    openSection = isExpanded ? nil : section
+                }
             } label: {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: systemImage)
@@ -333,9 +335,10 @@ struct HelpCenterView: View {
 
                     Spacer(minLength: 0)
 
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                    Image(systemName: "chevron.down")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Theme.accent)
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
                         .padding(.top, 2)
                         .accessibilityHidden(true)
                 }

@@ -245,30 +245,31 @@ struct AlertSetupSummaryCard: View {
                 )
             }
 
-            Divider()
-                .background(Theme.labelTertiary.opacity(0.35))
+            if display.soundAlarmEnabled {
+                Divider()
+                    .background(Theme.labelTertiary.opacity(0.35))
 
-            HStack(alignment: .top, spacing: compact ? 10 : 12) {
-                Image(systemName: "waveform.circle.fill")
-                    .font(alarmIconSize)
-                    .foregroundStyle(Theme.accent)
-                    .accessibilityHidden(true)
+                HStack(alignment: .top, spacing: compact ? 10 : 12) {
+                    Image(systemName: "waveform.circle.fill")
+                        .font(alarmIconSize)
+                        .foregroundStyle(Theme.accent)
+                        .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: compact ? 2 : 4) {
-                    Text("Alarm sound")
-                        .font(.caption.bold())
-                        .foregroundStyle(Theme.labelSecondary)
-                    Text(style.displayName)
-                        .font(compact ? .footnote.weight(.semibold) : .subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.labelPrimary)
-                    Text(Self.alarmSoundFootnote(for: style))
-                        .font(compact ? .caption2 : .caption)
-                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: compact ? 2 : 4) {
+                        Text("Alarm sound")
+                            .font(.caption.bold())
+                            .foregroundStyle(Theme.labelSecondary)
+                        Text(style.displayName)
+                            .font(compact ? .footnote.weight(.semibold) : .subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.labelPrimary)
+                        Text(Self.alarmSoundFootnote(for: style))
+                            .font(compact ? .caption2 : .caption)
+                            .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
             }
-            .opacity(display.soundAlarmEnabled ? 1 : 0.45)
 
             if !isSessionSnapshot,
                display.pushNotificationEnabled,
@@ -339,6 +340,9 @@ struct AlertSetupSummaryCard: View {
     private static func oneLineSummary(display: AlertSetupDisplay) -> String {
         let push = display.pushNotificationEnabled ? "Push on" : "Push off"
         let sound = display.soundAlarmEnabled ? "Sound on" : "Sound off"
+        guard display.soundAlarmEnabled else {
+            return "\(push) · \(sound)"
+        }
         let style = AlarmStyle(rawValue: display.alarmStyleRaw) ?? .classic
         return "\(push) · \(sound) · \(style.displayName)"
     }

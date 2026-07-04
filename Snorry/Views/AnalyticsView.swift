@@ -463,8 +463,30 @@ private struct SettingsChangeLegend: View {
     let onDelete: (AlertSettingsChange) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            DisclosureGroup(isExpanded: $isExpanded) {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack(alignment: .top, spacing: 8) {
+                    header
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                        .padding(.top, 2)
+                        .accessibilityHidden(true)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityLabel("Settings changes")
+            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+            .accessibilityHint(isExpanded ? "Collapse settings changes" : "Expand settings changes")
+
+            if isExpanded {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Numbered markers on the chart correspond to rows below.")
                         .font(.caption)
@@ -482,9 +504,7 @@ private struct SettingsChangeLegend: View {
                         }
                     }
                 }
-                .padding(.top, 6)
-            } label: {
-                header
+                .padding(.top, 14)
             }
         }
         .padding(16)
