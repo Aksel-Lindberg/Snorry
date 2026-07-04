@@ -34,7 +34,7 @@ final class SnoreEvent {
     var id: UUID
     var startDate: Date
     var endDate: Date?
-    /// BRPM calculated over this event's onset timestamps.
+    /// BRPM calculated from inhalation timestamps during this event.
     var brpm: Double
     /// Peak dBFS during this event.
     var peakDB: Float

@@ -41,7 +41,7 @@ struct SnoreEventDetectorTests {
     }
 
     /// Feeds classifier-active ticks from `start` through `end` every `step` seconds.
-    /// Loud `-20` dBFS ticks land on multiples of `onsetSpacing` for valid BRPM; others stay quiet.
+    /// Each breath cycle at `onsetSpacing` simulates quiet → inhale rise → exhale snore peak.
     private func feedActiveWindow(
         detector: SnoreEventDetector,
         from start: Date,
@@ -52,12 +52,28 @@ struct SnoreEventDetectorTests {
         var elapsed: TimeInterval = 0
         while elapsed <= end {
             let tickTime = start.addingTimeInterval(elapsed)
-            let isOnsetTick = isOnsetTime(elapsed, spacing: onsetSpacing)
-            let db: Float = isOnsetTick ? -20 : -45
             detector.feed(classifierResult: true)
-            detector.feed(tick: makeTick(db: db, at: tickTime))
+            if isOnsetTime(elapsed, spacing: onsetSpacing) {
+                feedBreathCycle(detector: detector, at: tickTime, step: step)
+            } else {
+                detector.feed(tick: makeTick(db: -48, at: tickTime))
+            }
             elapsed += step
         }
+    }
+
+    /// One breath: quiet trough → rising inhale → loud exhale/snore.
+    private func feedBreathCycle(
+        detector: SnoreEventDetector,
+        at start: Date,
+        step: TimeInterval
+    ) {
+        let dt = step * 0.35
+        detector.feed(classifierResult: true)
+        detector.feed(tick: makeTick(db: -48, at: start))
+        detector.feed(tick: makeTick(db: -40, at: start.addingTimeInterval(dt)))
+        detector.feed(tick: makeTick(db: -32, at: start.addingTimeInterval(dt * 2)))
+        detector.feed(tick: makeTick(db: -20, at: start.addingTimeInterval(dt * 3)))
     }
 
     /// Feeds inactive ticks over a time span.
@@ -76,19 +92,19 @@ struct SnoreEventDetectorTests {
         }
     }
 
-    /// True when `elapsed` is close to a multiple of `spacing` (breath onset tick).
+    /// True when `elapsed` is close to a multiple of `spacing` (breath cycle anchor).
     private func isOnsetTime(_ elapsed: TimeInterval, spacing: TimeInterval) -> Bool {
         guard spacing > 0 else { return false }
         let quotient = elapsed / spacing
         return abs(quotient - quotient.rounded()) < 0.05
     }
 
-    /// Four onsets spaced within an active window (~40 BRPM).
+    /// Four inhalations spaced within an active window (~40 BRPM).
     private func feedFirstEpisodePattern(detector: SnoreEventDetector, t0: Date, onsetSpacing: TimeInterval = 1.5) {
         for index in 0..<4 {
             let t = t0.addingTimeInterval(Double(index) * onsetSpacing)
             detector.feed(classifierResult: true)
-            detector.feed(tick: makeTick(db: -20, at: t))
+            feedBreathCycle(detector: detector, at: t, step: 0.25)
         }
     }
 
@@ -107,9 +123,36 @@ struct SnoreEventDetectorTests {
 
     @Test func brpmComputationWith6Onsets() {
         let timestamps = (0..<6).map { Date(timeIntervalSince1970: Double($0) * 2.0) }
-        let intervals = zip(timestamps, timestamps.dropFirst()).map { $1.timeIntervalSince($0) }
-        let brpm = AudioMath.brpm(fromIntervals: intervals)
+        let brpm = AudioMath.brpm(fromTimestamps: timestamps)
         #expect(brpm != nil && abs(brpm! - 30) < 0.1)
+    }
+
+    /// Two loud exhale peaks in one breath must not produce two inhalation counts.
+    @Test func doubleExhalePeakCountsOneInhalation() async {
+        let detector = SnoreEventDetector()
+        detector.minContinuousSnoringBeforeConfirm = 3
+        detector.onsetThresholdDB = 6
+        detector.start()
+
+        let t0 = Date(timeIntervalSince1970: 9000)
+        detector.feed(classifierResult: false, at: t0.addingTimeInterval(-1))
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(-1)))
+
+        // Four breath cycles at 2 s spacing → ~30 BRPM; extra exhale peaks must not inflate count.
+        for index in 0..<4 {
+            let base = t0.addingTimeInterval(Double(index) * 2.0)
+            feedBreathCycle(detector: detector, at: base, step: 0.25)
+            detector.feed(tick: makeTick(db: -18, at: base.addingTimeInterval(0.45)))
+            detector.feed(tick: makeTick(db: -48, at: base.addingTimeInterval(1.3)))
+        }
+
+        let events = await collectEvents(from: detector)
+        let brpmUpdates = events.compactMap { event -> Double? in
+            if case .brpmUpdated(let brpm) = event { return brpm }
+            return nil
+        }
+        #expect(startedCount(in: events) == 1)
+        #expect(brpmUpdates.last.map { abs($0 - 30) < 4 } == true)
     }
 
     @Test func requiresFiveSecondsActiveBeforeStart() async {

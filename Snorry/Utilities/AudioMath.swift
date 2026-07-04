@@ -49,18 +49,21 @@ enum AudioMath {
         return sorted[mid]
     }
 
-    // MARK: BRPM from onset intervals
+    // MARK: BRPM from inhalation intervals
 
     /// Lower bound for registered breath rate (breaths per minute). Slower patterns are treated as non-snore tempo noise.
     static let minRegisteredBRPM: Double = 10
     /// Upper bound for registered breath rate from interval median.
     static let maxRegisteredBRPM: Double = 60
 
-    /// Inter-onset spacing that maps to `[minRegisteredBRPM, maxRegisteredBRPM]`.
+    /// Minimum seconds between counted inhalations (matches `maxRegisteredBRPM`).
+    static var minInhalationInterval: TimeInterval { 60.0 / maxRegisteredBRPM }
+
+    /// Inter-breath spacing that maps to `[minRegisteredBRPM, maxRegisteredBRPM]`.
     private static var minIntervalForRegisteredBRPM: Double { 60.0 / maxRegisteredBRPM }
     private static var maxIntervalForRegisteredBRPM: Double { 60.0 / minRegisteredBRPM }
 
-    /// Returns breaths-per-minute from inter-onset intervals (seconds).
+    /// Returns breaths-per-minute from inter-inhalation intervals (seconds).
     /// Only intervals implying **≥ `minRegisteredBRPM` BRPM** (≤ 6 s at 10 BRPM) and **≤ `maxRegisteredBRPM`** (≥ 1 s) contribute.
     static func brpm(fromIntervals intervals: [Double]) -> Double? {
         let lo = minIntervalForRegisteredBRPM
@@ -70,6 +73,13 @@ enum AudioMath {
         let raw = 60.0 / med
         guard raw >= minRegisteredBRPM && raw <= maxRegisteredBRPM else { return nil }
         return raw
+    }
+
+    /// Returns breaths-per-minute from inhalation timestamps recorded during a snore bout.
+    static func brpm(fromTimestamps timestamps: [Date]) -> Double? {
+        guard timestamps.count >= 2 else { return nil }
+        let intervals = zip(timestamps, timestamps.dropFirst()).map { $1.timeIntervalSince($0) }
+        return brpm(fromIntervals: intervals)
     }
 
     // MARK: BRPM ↔ spectral marker (harmonic of breath tempo in audible band)

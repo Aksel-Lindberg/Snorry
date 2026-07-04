@@ -10,7 +10,7 @@ enum DetectorEvent: Sendable {
     /// Emitted only after enough onsets confirm a valid pattern.
     /// `at` = start of uninterrupted rumble-validated snoring; `captureFrom` = same (used to trim pre-roll).
     case snoreStarted(eventID: UUID, at: Date, captureFrom: Date)
-    /// Individual breath peak within a confirmed event.
+    /// Individual inhalation within a confirmed event (start of a breath cycle).
     case snoreOnset(at: Date)
     /// Emitted when the detector's gap tolerance expires (or on forced reset).
     case snoreEnded(eventID: UUID, at: Date, brpm: Double, peakDB: Float, avgDB: Float)
@@ -23,8 +23,8 @@ enum DetectorEvent: Sendable {
 /// Phase 2 — CONFIRMED: enough onsets confirmed; event is live.
 ///
 /// First episode of a monitoring session requires 5 s continuous rumble-validated snoring,
-/// 4 onsets, and valid BRPM. Every subsequent episode requires 5 s continuous snoring and
-/// 2 onsets so the alarm re-arms within seconds after a clear.
+/// 4 inhalations, and valid BRPM. Every subsequent episode requires 5 s continuous snoring and
+/// 2 inhalations so the alarm re-arms within seconds after a clear.
 ///
 /// Confirmed events end after 10 s of classifier silence.
 ///
@@ -44,14 +44,34 @@ final class SnoreEventDetector: @unchecked Sendable {
     var minContinuousSnoringBeforeConfirm: TimeInterval = 5.0
     /// Gaps shorter than this between active stretches still count toward the 5 s total (inter-snore pauses).
     var activeGapBridge: TimeInterval = 4.0
-    private let minOnsetInterval: TimeInterval = 0.5    // de-bounce between onsets
+    private let minInhalationInterval: TimeInterval = AudioMath.minInhalationInterval
     private let ambientAlpha: Float            = 0.02   // EMA weight for ambient baseline
-    private let brpmWindowSize                 = 30     // max onsets used for BRPM
+    private let brpmWindowSize                 = 30     // max inhalations used for BRPM
 
-    /// dB above the ambient baseline required to register a breath onset.
+    /// dB above the ambient baseline required to register the exhale/snore peak of a breath cycle.
     /// Lower values make the detector more sensitive to quieter snores.
     /// Set from ``SnoreDetectionTuning`` using the saved sensitivity level.
     var onsetThresholdDB: Float = 12.0
+
+    // MARK: Breath envelope (inhalation detection)
+
+    private enum BreathPhase {
+        case quiet
+        case inhaling
+        case exhaling
+    }
+
+    /// Fast level EMA (~70 ms) — tracks the current inhale ramp.
+    private var shortLevelEMA: Float = -50
+    /// Slow level EMA (~500 ms) — local trend for trough / rise detection.
+    private var longLevelEMA: Float = -50
+    private let shortLevelAlpha: Float = 0.28
+    private let longLevelAlpha: Float = 0.04
+    /// Short-term level must exceed the slow trend by this much to enter the inhaling phase.
+    private let inhaleRiseThresholdDB: Float = 2.0
+    /// Must settle near or below the slow trend before the next inhale can arm.
+    private let quietBelowTrendDB: Float = 1.0
+    private var breathPhase: BreathPhase = .quiet
 
     // MARK: Session-level flag
     /// True after the first confirmed episode this monitoring session.
@@ -70,10 +90,11 @@ final class SnoreEventDetector: @unchecked Sendable {
     /// Accumulates dBFS during classifier-active ticks for computing the event average.
     private var eventSumDB: Double = 0
     private var eventTickCount: Int = 0
-    private var lastOnsetDate: Date?
+    private var lastInhalationDate: Date?
     private var silenceStart: Date?
     private var ambientBaseline: Float = -50
-    private var onsetTimestamps: [Date] = []
+    /// Inhalation timestamps within the current bout — one per breath cycle.
+    private var inhalationTimestamps: [Date] = []
     /// Accumulated classifier-active time within the current bout (bridges short inter-snore pauses).
     private var accumulatedActiveTime: TimeInterval = 0
     /// Timestamp of the previous classifier-active tick — not advanced while inactive.
@@ -139,9 +160,12 @@ final class SnoreEventDetector: @unchecked Sendable {
         eventPeakDB      = -160
         eventSumDB       = 0
         eventTickCount   = 0
-        lastOnsetDate    = nil
+        lastInhalationDate    = nil
         silenceStart     = nil
-        onsetTimestamps  = []
+        inhalationTimestamps  = []
+        shortLevelEMA    = -50
+        longLevelEMA     = -50
+        breathPhase      = .quiet
         accumulatedActiveTime = 0
         lastActiveTickTimestamp = nil
         classifierInactiveSince = nil
@@ -192,16 +216,15 @@ final class SnoreEventDetector: @unchecked Sendable {
             ambientBaseline = AudioMath.ema(current: ambientBaseline, new: db, alpha: ambientAlpha)
         }
 
-        // Onset detection: significant dB spike while classifier is active.
+        // Inhalation detection: quiet → rising inhale → loud exhale/snore → quiet.
         if classifierActive {
-            let isOnset = db >= ambientBaseline + onsetThresholdDB
-            let gapOK   = lastOnsetDate.map { now.timeIntervalSince($0) >= minOnsetInterval } ?? true
-            if isOnset && gapOK {
-                registerOnset(at: now)
-            }
+            updateBreathEnvelope(db: db)
+            detectInhalation(db: db, at: now)
             if !isConfirmed {
                 tryConfirm(at: now)
             }
+        } else {
+            breathPhase = .quiet
         }
 
         // Gap / silence tracking; accumulate level for average.
@@ -244,13 +267,45 @@ final class SnoreEventDetector: @unchecked Sendable {
 
     // MARK: Private helpers
 
-    private func registerOnset(at date: Date) {
-        if firstOnsetDate == nil { firstOnsetDate = date }
-        lastOnsetDate = date
+    private func updateBreathEnvelope(db: Float) {
+        shortLevelEMA = AudioMath.ema(current: shortLevelEMA, new: db, alpha: shortLevelAlpha)
+        longLevelEMA  = AudioMath.ema(current: longLevelEMA, new: db, alpha: longLevelAlpha)
+    }
 
-        onsetTimestamps.append(date)
-        if onsetTimestamps.count > brpmWindowSize {
-            onsetTimestamps.removeFirst()
+    /// Tracks quiet → inhale → exhale phases and registers one timestamp per inhalation.
+    private func detectInhalation(db: Float, at now: Date) {
+        let rising = shortLevelEMA > longLevelEMA + inhaleRiseThresholdDB
+        let quiet  = shortLevelEMA <= longLevelEMA + quietBelowTrendDB
+        let loud   = db >= ambientBaseline + onsetThresholdDB
+
+        let previousPhase = breathPhase
+        switch breathPhase {
+        case .quiet:
+            if rising { breathPhase = .inhaling }
+        case .inhaling:
+            if loud { breathPhase = .exhaling }
+            else if quiet { breathPhase = .quiet }
+        case .exhaling:
+            if rising { breathPhase = .inhaling }
+            else if !loud && quiet { breathPhase = .quiet }
+        }
+
+        // Count one inhalation at the start of each rising phase (after quiet or after exhale).
+        if breathPhase == .inhaling && previousPhase != .inhaling {
+            registerInhalation(at: now)
+        }
+    }
+
+    private func registerInhalation(at date: Date) {
+        let gapOK = lastInhalationDate.map { date.timeIntervalSince($0) >= minInhalationInterval } ?? true
+        guard gapOK else { return }
+
+        if firstOnsetDate == nil { firstOnsetDate = date }
+        lastInhalationDate = date
+
+        inhalationTimestamps.append(date)
+        if inhalationTimestamps.count > brpmWindowSize {
+            inhalationTimestamps.removeFirst()
         }
 
         if isConfirmed {
@@ -263,11 +318,11 @@ final class SnoreEventDetector: @unchecked Sendable {
 
     /// Transitions from pending → confirmed using `confirmationThreshold` and accumulated active time.
     ///
-    /// Requires 5 s of classifier-active snoring (with inter-snore gap bridging), existing onset count,
+    /// Requires 5 s of classifier-active snoring (with inter-snore gap bridging), enough inhalations,
     /// and (first bout) valid BRPM.
     private func tryConfirm(at now: Date) {
         guard classifierActive,
-              onsetTimestamps.count >= confirmationThreshold,
+              inhalationTimestamps.count >= confirmationThreshold,
               let id = pendingID,
               let anchor = accumulationAnchor,
               accumulatedActiveTime >= minContinuousSnoringBeforeConfirm else { return }
@@ -303,8 +358,11 @@ final class SnoreEventDetector: @unchecked Sendable {
         pendingID       = nil
         isConfirmed     = false
         firstOnsetDate  = nil
-        lastOnsetDate   = nil
-        onsetTimestamps = []
+        lastInhalationDate   = nil
+        inhalationTimestamps = []
+        shortLevelEMA   = -50
+        longLevelEMA    = -50
+        breathPhase     = .quiet
         eventPeakDB     = -160
         eventSumDB      = 0
         eventTickCount  = 0
@@ -353,10 +411,6 @@ final class SnoreEventDetector: @unchecked Sendable {
     }
 
     private func computeBRPM() -> Double? {
-        // ≥2 breath peaks → ≥1 spacing; ≥3 peaks → smoother median filtering in AudioMath.
-        guard onsetTimestamps.count >= 2 else { return nil }
-        let intervals = zip(onsetTimestamps, onsetTimestamps.dropFirst())
-            .map { $1.timeIntervalSince($0) }
-        return AudioMath.brpm(fromIntervals: intervals)
+        AudioMath.brpm(fromTimestamps: inhalationTimestamps)
     }
 }

@@ -69,9 +69,15 @@ struct AudioMathTests {
     }
 
     @Test func brpmTypical() {
-        // 15 snores/min → intervals of 4s → BRPM = 15
+        // 15 breaths/min → intervals of 4s → BRPM = 15
         let intervals = Array(repeating: 4.0, count: 10)
         let brpm = AudioMath.brpm(fromIntervals: intervals)
+        #expect(brpm != nil && abs(brpm! - 15) < 0.1)
+    }
+
+    @Test func brpmFromTimestampsHelper() {
+        let timestamps = (0..<4).map { Date(timeIntervalSince1970: Double($0) * 4.0) }
+        let brpm = AudioMath.brpm(fromTimestamps: timestamps)
         #expect(brpm != nil && abs(brpm! - 15) < 0.1)
     }
 
