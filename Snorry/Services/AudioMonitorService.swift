@@ -111,29 +111,17 @@ final class AudioMonitorService: @unchecked Sendable {
 
         try AudioSessionManager.shared.configureForMonitoring()
 
-        let inputNode = engine.inputNode
-        let inputFormat = inputNode.outputFormat(forBus: 0)
-        self.inputFormat = inputFormat
-
-        converter = AVAudioConverter(from: inputFormat, to: targetFormat)
-
         let (asyncStream, cont) = AsyncStream<MonitorTick>.makeStream()
         self.stream = asyncStream
         self.continuation = cont
 
-        let tapFrames = AVAudioFrameCount(inputFormat.sampleRate * 0.02)
-
         do {
-            inputNode.installTap(onBus: 0, bufferSize: tapFrames, format: inputFormat) { [weak self] buffer, _ in
-                self?.process(buffer: buffer)
-            }
-            inputTapInstalled = true
-            engine.prepare()
+            try installInputTap()
             try engine.start()
             AudioSessionManager.shared.setMonitoringAudioActive(true)
         } catch {
             if inputTapInstalled {
-                inputNode.removeTap(onBus: 0)
+                engine.inputNode.removeTap(onBus: 0)
                 inputTapInstalled = false
             }
             engine.stop()
@@ -168,19 +156,7 @@ final class AudioMonitorService: @unchecked Sendable {
         for attempt in 1...2 {
             do {
                 try AudioSessionManager.shared.configureForMonitoring()
-
-                let inputNode = engine.inputNode
-                let inputFormat = inputNode.outputFormat(forBus: 0)
-                self.inputFormat = inputFormat
-                converter = AVAudioConverter(from: inputFormat, to: targetFormat)
-
-                let tapFrames = AVAudioFrameCount(inputFormat.sampleRate * 0.02)
-                inputNode.installTap(onBus: 0, bufferSize: tapFrames, format: inputFormat) { [weak self] buffer, _ in
-                    self?.process(buffer: buffer)
-                }
-                inputTapInstalled = true
-
-                engine.prepare()
+                try installInputTap()
                 try engine.start()
                 guard engine.isRunning else {
                     throw NSError(domain: "app.Snorry", code: -1,
@@ -223,6 +199,24 @@ final class AudioMonitorService: @unchecked Sendable {
     }
 
     // MARK: Buffer processing
+
+    /// Syncs the engine with the active audio session, then installs the mic tap using
+    /// the live hardware format — reading the format before `prepare()` can return a
+    /// stale rate (e.g. 44.1 kHz) that no longer matches the mic (48 kHz) after replay.
+    private func installInputTap() throws {
+        let inputNode = engine.inputNode
+        engine.prepare()
+
+        let inputFormat = inputNode.outputFormat(forBus: 0)
+        self.inputFormat = inputFormat
+        converter = AVAudioConverter(from: inputFormat, to: targetFormat)
+
+        let tapFrames = AVAudioFrameCount(inputFormat.sampleRate * 0.02)
+        inputNode.installTap(onBus: 0, bufferSize: tapFrames, format: inputFormat) { [weak self] buffer, _ in
+            self?.process(buffer: buffer)
+        }
+        inputTapInstalled = true
+    }
 
     private func process(buffer: AVAudioPCMBuffer) {
         let now = Date()

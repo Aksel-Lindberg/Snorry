@@ -182,8 +182,7 @@ final class AudioSessionManager: @unchecked Sendable {
     /// Configure the session for alarm preview and snore clip replay (playback only).
     ///
     /// Uses `.playAndRecord` + `.defaultToSpeaker` so `overrideOutputAudioPort(.speaker)`
-    /// is valid (`.playback` rejects that call with OSStatus -50). Resets the 16 kHz
-    /// monitoring sample-rate hint so AAC clips decode at their native rate.
+    /// is valid (`.playback` rejects that call with OSStatus -50).
     func configureForClipReplay() throws {
         let session = AVAudioSession.sharedInstance()
 
@@ -191,8 +190,6 @@ final class AudioSessionManager: @unchecked Sendable {
             try? session.setActive(false, options: .notifyOthersOnDeactivation)
         }
 
-        // Hint only — must not block replay if the hardware rejects the rate.
-        try? session.setPreferredSampleRate(48_000)
         try session.setCategory(
             .playAndRecord,
             mode: .default,
