@@ -77,6 +77,16 @@ enum AppAnalytics {
         log("restore_tapped")
     }
 
+    // MARK: - Cross-promotion
+
+    static func logSleepAllyPromoOpened(source: String) {
+        log("sleepally_promo_opened", ["source": source])
+    }
+
+    static func logSleepAllyAppStoreTapped(source: String) {
+        log("sleepally_app_store_tapped", ["source": source])
+    }
+
     // MARK: - Helpers
 
     private static func alarmMode(pushEnabled: Bool, soundEnabled: Bool) -> String {

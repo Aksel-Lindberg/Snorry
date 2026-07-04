@@ -68,6 +68,7 @@ struct SettingsView: View {
     private func settingsContent(vm: SettingsViewModel) -> some View {
         List {
             profileSection
+            discoverSection
             alertChannelsSection(vm: vm)
             alertTimingsSection(vm: vm)
             alarmStyleSection(vm: vm)
@@ -142,6 +143,38 @@ struct SettingsView: View {
             Text("Optional. Used for a personal “Good night” greeting when you start recording.")
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    private var discoverSection: some View {
+        Section {
+            NavigationLink {
+                SleepAllyPromoView()
+            } label: {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "moon.stars.fill")
+                        .font(.body)
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 24)
+                        .padding(.top, 2)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("SleepAlly")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.labelPrimary)
+                        Text("Fall-asleep audio, wake-up alarms, habits, and advanced Snore Stop — from the makers of Snorry.")
+                            .font(.caption)
+                            .foregroundStyle(Theme.labelSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .foregroundStyle(Theme.labelPrimary)
+        } header: {
+            Text("Discover")
+                .foregroundStyle(Theme.labelSecondary)
         }
         .listRowBackground(Theme.surface)
     }

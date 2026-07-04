@@ -19,6 +19,7 @@
 		2F07F61077B2165A37B82697 /* HelpCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742A6FD9950680E53BE23A63 /* HelpCenterView.swift */; };
 		3035876B19288EDE9C61B092 /* MonitorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EF584F086C55FF9542E4815 /* MonitorViewModel.swift */; };
 		35A1C94A9E4F4D3CA9B9E2A1 /* SupportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35A1C94A9E4F4D3CA9B9E2A2 /* SupportView.swift */; };
+		SLP00012EAA4B00C99A0001 /* SleepAllyPromoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */; };
 		37A803ABEE40E3C7971FA296 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51A9F63FA957C465BB7935C9 /* SettingsViewModel.swift */; };
 		3FFFD31FADCB1FC67529C3CB /* Birds 3.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C37029CCF29EF0BC50C6D96A /* Birds 3.mp3 */; };
 		462D2683E00D754D63ADE2AE /* SleepAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C2F7F64989DD486B79A682 /* SleepAnimationView.swift */; };
@@ -139,6 +140,7 @@
 		2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiveSpectrumAnalyzer.swift; path = Utilities/LiveSpectrumAnalyzer.swift; sourceTree = "<group>"; };
 		33D1DDE7F8E9E6DBA7BBDCA0 /* SessionsListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionsListView.swift; path = Views/SessionsListView.swift; sourceTree = "<group>"; };
 		35A1C94A9E4F4D3CA9B9E2A2 /* SupportView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SupportView.swift; path = Views/SupportView.swift; sourceTree = "<group>"; };
+		SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepAllyPromoView.swift; path = Views/SleepAllyPromoView.swift; sourceTree = "<group>"; };
 		37F972562D70C58D2A242EE7 /* Indigo_Window.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Indigo_Window.mp3; path = Resources/Indigo_Window.mp3; sourceTree = "<group>"; };
 		455FBB9E12AF91E48C08F0D7 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		49D488573FFBA9ADFCE1E490 /* Piano.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Piano.mp3; path = Resources/Piano.mp3; sourceTree = "<group>"; };
@@ -367,6 +369,7 @@
 				9DF99C03511A2D5234A814CD /* SettingsView.swift */,
 				SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */,
 				35A1C94A9E4F4D3CA9B9E2A2 /* SupportView.swift */,
+				SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */,
 				69C2F7F64989DD486B79A682 /* SleepAnimationView.swift */,
 				A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */,
 			);
@@ -629,6 +632,7 @@
 				D40D2F44182FA85C919E46D4 /* SettingsView.swift in Sources */,
 				SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */,
 				35A1C94A9E4F4D3CA9B9E2A1 /* SupportView.swift in Sources */,
+				SLP00012EAA4B00C99A0001 /* SleepAllyPromoView.swift in Sources */,
 				462D2683E00D754D63ADE2AE /* SleepAnimationView.swift in Sources */,
 				25657F1F23E5AE334FB85ADB /* WaveformView.swift in Sources */,
 			);

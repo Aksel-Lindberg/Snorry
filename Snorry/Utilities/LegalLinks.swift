@@ -7,6 +7,7 @@ enum LegalLinks {
     static let support = URL(string: "https://snorry.lintech.no/support/")!
     static let supportEmail = "Support@lintech.no"
     static let manageSubscriptions = URL(string: "https://apps.apple.com/account/subscriptions")!
+    static let sleepAllyAppStore = URL(string: "https://apps.apple.com/app/sleepally/id6763325334")!
 }
 
 // MARK: - In-app privacy copy (sleep data vs Firebase usage analytics)
