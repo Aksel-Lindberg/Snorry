@@ -160,6 +160,11 @@ struct SettingsView: View {
                     Text("Local alerts on this iPhone")
                         .font(.caption)
                         .foregroundStyle(Theme.labelSecondary)
+                    Text(
+                        "Allow notifications on your connected watch in order to get the snore alerts mirrored to your watch on your wrist"
+                    )
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelSecondary)
                 }
             }
             .tint(Theme.accent)

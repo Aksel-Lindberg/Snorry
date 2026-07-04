@@ -325,14 +325,6 @@ struct HomeView: View {
                     .multilineTextAlignment(.center)
             }
 
-            if !sessionActiveOnHome {
-                Text("Connect your watch · get Snore alerts on your wrist")
-                    .font(Theme.handwritten(size: usesCompressedPadLayout ? 12 : 13, bold: true))
-                    .foregroundStyle(Theme.handwrittenGradient)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                    .padding(.top, 2)
-            }
         }
     }
 
