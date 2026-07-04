@@ -181,20 +181,22 @@ final class AudioSessionManager: @unchecked Sendable {
 
     /// Configure the session for alarm preview and snore clip replay (playback only).
     ///
-    /// Uses `.playAndRecord` so `overrideOutputAudioPort(.speaker)` works when no
-    /// external device is connected (`.playback` returns OSStatus -50 for that call).
-    /// Requests 48 kHz so AAC clips decode at their native rate for full output level.
+    /// Uses `.playAndRecord` + `.defaultToSpeaker` so `overrideOutputAudioPort(.speaker)`
+    /// is valid (`.playback` rejects that call with OSStatus -50). Resets the 16 kHz
+    /// monitoring sample-rate hint so AAC clips decode at their native rate.
     func configureForClipReplay() throws {
         let session = AVAudioSession.sharedInstance()
-        // Don't tear down an active monitoring session — replay restores it when finished.
+
         if !monitoringAudioActive() {
             try? session.setActive(false, options: .notifyOthersOnDeactivation)
         }
+
+        // Hint only — must not block replay if the hardware rejects the rate.
         try? session.setPreferredSampleRate(48_000)
         try session.setCategory(
             .playAndRecord,
             mode: .default,
-            options: [.defaultToSpeaker, .allowBluetoothA2DP, .allowBluetoothHFP]
+            options: [.defaultToSpeaker, .allowBluetoothA2DP]
         )
         try session.setActive(true)
         applyPreferredOutputRoute(for: session)

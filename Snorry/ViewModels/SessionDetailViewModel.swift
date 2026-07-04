@@ -45,7 +45,7 @@ final class SessionDetailViewModel {
     /// Peak-normalising player: decodes AAC → Float32, boosts gain, plays via AVAudioEngine.
     private let clipPlayer = NormalizingClipPlayer()
     private let logger     = Logger(subsystem: "app.Snorry", category: "SessionDetail")
-    /// Avoids reconfiguring AVAudioSession on every clip tap while browsing a session.
+    /// Tracks whether clip replay has activated the audio session (released in tearDownPlayback).
     private var replaySessionConfigured = false
 
     /// Loads relationships eagerly off the navigation transition so the History list stays responsive.
@@ -180,7 +180,7 @@ final class SessionDetailViewModel {
     }
 
     private func ensureReplaySessionConfigured() throws {
-        guard !replaySessionConfigured else { return }
+        // Re-apply on every tap so output routing stays correct after monitoring or alarms.
         try AudioSessionManager.shared.configureForClipReplay()
         replaySessionConfigured = true
     }

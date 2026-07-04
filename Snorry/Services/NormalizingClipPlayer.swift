@@ -36,6 +36,12 @@ final class NormalizingClipPlayer: @unchecked Sendable {
 
         let file       = try AVAudioFile(forReading: url)
         let frameCount = AVAudioFrameCount(file.length)
+        guard frameCount > 0 else {
+            throw NSError(
+                domain: "app.Snorry", code: -3,
+                userInfo: [NSLocalizedDescriptionKey: "Recorded clip is empty."]
+            )
+        }
 
         guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat,
                                             frameCapacity: frameCount) else {
@@ -49,9 +55,10 @@ final class NormalizingClipPlayer: @unchecked Sendable {
 
         applyPeakNormalisation(to: buffer)
 
+        // Route through the output node (Apple's simple-playback pattern) so the graph
+        // stays connected even when the main mixer link was torn down by a prior stop.
         engine.disconnectNodeOutput(playerNode)
-        engine.connect(playerNode, to: engine.mainMixerNode, format: buffer.format)
-        engine.mainMixerNode.outputVolume = 1.0
+        engine.connect(playerNode, to: engine.outputNode, format: buffer.format)
 
         engine.prepare()
         try engine.start()
@@ -68,7 +75,8 @@ final class NormalizingClipPlayer: @unchecked Sendable {
         if engine.isRunning {
             engine.stop()
         }
-        engine.reset()
+        // Do not call `engine.reset()` — it severs the mixer→output connection and
+        // matches AlarmTonePlayer, which keeps the graph intact between plays.
     }
 
     // MARK: - Private
