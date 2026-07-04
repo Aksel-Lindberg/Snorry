@@ -82,12 +82,7 @@ struct HomeView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Image("HomeAppIcon")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 32, height: 32)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .accessibilityLabel("Snorry")
+                    HomeAppIconMark()
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {

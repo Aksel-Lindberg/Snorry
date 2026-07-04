@@ -40,13 +40,21 @@ struct MonitorView: View {
                     timelineCard
                 }
                 .padding(.horizontal, horizontalPadding)
-                .padding(.top, 12)
+                .padding(.top, 4)
                 .padding(.bottom, 8)
                 .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
                 .frame(maxWidth: .infinity)
             }
             .scrollIndicators(.hidden)
             .allowsHitTesting(!vm.isStoppingMonitoring)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                HStack {
+                    HomeAppIconMark()
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, horizontalPadding)
+                .padding(.bottom, 6)
+            }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 stopButton
                     .padding(.horizontal, horizontalPadding)

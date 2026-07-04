@@ -118,6 +118,20 @@ struct HandwrittenGradientText: View {
     }
 }
 
+/// Toolbar / header app icon — matches Tonight home top-leading mark.
+struct HomeAppIconMark: View {
+    var size: CGFloat = 32
+
+    var body: some View {
+        Image("HomeAppIcon")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .accessibilityLabel("Snorry")
+    }
+}
+
 // MARK: - iPad floating tab bar clearance
 
 enum TabBarLayout {
