@@ -87,26 +87,30 @@ struct AlertSetupSummaryCard: View {
         return AlertSetupSummaryCard(
             display: AlertSetupDisplay(session: session)!,
             caption: "Alert setup for this recording",
-            isSessionSnapshot: true
+            isSessionSnapshot: true,
+            collapsible: true,
+            startsCollapsed: true
         )
     }
 
     private init(
         display: AlertSetupDisplay,
         caption: String,
-        isSessionSnapshot: Bool
+        isSessionSnapshot: Bool,
+        collapsible: Bool = false,
+        startsCollapsed: Bool = true
     ) {
         self.display = display
         self.notificationsAuthorized = false
         self.isSessionSnapshot = isSessionSnapshot
         self.caption = caption
         self.compact = false
-        self.collapsible = false
-        self.startsCollapsed = true
+        self.collapsible = collapsible
+        self.startsCollapsed = startsCollapsed
         self.onExpandedChange = nil
         self.footerLinkTitle = nil
         self.onFooterLinkTap = nil
-        _isExpanded = State(initialValue: true)
+        _isExpanded = State(initialValue: collapsible ? !startsCollapsed : true)
     }
 
     var body: some View {

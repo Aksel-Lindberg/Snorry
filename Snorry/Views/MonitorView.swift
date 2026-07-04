@@ -540,15 +540,25 @@ private struct LiveTimelineChart: View {
                 RuleMark(x: .value("Snore", event.time))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     .foregroundStyle(Theme.snoring.opacity(0.65))
-                    .annotation(position: .top, spacing: 2) {
-                        Text(event.time, format: .dateTime.hour(.defaultDigits(amPM: .narrow)).minute(.twoDigits))
-                            .font(Theme.monoDigit(size: 9, weight: .medium))
-                            .foregroundStyle(Theme.snoring)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1)
-                            .background(Theme.surfaceSecondary.opacity(0.92), in: Capsule())
-                    }
+
+                // Anchor time labels inside the chart, just below the card header.
+                PointMark(
+                    x: .value("Snore", event.time),
+                    y: .value("Label", 1.0)
+                )
+                .symbolSize(0)
+                .annotation(position: .bottom, spacing: 2) {
+                    Text(event.time, format: .dateTime.hour(.defaultDigits(amPM: .narrow)).minute(.twoDigits))
+                        .font(Theme.monoDigit(size: 9, weight: .medium))
+                        .foregroundStyle(Theme.snoring)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(Theme.surfaceSecondary.opacity(0.92), in: Capsule())
+                }
             }
+        }
+        .chartPlotStyle { plotArea in
+            plotArea.padding(.top, 12)
         }
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: 4)) { _ in
