@@ -113,7 +113,7 @@ final class NotificationManager: NSObject, @unchecked Sendable {
     private func makeSnoringAlertContent() -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         content.title = "Snoring Detected"
-        content.body = "Snorry has detected a snoring pattern. Tap to view details."
+        content.body = "Turn to side sleep!"
         content.sound = .default
         content.interruptionLevel = .timeSensitive
         content.userInfo = [
