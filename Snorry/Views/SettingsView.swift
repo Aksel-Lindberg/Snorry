@@ -68,13 +68,13 @@ struct SettingsView: View {
     private func settingsContent(vm: SettingsViewModel) -> some View {
         List {
             profileSection
-            discoverSection
             alertChannelsSection(vm: vm)
             alertTimingsSection(vm: vm)
             alarmStyleSection(vm: vm)
             actionsSection(vm: vm)
             subscriptionSection()
             supportSection()
+            discoverSection
             legalSection()
         }
         .scrollContentBackground(.hidden)
@@ -152,31 +152,14 @@ struct SettingsView: View {
             NavigationLink {
                 SleepAllyPromoView()
             } label: {
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "moon.stars.fill")
-                        .font(.body)
-                        .foregroundStyle(Theme.accent)
-                        .frame(width: 24)
-                        .padding(.top, 2)
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("SleepAlly")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.labelPrimary)
-                        Text("Fall-asleep audio, wake-up alarms, habits, and advanced Snore Stop — from the makers of Snorry.")
-                            .font(.caption)
-                            .foregroundStyle(Theme.labelSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .padding(.vertical, 2)
+                SleepAllyDiscoverPromoLabel()
             }
             .foregroundStyle(Theme.labelPrimary)
         } header: {
-            Text("Discover")
+            Text("Discover our advanced Sleep Assistant")
                 .foregroundStyle(Theme.labelSecondary)
         }
-        .listRowBackground(Theme.surface)
+        .listRowBackground(SleepAllyDiscoverPromoRowBackground())
     }
 
     private func alertChannelsSection(vm: SettingsViewModel) -> some View {
@@ -490,6 +473,127 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.labelSecondary)
         }
         .listRowBackground(Theme.surface)
+    }
+}
+
+// MARK: - SleepAlly discover promo (animated Settings row)
+
+private struct SleepAllyDiscoverPromoLabel: View {
+    @State private var glowPulse = false
+    @State private var sparkleTwinkle = false
+    @State private var floatUp = false
+    @State private var shimmerOffset: CGFloat = -0.6
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Theme.accentGlow)
+                    .frame(width: 42, height: 42)
+                    .scaleEffect(glowPulse ? 1.18 : 0.86)
+                    .opacity(glowPulse ? 0.95 : 0.35)
+
+                Image(systemName: "moon.stars.fill")
+                    .font(.title3)
+                    .foregroundStyle(Theme.accentGradient)
+                    .symbolEffect(.bounce, options: .repeating.speed(0.45))
+                    .symbolEffect(.pulse.byLayer, options: .repeating.speed(0.55))
+
+                Image(systemName: "sparkles")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Theme.warning)
+                    .offset(x: 15, y: -13)
+                    .scaleEffect(sparkleTwinkle ? 1.15 : 0.65)
+                    .opacity(sparkleTwinkle ? 1 : 0.4)
+                    .rotationEffect(.degrees(sparkleTwinkle ? 8 : -8))
+            }
+            .frame(width: 44, height: 44)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("SleepAlly")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.labelPrimary)
+                    .overlay { titleShimmer }
+                    .clipShape(Rectangle())
+
+                Text(
+                    "Fall-asleep audio, wake-up alarms, habits, and advanced Snore Stop "
+                        + "— from the makers of Snorry."
+                )
+                .font(.caption)
+                .foregroundStyle(Theme.labelSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 6)
+        .offset(y: floatUp ? -1.5 : 1.5)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.1).repeatForever(autoreverses: true)) {
+                glowPulse = true
+            }
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                sparkleTwinkle = true
+            }
+            withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
+                floatUp = true
+            }
+            withAnimation(.linear(duration: 2.6).repeatForever(autoreverses: false)) {
+                shimmerOffset = 1.35
+            }
+        }
+    }
+
+    private var titleShimmer: some View {
+        GeometryReader { geo in
+            LinearGradient(
+                colors: [.clear, Theme.accent.opacity(0.65), .clear],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(width: max(geo.size.width * 0.5, 36))
+            .offset(x: shimmerOffset * geo.size.width)
+            .blendMode(.plusLighter)
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+private struct SleepAllyDiscoverPromoRowBackground: View {
+    @State private var borderPulse = false
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Theme.surface,
+                        Theme.surfaceSecondary.opacity(borderPulse ? 0.85 : 0.55)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(
+                        AngularGradient(
+                            colors: [
+                                Theme.accent.opacity(borderPulse ? 0.95 : 0.3),
+                                Color(red: 0.55, green: 0.35, blue: 1.0).opacity(borderPulse ? 0.8 : 0.22),
+                                Theme.warning.opacity(borderPulse ? 0.65 : 0.18),
+                                Theme.accent.opacity(borderPulse ? 0.95 : 0.3)
+                            ],
+                            center: .center
+                        ),
+                        lineWidth: borderPulse ? 1.5 : 1
+                    )
+            }
+            .shadow(color: Theme.accentGlow.opacity(borderPulse ? 0.5 : 0.12), radius: borderPulse ? 9 : 3)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                    borderPulse = true
+                }
+            }
     }
 }
 
