@@ -691,14 +691,15 @@ final class MonitorViewModel {
     /// Runs the alert state machine from confirmed episode state.
     ///
     /// Before an alert fires, keep the escalation clock running through brief classifier dropouts.
-    /// Once push or sound has fired for this event, pass live classifier state only while the alarm
-    /// is still playing; after it clears, do not re-arm until the next `.snoreStarted`.
+    /// Once push or sound has fired, keep alerts active through inter-snore pauses within the same
+    /// confirmed bout (classifier silence can last several seconds between individual snores).
+    /// Alerts clear on `.snoreEnded` or after sustained silence when no bout is active.
     private func updateAlertSnoringState() {
         let alertAlreadyActive = alertPhase == .notified || alertPhase == .alarming
 
         let snoringForAlerts: Bool
         if alertAlreadyActive {
-            snoringForAlerts = isSnoring
+            snoringForAlerts = snoringActiveForOngoingAlert()
         } else if alertDeliveredForCurrentEvent {
             snoringForAlerts = false
         } else if requiresBackgroundAlarmVerification {
@@ -711,6 +712,19 @@ final class MonitorViewModel {
         }
 
         alertManager.update(isSnoring: snoringForAlerts, at: Date())
+    }
+
+    /// While an alert is live, treat a confirmed bout as ongoing snoring even when the classifier
+    /// briefly drops between individual snores (otherwise the 3 s clear delay stops the alarm early).
+    private func snoringActiveForOngoingAlert() -> Bool {
+        if isSnoring { return true }
+        if isEpisodeConfirmed, activeEventID != nil { return true }
+        if requiresBackgroundAlarmVerification,
+           let pauseStart = backgroundSnoringInactiveSince,
+           Date().timeIntervalSince(pauseStart) < backgroundSnoringGapBridge {
+            return true
+        }
+        return false
     }
 
     /// True while the app is locked or backgrounded — RMS fallback replaces live SoundAnalysis.
