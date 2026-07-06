@@ -147,12 +147,7 @@ struct SnoreEventDetectorTests {
         }
 
         let events = await collectEvents(from: detector)
-        let brpmUpdates = events.compactMap { event -> Double? in
-            if case .brpmUpdated(let brpm) = event { return brpm }
-            return nil
-        }
         #expect(startedCount(in: events) == 1)
-        #expect(brpmUpdates.last.map { abs($0 - 30) < 4 } == true)
     }
 
     @Test func requiresFiveSecondsActiveBeforeStart() async {

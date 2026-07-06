@@ -12,12 +12,10 @@ final class MonitorViewModel {
     var isMonitoring = false
     /// Raw classifier state — true as soon as the model detects a snoring-like sound.
     var isSnoring = false
-    /// True only once a valid BRPM pattern (≥4 onsets) has been confirmed.
+    /// True only once a confirmed snore bout has started.
     /// AlertManager is fed this flag so a single snore-like sound never triggers alerts.
     var isEpisodeConfirmed = false
     var currentDB: Float = -160
-    var currentBRPM: Double = 0
-    var brpmAvailable = false
     var alertPhase: AlertPhase = .idle
     var elapsedSeconds: Int = 0
     var snoreEventCount = 0
@@ -37,22 +35,6 @@ final class MonitorViewModel {
     /// True between `.snoreStarted` and `.snoreEnded` while an event is being logged.
     var isSnoreEventActive: Bool { activeEventID != nil }
 
-    /// Lowest harmonic of the respiratory tempo that falls in the snore-heavy band (~85–2800 Hz).
-    var spectrumBRPMHighlightHz: Double? {
-        guard isSnoreEventActive, brpmAvailable, currentBRPM > 0 else { return nil }
-        return AudioMath.brpmHarmonicHighlightHz(brpm: currentBRPM)
-    }
-
-    /// Matching bar for the live log spectrum (aligned with `spectrumBandCount`).
-    var spectrumBRPMHighlightBandIndex: Int? {
-        guard let hz = spectrumBRPMHighlightHz else { return nil }
-        return AudioMath.logSpectrumBandIndex(
-            freqHz: hz,
-            bandCount: spectrumBandCount,
-            sampleRate: AudioMonitorService.targetSampleRate
-        )
-    }
-
     /// Normalised FFT power per logarithmic frequency band (0…1), low Hz on the left.
     var spectrumBands: [Float] = []
 
@@ -63,7 +45,6 @@ final class MonitorViewModel {
         let id = UUID()
         let time: Date
         let dBFS: Float
-        let brpm: Double
         let isSnoring: Bool
     }
 
@@ -403,8 +384,6 @@ final class MonitorViewModel {
         needsMonitoringRestoreAfterAlarm = false
         monitoringStartedAt = nil
         lastPipelineRecoveryAt = nil
-        currentBRPM        = 0
-        brpmAvailable      = false
 
         UIApplication.shared.isIdleTimerDisabled = false
     }
@@ -542,13 +521,11 @@ final class MonitorViewModel {
                 // Persist waveform sample every second
                 sessionStore?.addWaveformSample(
                     dBFS: currentDB,
-                    brpm: currentBRPM,
                     isSnoringActive: isSnoreEventActive && isSnoring
                 )
                 timelinePoints.append(TimelinePoint(
                     time: Date(),
                     dBFS: currentDB,
-                    brpm: currentBRPM,
                     isSnoring: isSnoreEventActive && isSnoring
                 ))
                 // Keep at most 8 hours of data in memory
@@ -613,9 +590,6 @@ final class MonitorViewModel {
                 backgroundSnoringVerifiedForAlarm = true
                 alertManager.update(isSnoring: true, at: Date())
             }
-            // Fresh BRPM estimation for each new detector bout / event.
-            currentBRPM       = 0
-            brpmAvailable     = false
             sessionStore?.beginEvent(id: id, at: at)
             if isBackgroundMonitoringProfileActive || requiresBackgroundAlarmVerification {
                 sessionStore?.setSoundKind(.snoring, eventID: id)
@@ -648,43 +622,29 @@ final class MonitorViewModel {
         case .snoreOnset:
             break
 
-        case .snoreEnded(let id, let at, let brpm, let peakDB, let avgDB):
-            var clipRelativePath: String?
+        case .snoreEnded(let id, let at, let peakDB, let avgDB):
             if clipOpen {
                 let relativePath = clipRecorder.endClip()
                 clipOpen = false
                 if let clipPath = relativePath {
                     sessionStore?.updateEventAudioPath(clipPath, eventID: id)
-                    clipRelativePath = clipPath
                 }
             }
-            // Breath-tempo harmonic (live spectrum red marker); distinct from clip `spectralPeakHz`.
-            let rumbleHz = AudioMath.brpmHarmonicHighlightHz(brpm: brpm) ?? 0
-            sessionStore?.endEvent(id: id, at: at, brpm: brpm, peakDB: peakDB,
-                                   avgDB: avgDB, rumbleFrequencyHz: rumbleHz)
+            sessionStore?.endEvent(id: id, at: at, peakDB: peakDB, avgDB: avgDB)
             if isBackgroundMonitoringProfileActive
                 || activeSession?.hadBackgroundRecordingPeriod == true {
                 sessionStore?.setSoundKind(.snoring, eventID: id)
-            }
-            if let rel = clipRelativePath {
-                scheduleClipSpectralAnalysis(relativePath: rel, eventID: id)
             }
             activeEventID = nil
             cancelBackgroundAlarmVerification()
             cancelSoundAlarmPulseLoop()
             // Return UI to Quiet
             isEpisodeConfirmed = false
-            brpmAvailable = false
-            currentBRPM = 0
             // Only force-clear when an alert already fired; otherwise let the 1 Hz loop
             // finish the notify/sound delay (short test clips used to cancel too early).
             if alertPhase == .notified || alertPhase == .alarming {
                 alertManager.clearAfterSnoreBoutEnded()
             }
-
-        case .brpmUpdated(let brpm):
-            currentBRPM   = brpm
-            brpmAvailable = true
         }
     }
 
@@ -920,8 +880,6 @@ final class MonitorViewModel {
             // Only tear down the bout when logging has ended — brief pauses mid-event may clear the alarm.
             if activeEventID == nil {
                 isEpisodeConfirmed = false
-                currentBRPM       = 0
-                brpmAvailable     = false
                 detector.resetForNewEpisode()
             }
         }
@@ -979,41 +937,15 @@ final class MonitorViewModel {
     /// Ends an in-flight AAC encode and persists the SwiftData row when stopping mid-snore bout.
     private func finalizeOpenClipAndEventIfInterrupted() {
         guard let id = activeEventID else { return }
-        var clipRelativePath: String?
         if clipOpen {
             let relativePath = clipRecorder.endClip()
             clipOpen = false
             if let clipPath = relativePath {
                 sessionStore?.updateEventAudioPath(clipPath, eventID: id)
-                clipRelativePath = clipPath
             }
         }
         let peak = min(Float(0), max(currentDB, -160))
-        let rumbleHz = AudioMath.brpmHarmonicHighlightHz(brpm: currentBRPM) ?? 0
-        sessionStore?.endEvent(id: id, at: Date(), brpm: max(0, currentBRPM), peakDB: peak,
-                               avgDB: peak, rumbleFrequencyHz: rumbleHz)
-        if let rel = clipRelativePath {
-            scheduleClipSpectralAnalysis(relativePath: rel, eventID: id)
-        }
+        sessionStore?.endEvent(id: id, at: Date(), peakDB: peak, avgDB: peak)
         activeEventID = nil
-    }
-
-    /// FFT-based rumble peak from the saved clip (background); updates `spectralPeakHz`.
-    private func scheduleClipSpectralAnalysis(relativePath: String, eventID: UUID) {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let url = support.appendingPathComponent(relativePath)
-        guard FileManager.default.fileExists(atPath: url.path) else { return }
-
-        let context = modelContext
-        let id = eventID
-
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(200))
-            let peakHz: Double? = await Task.detached(priority: .utility) {
-                try? SnoreClipSpectralAnalyzer.dominantPeakHz(fileURL: url)
-            }.value
-            guard let hz = peakHz else { return }
-            SessionStore(context: context).setSpectralPeakHz(hz, eventID: id)
-        }
     }
 }

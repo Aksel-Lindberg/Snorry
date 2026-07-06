@@ -41,8 +41,7 @@ struct LiveSpectrumInfoSheet: View {
 
             Text(
                 "Log-scaled band energy from 45 Hz up to the Nyquist frequency. " +
-                "Red highlights mark the breath-tempo harmonic when a bout is confirmed—" +
-                "the same idea as the rumble marker stored on each event in History."
+                "Bars brighten when snoring is confirmed so you can see how the sound shifts in real time."
             )
             .font(.subheadline)
             .foregroundStyle(Theme.labelSecondary)
@@ -60,11 +59,6 @@ struct LiveSpectrumInfoSheet: View {
                 icon: "speaker.wave.2.fill",
                 title: "dBFS",
                 detail: "Input loudness (— when extremely quiet)."
-            )
-            infoRow(
-                icon: "lungs.fill",
-                title: "BRPM",
-                detail: "Breath rate per minute once tempo is estimated for the current bout."
             )
             infoRow(
                 icon: "waveform.badge.exclamationmark",

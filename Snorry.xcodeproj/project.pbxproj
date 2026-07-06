@@ -86,6 +86,7 @@
 		EE47D6282AEC20E24ACDB499 /* AnalyticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A95B0DD1AEC516E507C1B1B /* AnalyticsViewModel.swift */; };
 		EE7999D9F5A806F3EAFEAB07 /* Blades.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = C0E7F74222B44790C949159B /* Blades.mp3 */; };
 		EF5CC0251F040554878D0EBD /* SnoreClipSpectralAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF43A2D12306F7CD8D9E23C3 /* SnoreClipSpectralAnalyzer.swift */; };
+		C99A00032EAA4B00C99A0011 /* SnoreClipSharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99A00022EAA4B00C99A0010 /* SnoreClipSharing.swift */; };
 		EF96694FBC2893F5056D48FE /* Double tones.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = D478DD736616BB856D2F2D94 /* Double tones.mp3 */; };
 		F6F9545BB9B8179202A70A85 /* AudioSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0CC6D2C570ADD8994AFDE52 /* AudioSessionManager.swift */; };
 		F8A2B3C4D5E60718293A4B5D /* SnoreRumbleGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A2B3C4D5E60718293A4B5C /* SnoreRumbleGate.swift */; };
@@ -181,6 +182,7 @@
 		B535260A902657556E2C94B2 /* Marimba.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Marimba.mp3; path = Resources/Marimba.mp3; sourceTree = "<group>"; };
 		BC3AAF0922B2A428E2CD2A6E /* AlertSetupSummaryCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSetupSummaryCard.swift; path = Views/AlertSetupSummaryCard.swift; sourceTree = "<group>"; };
 		BF43A2D12306F7CD8D9E23C3 /* SnoreClipSpectralAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreClipSpectralAnalyzer.swift; path = Utilities/SnoreClipSpectralAnalyzer.swift; sourceTree = "<group>"; };
+		C99A00022EAA4B00C99A0010 /* SnoreClipSharing.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreClipSharing.swift; path = Utilities/SnoreClipSharing.swift; sourceTree = "<group>"; };
 		C0E7F74222B44790C949159B /* Blades.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Blades.mp3; path = Resources/Blades.mp3; sourceTree = "<group>"; };
 		C37029CCF29EF0BC50C6D96A /* Birds 3.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = "Birds 3.mp3"; path = "Resources/Birds 3.mp3"; sourceTree = "<group>"; };
 		C3DF721CCFE5BF5EA3AF9F05 /* AlarmTonePlayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlarmTonePlayer.swift; path = Services/AlarmTonePlayer.swift; sourceTree = "<group>"; };
@@ -346,6 +348,7 @@
 				21AA62568AD509DB2EF3C867 /* LegalLinks.swift */,
 				2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */,
 				BF43A2D12306F7CD8D9E23C3 /* SnoreClipSpectralAnalyzer.swift */,
+				C99A00022EAA4B00C99A0010 /* SnoreClipSharing.swift */,
 				F8A2B3C4D5E60718293A4B5C /* SnoreRumbleGate.swift */,
 				E0D7E4820D5B40D5D01D18D1 /* Theme.swift */,
 				A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */,
@@ -609,6 +612,7 @@
 				FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */,
 				AF86D422BDA1C67CD7A9D9F3 /* LiveSpectrumAnalyzer.swift in Sources */,
 				EF5CC0251F040554878D0EBD /* SnoreClipSpectralAnalyzer.swift in Sources */,
+				C99A00032EAA4B00C99A0011 /* SnoreClipSharing.swift in Sources */,
 				F8A2B3C4D5E60718293A4B5D /* SnoreRumbleGate.swift in Sources */,
 				5AE41B3C3FD7C95969F2831C /* Theme.swift in Sources */,
 				A1B2C3D4E5F60005A1B2C3D5 /* UserPreferences.swift in Sources */,

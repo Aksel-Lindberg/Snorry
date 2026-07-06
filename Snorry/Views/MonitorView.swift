@@ -172,10 +172,7 @@ struct MonitorView: View {
 
             LivePowerSpectrumView(
                 bands: vm.spectrumBands,
-                isSnoring: vm.detectionPhase == .confirmed && vm.isSnoring,
-                brpmHighlightBandIndex: vm.spectrumBRPMHighlightBandIndex,
-                brpmHarmonicFrequencyHz: vm.spectrumBRPMHighlightHz,
-                emphasiseMarker: vm.detectionPhase == .confirmed && vm.isSnoring
+                isSnoring: vm.detectionPhase == .confirmed && vm.isSnoring
             )
             .frame(height: 104)
 
@@ -183,12 +180,6 @@ struct MonitorView: View {
                 Text("45 Hz")
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                Spacer()
-                if let hz = vm.spectrumBRPMHighlightHz, vm.detectionPhase == .confirmed, vm.brpmAvailable {
-                    Text(String(format: "~%.0f Hz harmonic", hz))
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(Color.red.opacity(vm.isSnoring ? 1 : 0.65))
-                }
                 Spacer()
                 Text("\(nyquistLabel) Hz")
                     .font(.caption2.monospacedDigit())
@@ -214,16 +205,6 @@ struct MonitorView: View {
                 LoudnessVisualizerIcon(
                     dBFS: vm.currentDB,
                     color: Theme.accent
-                )
-            }
-            MetricTile(
-                label: "BRPM",
-                value: vm.brpmAvailable ? String(format: "%.0f", vm.currentBRPM) : "—"
-            ) {
-                BreathingLungsIcon(
-                    brpm: vm.currentBRPM,
-                    isActive: vm.isSnoreEventActive && vm.brpmAvailable,
-                    color: Theme.snoring
                 )
             }
             MetricTile(
@@ -441,46 +422,6 @@ private struct LoudnessVisualizerIcon: View {
                 }
             }
             .frame(width: 30, height: 22, alignment: .bottom)
-            .drawingGroup()
-        }
-    }
-}
-
-private struct BreathingLungsIcon: View {
-    let brpm: Double
-    let isActive: Bool
-    let color: Color
-
-    private var clampedBRPM: Double {
-        min(max(brpm, 6), 40)
-    }
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            let period = 60.0 / clampedBRPM
-            // One full inhale/exhale per BRPM cycle.
-            let cycle = 0.5 + 0.5 * sin((2.0 * .pi * t) / period)
-            let breathScale = isActive ? (0.88 + 0.16 * cycle) : 0.92
-
-            HStack(spacing: 4) {
-                Capsule()
-                    .fill(color.opacity(isActive ? 0.95 : 0.45))
-                    .frame(width: 9, height: 14)
-                    .scaleEffect(x: breathScale, y: 1.0, anchor: .bottomTrailing)
-
-                Capsule()
-                    .fill(color.opacity(isActive ? 0.95 : 0.45))
-                    .frame(width: 9, height: 14)
-                    .scaleEffect(x: breathScale, y: 1.0, anchor: .bottomLeading)
-            }
-            .overlay(alignment: .top) {
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(color.opacity(isActive ? 0.95 : 0.45))
-                    .frame(width: 2.4, height: 7)
-                    .offset(y: -5)
-            }
-            .frame(width: 30, height: 22)
             .drawingGroup()
         }
     }

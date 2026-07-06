@@ -104,12 +104,12 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chart.xyaxis.line",
                                 title: "Live power spectrum",
-                                detail: "Log-scaled band energy from 45 Hz up to the Nyquist frequency; red highlights mark the breath-tempo harmonic when a bout is confirmed—same idea as the rumble marker stored on each event."
+                                detail: "Log-scaled band energy from 45 Hz up to the Nyquist frequency. Bars brighten when snoring is confirmed."
                             )
                             HelpBullet(
-                                icon: "lungs.fill",
-                                title: "dBFS, BRPM, Events",
-                                detail: "dBFS shows input loudness (— when extremely quiet). BRPM appears once tempo is estimated for the current bout. Events counts completed snore bouts, not every classifier frame."
+                                icon: "speaker.wave.2.fill",
+                                title: "dBFS & Events",
+                                detail: "dBFS shows input loudness (— when extremely quiet). Events counts completed snore bouts, not every classifier frame."
                             )
                             HelpBullet(
                                 icon: "bell.and.waves.left.and.right.fill",
@@ -147,7 +147,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chevron.right.circle.fill",
                                 title: "Session detail",
-                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, a Session Timeline chart from saved waveform samples, and a Sound Events list. After nights with background recording, each event may be labeled Snoring, Sleep Talking, or Environment; tap a row with playback available to hear its AAC clip."
+                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, a Session Timeline chart from saved waveform samples, and a Sound Events list. After nights with background recording, each event may be labeled Snoring, Sleep Talking, or Environment; tap a row with playback available to hear its AAC clip, or use the share button to send the recording to someone else."
                             )
                         }
 

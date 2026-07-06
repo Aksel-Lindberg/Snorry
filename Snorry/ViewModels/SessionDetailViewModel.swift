@@ -10,7 +10,6 @@ struct TimelineChartPoint: Identifiable, Sendable {
     let id: UUID
     let timestamp: Date
     let dBFS: Float
-    let brpm: Double
     let isSnoringActive: Bool
 }
 
@@ -18,7 +17,6 @@ private struct WaveformSnapshot: Sendable {
     let id: UUID
     let timestamp: Date
     let dBFS: Float
-    let brpm: Double
     let isSnoringActive: Bool
 }
 
@@ -72,7 +70,6 @@ final class SessionDetailViewModel {
                 id: $0.id,
                 timestamp: $0.timestamp,
                 dBFS: $0.dBFS,
-                brpm: $0.brpm,
                 isSnoringActive: $0.isSnoringActive
             )
         }
@@ -108,7 +105,6 @@ final class SessionDetailViewModel {
                     id: $0.id,
                     timestamp: $0.timestamp,
                     dBFS: $0.dBFS,
-                    brpm: $0.brpm,
                     isSnoringActive: $0.isSnoringActive
                 )
             }
@@ -126,7 +122,6 @@ final class SessionDetailViewModel {
                         id: t.id,
                         timestamp: t.timestamp,
                         dBFS: t.dBFS,
-                        brpm: t.brpm,
                         isSnoringActive: t.isSnoringActive
                     )
                 )

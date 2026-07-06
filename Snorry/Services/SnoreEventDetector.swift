@@ -13,8 +13,7 @@ enum DetectorEvent: Sendable {
     /// Individual inhalation within a confirmed event (start of a breath cycle).
     case snoreOnset(at: Date)
     /// Emitted when the detector's gap tolerance expires (or on forced reset).
-    case snoreEnded(eventID: UUID, at: Date, brpm: Double, peakDB: Float, avgDB: Float)
-    case brpmUpdated(Double)
+    case snoreEnded(eventID: UUID, at: Date, peakDB: Float, avgDB: Float)
 }
 
 // MARK: - Snore event detector with two-phase confirmation
@@ -22,8 +21,8 @@ enum DetectorEvent: Sendable {
 /// Phase 1 — PENDING: classifier is active but pattern not yet confirmed.
 /// Phase 2 — CONFIRMED: enough onsets confirmed; event is live.
 ///
-/// First episode of a monitoring session requires 5 s continuous rumble-validated snoring,
-/// 4 inhalations, and valid BRPM. Every subsequent episode requires 5 s continuous snoring and
+/// First episode of a monitoring session requires 5 s continuous rumble-validated snoring
+/// and 4 inhalations. Every subsequent episode requires 5 s continuous snoring and
 /// 2 inhalations so the alarm re-arms within seconds after a clear.
 ///
 /// Confirmed events end after 10 s of classifier silence.
@@ -46,7 +45,7 @@ final class SnoreEventDetector: @unchecked Sendable {
     var activeGapBridge: TimeInterval = 4.0
     private let minInhalationInterval: TimeInterval = AudioMath.minInhalationInterval
     private let ambientAlpha: Float            = 0.02   // EMA weight for ambient baseline
-    private let brpmWindowSize                 = 30     // max inhalations used for BRPM
+    private let inhalationWindowSize           = 30     // max inhalations tracked per bout
 
     /// dB above the ambient baseline required to register the exhale/snore peak of a breath cycle.
     /// Lower values make the detector more sensitive to quieter snores.
@@ -304,13 +303,12 @@ final class SnoreEventDetector: @unchecked Sendable {
         lastInhalationDate = date
 
         inhalationTimestamps.append(date)
-        if inhalationTimestamps.count > brpmWindowSize {
+        if inhalationTimestamps.count > inhalationWindowSize {
             inhalationTimestamps.removeFirst()
         }
 
         if isConfirmed {
             continuation?.yield(.snoreOnset(at: date))
-            updateBRPM()
         } else {
             tryConfirm(at: date)
         }
@@ -318,8 +316,7 @@ final class SnoreEventDetector: @unchecked Sendable {
 
     /// Transitions from pending → confirmed using `confirmationThreshold` and accumulated active time.
     ///
-    /// Requires 5 s of classifier-active snoring (with inter-snore gap bridging), enough inhalations,
-    /// and (first bout) valid BRPM.
+    /// Requires 5 s of classifier-active snoring (with inter-snore gap bridging) and enough inhalations.
     private func tryConfirm(at now: Date) {
         guard classifierActive,
               inhalationTimestamps.count >= confirmationThreshold,
@@ -327,31 +324,21 @@ final class SnoreEventDetector: @unchecked Sendable {
               let anchor = accumulationAnchor,
               accumulatedActiveTime >= minContinuousSnoringBeforeConfirm else { return }
 
-        // For first episode, also validate a physiologically plausible breathing rate.
-        if !sessionHasConfirmedEpisode {
-            guard computeBRPM() != nil else { return }
-        }
-
         isConfirmed                = true
         currentEventID             = id
         sessionHasConfirmedEpisode = true
 
-        let brpm = computeBRPM() ?? 0
-        logger.info("Snore event confirmed: \(id), BRPM=\(brpm, format: .fixed(precision: 1)), threshold=\(self.confirmationThreshold)")
+        logger.info("Snore event confirmed: \(id), threshold=\(self.confirmationThreshold)")
 
         continuation?.yield(.snoreStarted(eventID: id, at: anchor, captureFrom: anchor))
-        if brpm > 0 {
-            continuation?.yield(.brpmUpdated(brpm))
-        }
     }
 
     /// Emits `.snoreEnded` and fully resets per-event tracking variables.
     private func finishCurrentEvent(at date: Date) {
         guard let id = currentEventID else { return }
-        let brpm   = computeBRPM() ?? 0
         let avgDB  = eventTickCount > 0 ? Float(eventSumDB / Double(eventTickCount)) : -160
-        logger.debug("Snore event ended: \(id), BRPM=\(brpm, format: .fixed(precision: 1)), avgDB=\(avgDB, format: .fixed(precision: 1))")
-        continuation?.yield(.snoreEnded(eventID: id, at: date, brpm: brpm, peakDB: eventPeakDB, avgDB: avgDB))
+        logger.debug("Snore event ended: \(id), avgDB=\(avgDB, format: .fixed(precision: 1))")
+        continuation?.yield(.snoreEnded(eventID: id, at: date, peakDB: eventPeakDB, avgDB: avgDB))
 
         // Clear all event-specific variables so a fresh pending phase can begin.
         currentEventID  = nil
@@ -403,14 +390,5 @@ final class SnoreEventDetector: @unchecked Sendable {
         classifierInactiveSince = nil
         // Re-anchor so the next active tick does not credit the pause gap.
         lastActiveTickTimestamp = now
-    }
-
-    private func updateBRPM() {
-        guard let brpm = computeBRPM() else { return }
-        continuation?.yield(.brpmUpdated(brpm))
-    }
-
-    private func computeBRPM() -> Double? {
-        AudioMath.brpm(fromTimestamps: inhalationTimestamps)
     }
 }

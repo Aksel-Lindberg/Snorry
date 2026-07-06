@@ -77,6 +77,10 @@ enum AppAnalytics {
         log("restore_tapped")
     }
 
+    static func logSnoreClipShared() {
+        log("snore_clip_shared")
+    }
+
     // MARK: - Cross-promotion
 
     static func logSleepAllyPromoOpened(source: String) {

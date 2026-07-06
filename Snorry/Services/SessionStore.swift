@@ -66,8 +66,6 @@ final class SessionStore {
         let snoringEvents = session.events.filter { $0.endDate != nil && $0.soundKind == .snoring }
         session.eventCount = snoringEvents.count
         session.totalSnoreDuration = snoringEvents.compactMap { $0.duration }.reduce(0, +)
-        let brpms = snoringEvents.filter { $0.brpm > 0 }.map { $0.brpm }
-        session.avgBRPM = brpms.isEmpty ? 0 : brpms.reduce(0, +) / Double(brpms.count)
         session.peakDB = snoringEvents.map { $0.peakDB }.max() ?? -160
     }
 
@@ -83,27 +81,13 @@ final class SessionStore {
         logger.debug("Event began: \(id)")
     }
 
-    func endEvent(id: UUID, at date: Date, brpm: Double, peakDB: Float,
-                  avgDB: Float, rumbleFrequencyHz: Double) {
+    func endEvent(id: UUID, at date: Date, peakDB: Float, avgDB: Float) {
         guard let event = openEvents[id] else { return }
         event.endDate = date
-        event.brpm = brpm
         event.peakDB = peakDB
         event.avgDB = avgDB
-        event.rumbleFrequencyHz = rumbleFrequencyHz
         openEvents.removeValue(forKey: id)
-        logger.debug("Event ended: \(id), breathHarmonic=\(rumbleFrequencyHz) Hz, avgDB=\(avgDB)")
-    }
-
-    /// Background clip analysis writes the measured rumble peak after `endEvent`.
-    func setSpectralPeakHz(_ peakHz: Double, eventID: UUID) {
-        guard let event = fetchEvent(id: eventID) else {
-            logger.warning("setSpectralPeakHz: no event \(eventID.uuidString)")
-            return
-        }
-        event.spectralPeakHz = peakHz
-        saveContext()
-        logger.debug("Spectral peak stored: \(eventID) \(peakHz) Hz")
+        logger.debug("Event ended: \(id), avgDB=\(avgDB)")
     }
 
     /// Live lock-screen verification writes the inferred sound category before/alongside alarms.
@@ -142,9 +126,9 @@ final class SessionStore {
 
     // MARK: Waveform samples (buffered, flushed every 60 s)
 
-    func addWaveformSample(dBFS: Float, brpm: Double, isSnoringActive: Bool) {
+    func addWaveformSample(dBFS: Float, isSnoringActive: Bool) {
         let sample = WaveformSample(timestamp: Date(), dBFS: dBFS,
-                                    brpm: brpm, isSnoringActive: isSnoringActive)
+                                    brpm: 0, isSnoringActive: isSnoringActive)
         waveformAccumulator.append(sample)
 
         let now = Date()

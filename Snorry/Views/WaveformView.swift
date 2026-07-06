@@ -59,16 +59,11 @@ struct DBMeterView: View {
     }
 }
 
-// MARK: - Live FFT power spectrum with optional BRPM harmonic marker
+// MARK: - Live FFT power spectrum
 struct LivePowerSpectrumView: View {
 
     let bands: [Float]
     let isSnoring: Bool
-    /// Index into `bands` (log-spaced) for the audible harmonic of respiratory tempo (BRPM).
-    var brpmHighlightBandIndex: Int? = nil
-    var brpmHarmonicFrequencyHz: Double? = nil
-    /// Pulse marker when classifier sees active snoring.
-    var emphasiseMarker: Bool = false
 
     var barSpacing: CGFloat = 1.5
     var cornerRadius: CGFloat = 2
@@ -101,34 +96,14 @@ struct LivePowerSpectrumView: View {
                     let x = CGFloat(i) * (barW + barSpacing)
                     let y = csize.height - h
 
-                    let isBRPMBand: Bool = {
-                        guard let c = brpmHighlightBandIndex else { return false }
-                        return abs(c - i) <= 1
-                    }()
-
-                    let fillColor: Color
-                    let outlineColor: Color
-                    if isBRPMBand, brpmHarmonicFrequencyHz != nil {
-                        fillColor = Color.red.opacity(emphasiseMarker ? 0.88 : 0.55)
-                        outlineColor = Color.red.opacity(emphasiseMarker ? 1.0 : 0.75)
-                    } else {
-                        let alpha = 0.35 + 0.65 * Double(v)
-                        fillColor = accentColor.opacity(alpha)
-                        outlineColor = .clear
-                    }
+                    let alpha = 0.35 + 0.65 * Double(v)
+                    let fillColor = accentColor.opacity(alpha)
 
                     let rect = CGRect(x: x, y: y, width: barW, height: h)
                     ctx.fill(
                         Path(roundedRect: rect, cornerRadius: cornerRadius),
                         with: .color(fillColor)
                     )
-                    if isBRPMBand, brpmHarmonicFrequencyHz != nil {
-                        ctx.stroke(
-                            Path(roundedRect: rect, cornerRadius: cornerRadius),
-                            with: .color(outlineColor),
-                            lineWidth: emphasiseMarker ? 1.75 : 1.0
-                        )
-                    }
                 }
             }
         }

@@ -61,13 +61,6 @@ struct SessionDetailView: View {
             // Snore events / duration use snoring-only counts from the session rollup.
             StatCard(label: "Snore events", value: "\(session.displayEventCount)", icon: "waveform.badge.exclamationmark")
             StatCard(label: "Snore duration", value: session.displayTotalSnoreTime, icon: "zzz")
-            if session.avgBRPM > 0 {
-                StatCard(
-                    label: "Average BRPM",
-                    value: String(format: "%.0f", session.avgBRPM),
-                    icon: "lungs"
-                )
-            }
         }
     }
 
@@ -171,7 +164,8 @@ struct SessionDetailView: View {
                         event: event,
                         isPlaying: vm.playingEventID == event.id,
                         canReplay: event.playbackURL != nil,
-                        onTap: { vm.togglePlayback(of: event) }
+                        onTap: { vm.togglePlayback(of: event) },
+                        onShare: { AppAnalytics.logSnoreClipShared() }
                     )
                 }
                 if let msg = vm.playbackDiagnostic {
@@ -359,34 +353,6 @@ private struct SessionTimelineChart: View {
                 .interpolationMethod(.catmullRom)
             }
 
-            ForEach(samples.filter { $0.brpm > 0 }) { s in
-                LineMark(
-                    x: .value("Time", s.timestamp),
-                    y: .value("BRPM", min(1.0, s.brpm / 60.0))
-                )
-                .foregroundStyle(Theme.accent.opacity(0.5))
-                .lineStyle(StrokeStyle(lineWidth: 1))
-            }
-
-            // Inline label attached near the middle of the BRPM line, shown just below it.
-            let brpmSamples = samples.filter { $0.brpm > 0 }
-            if !brpmSamples.isEmpty {
-                let labelSample = brpmSamples[brpmSamples.count / 2]
-                PointMark(
-                    x: .value("Time", labelSample.timestamp),
-                    y: .value("BRPM", min(1.0, labelSample.brpm / 60.0))
-                )
-                .symbolSize(0)
-                .annotation(position: .bottom, spacing: 4) {
-                    Text("BRPM trend")
-                        .font(.caption)
-                        .foregroundStyle(Theme.accent.opacity(0.9))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(Theme.surfaceSecondary.opacity(0.9), in: Capsule())
-                }
-            }
-
             // Vertical rule at each event start
             ForEach(events) { event in
                 RuleMark(x: .value("Event", event.startDate))
@@ -419,6 +385,7 @@ struct EventPlaybackRow: View {
     /// False when no file exists — avoids a tappable UI that silently does nothing.
     let canReplay: Bool
     let onTap: () -> Void
+    var onShare: (() -> Void)? = nil
 
     private var timeString: String {
         event.startDate.formatted(date: .omitted, time: .standard)
@@ -437,14 +404,6 @@ struct EventPlaybackRow: View {
         return (duration - minSeconds) / (maxSeconds - minSeconds)
     }
 
-    /// Strongest rumble-band frequency: **measured from the clip** when `spectralPeakHz` is set;
-    /// otherwise the legacy breath-tempo harmonic (~85 Hz) from older sessions.
-    private var rumbleDisplayHz: Double? {
-        if event.spectralPeakHz > 0 { return event.spectralPeakHz }
-        if event.rumbleFrequencyHz > 0 { return event.rumbleFrequencyHz }
-        return nil
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 12) {
@@ -456,6 +415,7 @@ struct EventPlaybackRow: View {
                 }
                 .disabled(!canReplay)
                 .opacity(canReplay ? 1.0 : 0.3)
+                .accessibilityLabel(isPlaying ? "Stop playback" : "Play recording")
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(timeString)
@@ -466,14 +426,17 @@ struct EventPlaybackRow: View {
 
                 Spacer()
 
+                if canReplay {
+                    SnoreClipShareButton(event: event, onShare: onShare)
+                }
+
                 if isPlaying {
                     PlayingIndicator()
                 }
             }
 
             // Metric bars — shown when duration and/or other measurements were captured for this event.
-            if durationFill != nil || event.brpm > 0 || event.avgDB > -160
-                || event.spectralPeakHz > 0 || event.rumbleFrequencyHz > 0 {
+            if durationFill != nil || event.avgDB > -160 {
                 VStack(spacing: 7) {
                     // Snore duration: mapped from 5 s (0%) to 10 min (100%).
                     if let durationFill {
@@ -483,34 +446,6 @@ struct EventPlaybackRow: View {
                             fill: durationFill,
                             color: Theme.labelSecondary,
                             systemImage: "clock.badge"
-                        )
-                    }
-
-                    // BRPM bar: normalised over the physiological 10–60 BRPM range.
-                    if event.brpm > 0 {
-                        EventMetricBar(
-                            label: "BRPM",
-                            value: String(format: "%.0f", event.brpm),
-                            fill: (event.brpm - 10) / 50,
-                            color: Theme.accent,
-                            systemImage: "lungs"
-                        )
-                    }
-
-                    // Rumble: dominant FFT peak in the snore band from the recording (new);
-                    // older rows fall back to breath harmonic. Log-scale bar 50–2000 Hz.
-                    if let rumbleFreq = rumbleDisplayHz {
-                        let lo = 50.0
-                        let hi = 2000.0
-                        let clamped = min(max(rumbleFreq, lo), hi)
-                        let logFill = log(clamped / lo) / log(hi / lo)
-                        let rumbleLabel = event.spectralPeakHz > 0 ? "Rumble" : "Breath harmonic"
-                        EventMetricBar(
-                            label: rumbleLabel,
-                            value: String(format: "%.0f Hz", rumbleFreq),
-                            fill: logFill,
-                            color: Theme.snoring,
-                            systemImage: "waveform.path.ecg"
                         )
                     }
 
