@@ -80,11 +80,13 @@ final class SnoreSession {
 
     // MARK: Display strings (Monitor card + session detail — avoids spinning up `SessionDetailViewModel`)
 
-    /// e.g. `"6h 57m"` or `"42m"`.
+    /// e.g. `"6h 57m"`, `"42m"`, or `"45s"` for short recordings.
     var displayDurationSummary: String {
         guard let dur = duration else { return "—" }
-        let hours = Int(dur) / 3600
-        let minutes = Int(dur) % 3600 / 60
+        let total = Int(dur.rounded())
+        if total < 60 { return "\(total)s" }
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
         return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
     }
 

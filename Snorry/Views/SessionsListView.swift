@@ -114,20 +114,21 @@ struct SessionRowView: View {
     let session: SnoreSession
     /// Maximum `totalSnoreDuration` across all visible sessions, used to normalise the bar.
     let maxSnoreDuration: Double
-    private let miniBarWidth: CGFloat = 116
 
     private var dateString: String {
         session.startDate.formatted(date: .abbreviated, time: .shortened)
     }
 
-    private var durationString: String {
-        guard let dur = session.duration else { return "—" }
-        let h = Int(dur) / 3600
-        let m = Int(dur) % 3600 / 60
-        return h > 0 ? "\(h)h \(m)m" : "\(m)m"
+    private var recordingDurationString: String {
+        session.displayDurationSummary
     }
 
     private var snoreDurationString: String { session.displayTotalSnoreTime }
+
+    private var eventCountLabel: String {
+        let count = session.displayEventCount
+        return count == 1 ? "1 snore event" : "\(count) snore events"
+    }
 
     private var barFill: CGFloat {
         guard maxSnoreDuration > 0 else { return 0 }
@@ -135,59 +136,68 @@ struct SessionRowView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
                 Text(dateString)
                     .font(.subheadline.bold())
                     .foregroundStyle(Theme.labelPrimary)
-                Spacer()
-                Text(durationString)
-                    .font(Theme.monoDigit(size: 13))
-                    .foregroundStyle(Theme.labelSecondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 12)
+
+                Label {
+                    Text(recordingDurationString)
+                        .font(Theme.monoDigit(size: 13))
+                } icon: {
+                    Image(systemName: "moon.zzz")
+                        .font(.caption2)
+                }
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(Theme.labelSecondary)
             }
 
-            HStack(spacing: 27) {
-                HStack(spacing: 4) {
-                    Image(systemName: "waveform")
-                    Text("\(session.displayEventCount)")
-                        .fontWeight(.bold)
-                        .frame(width: 24, alignment: .trailing)
-                    Text("snore events")
+            HStack(spacing: 20) {
+                Label {
+                    Text(eventCountLabel)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                } icon: {
+                    Image(systemName: "waveform.badge.exclamationmark")
                 }
-                .font(.caption)
+                .font(.caption.weight(.medium))
                 .foregroundStyle(Theme.snoring)
+                .labelStyle(.titleAndIcon)
 
-                HStack(spacing: 0) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "zzz")
-                        Text(snoreDurationString)
-                            .font(Theme.monoDigit(size: 12))
-                            .fontWeight(.bold)
-                    }
-                    .font(.caption)
-                    .foregroundStyle(Theme.accent)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-
-                    snoreDurationBar
-                        .padding(.leading, 10)
+                Label {
+                    Text(snoreDurationString)
+                        .font(Theme.monoDigit(size: 12, weight: .bold))
+                        .lineLimit(1)
+                } icon: {
+                    Image(systemName: "zzz")
                 }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Snore duration \(snoreDurationString)")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(Theme.accent)
+                .labelStyle(.titleAndIcon)
             }
+
+            snoreDurationBar
+                .accessibilityLabel("Snore duration relative to your longest night")
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 
     private var snoreDurationBar: some View {
-        ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 3)
-                .fill(Theme.surfaceSecondary)
-                .frame(width: miniBarWidth, height: 6)
-            RoundedRectangle(cornerRadius: 3)
-                .fill(Theme.snoringGradient)
-                .frame(width: miniBarWidth * barFill, height: 6)
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Theme.surfaceSecondary)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Theme.snoringGradient)
+                    .frame(width: max(geo.size.width * barFill, barFill > 0 ? 8 : 0))
+            }
         }
+        .frame(height: 6)
     }
 }
 

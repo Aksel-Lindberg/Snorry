@@ -33,21 +33,19 @@ enum SnoreClipSharing {
     }
 }
 
-// MARK: - Share button (copies clip once when tapped)
+// MARK: - Share button
 
 struct SnoreClipShareButton: View {
     let event: SnoreEvent
     var onShare: (() -> Void)? = nil
 
-    @State private var shareURL: URL?
-    @State private var showShareSheet = false
-
     var body: some View {
         Button {
             guard let url = SnoreClipSharing.preparedShareURL(for: event) else { return }
-            shareURL = url
-            showShareSheet = true
             onShare?()
+            // UIActivityViewController must be presented from UIKit — wrapping it in a
+            // SwiftUI `.sheet` often shows a blank sheet on iPhone.
+            ActivitySharePresenter.present(items: [url])
         } label: {
             Image(systemName: "square.and.arrow.up")
                 .font(.title3)
@@ -56,22 +54,49 @@ struct SnoreClipShareButton: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Share recording")
-        .sheet(isPresented: $showShareSheet) {
-            if let shareURL {
-                ShareSheet(items: [shareURL])
-            }
-        }
     }
 }
 
-// MARK: - UIKit share sheet wrapper
+// MARK: - UIKit presenter
 
-private struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
+enum ActivitySharePresenter {
 
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    @MainActor
+    static func present(items: [Any]) {
+        guard !items.isEmpty else { return }
+        guard let presenter = topViewController() else { return }
+
+        let activity = UIActivityViewController(activityItems: items, applicationActivities: nil)
+
+        if let popover = activity.popoverPresentationController {
+            popover.sourceView = presenter.view
+            popover.sourceRect = CGRect(
+                x: presenter.view.bounds.midX,
+                y: presenter.view.bounds.midY,
+                width: 1,
+                height: 1
+            )
+            popover.permittedArrowDirections = []
+        }
+
+        presenter.present(activity, animated: true)
     }
 
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+    @MainActor
+    private static func topViewController() -> UIViewController? {
+        let scenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .filter { $0.activationState == .foregroundActive || $0.activationState == .foregroundInactive }
+
+        for scene in scenes {
+            guard let root = scene.windows.first(where: \.isKeyWindow)?.rootViewController
+                ?? scene.windows.first?.rootViewController else { continue }
+            var top = root
+            while let presented = top.presentedViewController {
+                top = presented
+            }
+            return top
+        }
+        return nil
+    }
 }
