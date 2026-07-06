@@ -9,15 +9,15 @@ final class SettingsViewModel {
     private static let timingRange: ClosedRange<Double> = 1...10
 
     var notifyDelay: Double     = 2
-    var soundAlarmAfter: Double = 10
+    var soundAlarmAfter: Double = 5
 
-    var pushNotificationEnabled: Bool = false
-    var soundAlarmEnabled: Bool       = false
+    var pushNotificationEnabled: Bool = true
+    var soundAlarmEnabled: Bool       = true
     var pushRepeatEnabled: Bool       = true
     var pushRepeatInterval: Double    = 3
 
     /// Selected alarm tone style.
-    var alarmStyle: AlarmStyle = .marimbaIntrumental
+    var alarmStyle: AlarmStyle = .bell
     /// Alarm style currently being previewed in Settings.
     private(set) var previewingAlarmStyle: AlarmStyle?
 

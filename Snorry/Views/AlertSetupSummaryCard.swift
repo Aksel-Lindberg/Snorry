@@ -28,7 +28,7 @@ struct AlertSetupDisplay {
         pushNotificationEnabled = push
         soundAlarmEnabled = sound
         alarmStyleRaw = style
-        soundAlarmAfterSeconds = session.snapshotSoundAlarmAfterSeconds ?? 10
+        soundAlarmAfterSeconds = session.snapshotSoundAlarmAfterSeconds ?? 5
         pushRepeatIntervalSeconds = session.snapshotPushRepeatIntervalSeconds ?? 3
     }
 }

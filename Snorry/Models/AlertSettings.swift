@@ -31,12 +31,11 @@ final class AlertSettings {
 
     init() {
         notifyDelaySeconds        = 2
-        soundAlarmAfterSeconds    = 10
+        soundAlarmAfterSeconds    = 5
         alarmVolume               = 1.0
         snoringDetectionSensitivity = 5
-        alarmStyleRaw             = AlarmStyle.marimbaIntrumental.rawValue
-        pushNotificationEnabled   = false
-        /// Sound alarm on by default so monitoring can alert without extra Settings steps.
+        alarmStyleRaw             = AlarmStyle.bell.rawValue
+        pushNotificationEnabled   = true
         soundAlarmEnabled         = true
         pushRepeatEnabled         = true
         pushRepeatIntervalSeconds = 3
