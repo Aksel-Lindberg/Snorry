@@ -383,4 +383,57 @@ struct SnoreEventDetectorTests {
         #expect(startedCount(in: events) == 1)
         #expect(endedCount(in: events) == 1)
     }
+
+    @Test func endsConfirmedEventWhenClassifierStuckWithoutBreathActivity() async {
+        let detector = SnoreEventDetector()
+        detector.confirmedGapTolerance = 10
+        detector.minContinuousSnoringBeforeConfirm = 5
+        detector.onsetThresholdDB = 6
+        detector.start()
+
+        let t0 = Date(timeIntervalSince1970: 9000)
+
+        detector.feed(classifierResult: false, at: t0.addingTimeInterval(-1))
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(-1)))
+        feedActiveWindow(detector: detector, from: t0, through: 5.5)
+
+        // Classifier stays active on flat audio — no further breath cycles.
+        let stuckStart = t0.addingTimeInterval(6.0)
+        detector.feed(classifierResult: true, at: stuckStart)
+        for step in 0..<48 {
+            let t = stuckStart + Double(step) * 0.25
+            detector.feed(tick: makeTick(db: -30, at: t))
+        }
+
+        let events = await collectEvents(from: detector)
+        #expect(startedCount(in: events) == 1)
+        #expect(endedCount(in: events) == 1, "No new breath onsets should end bout even if classifier stays active")
+    }
+
+    @Test func confirmedEndTimestampUsesSilenceOnsetNotGapExpiry() async {
+        let detector = SnoreEventDetector()
+        detector.confirmedGapTolerance = 10
+        detector.minContinuousSnoringBeforeConfirm = 5
+        detector.onsetThresholdDB = 6
+        detector.start()
+
+        let t0 = Date(timeIntervalSince1970: 10_000)
+
+        detector.feed(classifierResult: false, at: t0.addingTimeInterval(-1))
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(-1)))
+        feedActiveWindow(detector: detector, from: t0, through: 5.5)
+
+        let silenceOnset = t0.addingTimeInterval(6.0)
+        detector.feed(classifierResult: false, at: silenceOnset)
+        detector.feed(tick: makeTick(db: -50, at: silenceOnset))
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(16.0)))
+
+        let events = await collectEvents(from: detector)
+        guard case .snoreEnded(_, let endDate, _, _) = events.last else {
+            Issue.record("Expected snoreEnded as final event")
+            return
+        }
+        #expect(abs(endDate.timeIntervalSince(silenceOnset)) < 0.01,
+                "Duration should end when silence began, not after the full gap tolerance")
+    }
 }

@@ -25,7 +25,8 @@ enum DetectorEvent: Sendable {
 /// and 4 inhalations. Every subsequent episode requires 5 s continuous snoring and
 /// 2 inhalations so the alarm re-arms within seconds after a clear.
 ///
-/// Confirmed events end after 10 s of classifier silence.
+/// Confirmed events end after 10 s of classifier silence, or 10 s without a new breath onset
+/// when the classifier stays stuck active (e.g. steady ambient noise).
 ///
 /// Call `resetForNewEpisode()` when the AlertManager goes idle to end the
 /// current episode cleanly and prepare for the next snore bout.
@@ -245,22 +246,18 @@ final class SnoreEventDetector: @unchecked Sendable {
             eventTickCount += 1
         } else {
             confirmedActiveStreakStart = nil
-            if pendingID != nil {
+            if pendingID != nil, !isConfirmed {
                 if silenceStart == nil { silenceStart = now }
                 let gap = now.timeIntervalSince(silenceStart!)
-                // Use a longer gap tolerance once confirmed to bridge between individual snores
-                // (hysteresis: harder to leave the snoring state than to enter it).
-                let effectiveGap = isConfirmed ? confirmedGapTolerance : gapTolerance
-                if gap >= effectiveGap {
-                    if isConfirmed {
-                        finishCurrentEvent(at: now)
-                        resetEpisodeState()
-                    } else {
-                        logger.debug("Snore pending discarded — no pattern before gap")
-                        resetEpisodeState()
-                    }
+                if gap >= gapTolerance {
+                    logger.debug("Snore pending discarded — no pattern before gap")
+                    resetEpisodeState()
                 }
             }
+        }
+
+        if isConfirmed {
+            evaluateConfirmedBoutEnd(at: now)
         }
     }
 
@@ -359,6 +356,30 @@ final class SnoreEventDetector: @unchecked Sendable {
         lastActiveTickTimestamp = nil
         classifierInactiveSince = nil
         accumulationAnchor = nil
+    }
+
+    /// Ends a confirmed bout after sustained silence — classifier-off or no recent breath onsets.
+    private func evaluateConfirmedBoutEnd(at now: Date) {
+        guard isConfirmed, currentEventID != nil else { return }
+
+        if !classifierActive {
+            if silenceStart == nil { silenceStart = now }
+            let gap = now.timeIntervalSince(silenceStart!)
+            guard gap >= confirmedGapTolerance else { return }
+            finishAndResetEpisode(endingAt: silenceStart!)
+            return
+        }
+
+        // Classifier still reports snoring but breath onsets have stopped (e.g. steady ambient noise).
+        guard let lastInhalation = lastInhalationDate else { return }
+        let gap = now.timeIntervalSince(lastInhalation)
+        guard gap >= confirmedGapTolerance else { return }
+        finishAndResetEpisode(endingAt: lastInhalation)
+    }
+
+    private func finishAndResetEpisode(endingAt date: Date) {
+        finishCurrentEvent(at: date)
+        resetEpisodeState()
     }
 
     /// Adds elapsed active time only while the classifier is active.
