@@ -58,7 +58,7 @@ struct HelpCenterView: View {
                             tabChip(icon: "moon.stars.fill", name: "Tonight", hint: "Start recording and see your latest summary.")
                             tabChip(icon: "clock.arrow.circlepath", name: "History", hint: "Browse past nights and open session details.")
                             tabChip(icon: "chart.line.uptrend.xyaxis", name: "Insights", hint: "Trends, charts, and how settings relate to snore duration.")
-                            tabChip(icon: "gearshape", name: "Settings", hint: "Alert channels and timings, alarm style, support, reset/delete logs, and legal links.")
+                            tabChip(icon: "gearshape", name: "Settings", hint: "Alert channels and timings, alarm style, Premium, support, reset/delete logs, and legal links.")
                         }
 
                         helpAccordion(
@@ -80,7 +80,12 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "clock.fill",
                                 title: "Last Session",
-                                detail: "When you have completed nights, the card summarizes the most recent session: sleep duration, snore event count, and total snore time (counts confirmed snoring, not other sound categories). Before your first completed night, the card shows placeholders and “No recordings yet.”"
+                                detail: "When you have completed nights, the card summarizes the most recent session: sleep duration, snore event count, and total snore time (counts confirmed snoring, not other sound categories). Before your first completed night, the card shows placeholders and “No recordings yet.” Tap View details to open the full session screen."
+                            )
+                            HelpBullet(
+                                icon: "star.circle.fill",
+                                title: "Free vs Premium",
+                                detail: "Free includes up to 20 recording sessions and your latest sleep session in History. Snorry Premium unlocks unlimited recording, full Sleep History, and Insights. A remaining-session count appears under Start when you are on the free plan; upgrade from Settings or when a limit is reached."
                             )
                             HelpBullet(
                                 icon: "applewatch",
@@ -114,7 +119,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "bell.and.waves.left.and.right.fill",
                                 title: "Alert phases",
-                                detail: "When enabled in Settings, you’ll see in-app states such as “Push notification sent”, “Alarm active” (tone ramps in steps), and “Alert cleared” when snoring has stopped long enough. On a locked phone the sound alarm stops automatically after five seconds so it does not drone indefinitely; silence thresholds also relax while locked so alerts can clear."
+                                detail: "When push notifications are enabled, an in-app card confirms “Push notification sent” while the alert is active. The sound alarm, if enabled, plays through your speaker or connected earbuds without a separate on-screen card—the tone ramps in 2 s steps until snoring stops. On a locked phone the sound alarm stops automatically after five seconds so it does not drone indefinitely; silence thresholds also relax while locked so alerts can clear."
                             )
                             HelpBullet(
                                 icon: "chart.line.uptrend.xyaxis",
@@ -147,16 +152,36 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chevron.right.circle.fill",
                                 title: "Session detail",
-                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, a Session Timeline chart from saved waveform samples, and a Sound Events list. After nights with background recording, each event may be labeled Snoring, Sleep Talking, or Environment; tap a row with playback available to hear its AAC clip, or use the share button to send the recording to someone else."
+                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, a Session Timeline chart from saved waveform samples, and a Sound Events list. Each event is labeled Snoring, Sleep Talking, or Environment; background nights classify non-snore sounds more often."
+                            )
+                            HelpBullet(
+                                icon: "play.circle.fill",
+                                title: "Event playback",
+                                detail: "In Sound Events, tap the play button on any row with a saved AAC clip to hear that bout. Rows without a clip file show a dimmed control—usually when encoding failed or the bout was too short to store."
+                            )
+                            HelpBullet(
+                                icon: "square.and.arrow.up",
+                                title: "Share event clips",
+                                detail: "Tap the share icon on any Sound Events row that has playback. iOS opens the standard share sheet so you can AirDrop, Messages, Mail, or save the file. Snorry exports a single .m4a clip named with the event time—only that bout is shared, not your full night."
+                            )
+                            HelpBullet(
+                                icon: "lock.fill",
+                                title: "Premium & older sessions",
+                                detail: "On the free plan, only your most recent sleep session opens in detail; older rows appear locked until you upgrade to Premium. Your data is kept on device—Premium simply unlocks browsing the full list."
                             )
                         }
 
                         helpAccordion(
                             section: .analytics,
                             title: "Insights tab",
-                            subtitle: "Ranges, trends, settings markers",
+                            subtitle: "Ranges, trends, settings markers (Premium)",
                             systemImage: "chart.line.uptrend.xyaxis"
                         ) {
+                            HelpBullet(
+                                icon: "star.circle.fill",
+                                title: "Premium feature",
+                                detail: "Insights requires Snorry Premium. Free users see an upgrade prompt; subscribers get trend charts, summary pills, and alert-correlation views described below."
+                            )
                             HelpBullet(
                                 icon: "calendar",
                                 title: "Time range",
@@ -198,12 +223,17 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "timer",
                                 title: "Alert timings",
-                                detail: "Push is sent after a fixed 2 s of continuous snoring. The sound alarm fires after the delay you choose on its slider. Alerts clear once snoring has stayed off for a few seconds (timing adapts slightly if the phone is locked during the session)."
+                                detail: "Push is sent after a fixed 2 s of continuous snoring. The sound alarm fires after the delay you choose on its slider (1–30 s). Alerts clear once snoring has stayed off for about 3 s (timing adapts slightly if the phone is locked during the session)."
                             )
                             HelpBullet(
                                 icon: "speaker.wave.3.fill",
                                 title: "Alarm style",
                                 detail: "Pick the alarm character you notice best and use Play / Stop to preview the selected style."
+                            )
+                            HelpBullet(
+                                icon: "star.circle.fill",
+                                title: "Snorry Premium",
+                                detail: "Shows Free or Premium status. Upgrade for unlimited recording, full Sleep History, and Insights; manage billing through your Apple ID subscriptions."
                             )
                             HelpBullet(
                                 icon: "lifepreserver.fill",
@@ -429,6 +459,14 @@ struct HelpCenterView: View {
                     title: "Track Your Progress",
                     description: "Session history and Insights show your snore patterns over time " +
                                  "and how the alert feature is affecting them — see real improvement."
+                )
+
+                HowSnorryWorksFeatureRow(
+                    icon: "square.and.arrow.up",
+                    iconColor: Theme.accent,
+                    title: "Share Snore Clips",
+                    description: "Open any night in Sleep History and share individual event recordings " +
+                                 "via AirDrop, Messages, or save—handy for a partner or clinician review."
                 )
             }
         }
