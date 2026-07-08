@@ -302,7 +302,7 @@ struct SettingsView: View {
         } footer: {
             Text(
                 "Push notification fires after a fixed 2 s. Sound alarm fires after the selected delay " +
-                "(from snoring start). Alerts stay active until snoring has stopped for 3 s."
+                "(from snoring start). Alerts stop within about 1 s after snoring ends."
             )
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)

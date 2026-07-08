@@ -82,6 +82,10 @@ final class MonitorViewModel {
     private let soundAlarmPauseSeconds: TimeInterval = 3
     /// Repeats alarm bursts with pauses while the user is still snoring.
     private var soundAlarmPulseTask: Task<Void, Never>?
+    /// Brief classifier dropouts between snores are bridged; longer silence stops alerts.
+    private let alertClassifierSilenceBridge: TimeInterval = 1.0
+    private var alertClassifierInactiveSince: Date?
+    private var alertSilenceClearTask: Task<Void, Never>?
     /// When continuous background snoring began (RMS + rumble path) — used for the 3 s alarm delay.
     private var backgroundContinuousSnoringSince: Date?
     /// Brief classifier dropouts during a bout do not reset the 3 s snoring clock.
@@ -222,6 +226,9 @@ final class MonitorViewModel {
 
         isMonitoring = true
         isSnoring = false
+        alertClassifierInactiveSince = nil
+        alertSilenceClearTask?.cancel()
+        alertSilenceClearTask = nil
         elapsedSeconds = 0
         snoreEventCount = 0
         spectrumBands = []
@@ -282,7 +289,7 @@ final class MonitorViewModel {
 
         alertManager.config.notifyDelay       = 2
         alertManager.config.soundAlarmAfter   = settings.soundAlarmAfterSeconds
-        alertManager.config.clearDelay        = 3
+        alertManager.config.clearDelay        = 0
         alertManager.config.alarmVolume       = settings.alarmVolume
         alertManager.config.pushEnabled       = settings.pushNotificationEnabled
         alertManager.config.soundEnabled      = settings.soundAlarmEnabled
@@ -358,6 +365,8 @@ final class MonitorViewModel {
 
         cancelTasks()
         cancelSoundAlarmPulseLoop()
+        alertSilenceClearTask?.cancel()
+        alertSilenceClearTask = nil
         audioService.stop()
         classifier.stop()
         detector.stop()
@@ -374,6 +383,9 @@ final class MonitorViewModel {
         backgroundSnoringVerifiedForAlarm = true
         backgroundContinuousSnoringSince = nil
         backgroundSnoringInactiveSince = nil
+        alertClassifierInactiveSince = nil
+        alertSilenceClearTask?.cancel()
+        alertSilenceClearTask = nil
         cancelBackgroundAlarmVerification()
         cancelSoundAlarmPulseLoop()
 
@@ -516,7 +528,7 @@ final class MonitorViewModel {
                 if requiresBackgroundAlarmVerification {
                     evaluateBackgroundAlarmEligibility()
                 }
-                // Drive alert silence detection at 1 Hz (alarm clears after 3 s without snoring).
+                // Drive alert silence detection at 1 Hz (alarm clears ~1 s after snoring stops).
                 updateAlertSnoringState()
                 // Persist waveform sample every second
                 sessionStore?.addWaveformSample(
@@ -544,6 +556,8 @@ final class MonitorViewModel {
         pushRepeatTask?.cancel(); pushRepeatTask = nil
         cancelBackgroundAlarmVerification()
         cancelSoundAlarmPulseLoop()
+        alertSilenceClearTask?.cancel()
+        alertSilenceClearTask = nil
     }
 
     /// Restarts the mic tap when ticks stop arriving (e.g. after a failed route reconfigure).
@@ -573,7 +587,24 @@ final class MonitorViewModel {
     private func handle(detectorEvent event: DetectorEvent) {
         switch event {
         case .snoringActive(let active):
+            let wasSnoring = isSnoring
             isSnoring = active
+            if active {
+                alertClassifierInactiveSince = nil
+                alertSilenceClearTask?.cancel()
+                alertSilenceClearTask = nil
+                if wasSnoring == false, alertPhase == .alarming, soundAlarmPulseTask == nil {
+                    startSoundAlarmPulseLoop()
+                }
+            } else {
+                if alertClassifierInactiveSince == nil {
+                    alertClassifierInactiveSince = Date()
+                }
+                if wasSnoring {
+                    stopActiveSoundAlarmImmediately()
+                }
+                scheduleAlertSilenceClearCheck()
+            }
             if requiresBackgroundAlarmVerification {
                 trackBackgroundContinuousSnoring(active: active)
             }
@@ -638,6 +669,8 @@ final class MonitorViewModel {
             activeEventID = nil
             cancelBackgroundAlarmVerification()
             cancelSoundAlarmPulseLoop()
+            alertSilenceClearTask?.cancel()
+            alertSilenceClearTask = nil
             // Return UI to Quiet
             isEpisodeConfirmed = false
             // Only force-clear when an alert already fired; otherwise let the 1 Hz loop
@@ -651,9 +684,8 @@ final class MonitorViewModel {
     /// Runs the alert state machine from confirmed episode state.
     ///
     /// Before an alert fires, keep the escalation clock running through brief classifier dropouts.
-    /// Once push or sound has fired, keep alerts active through inter-snore pauses within the same
-    /// confirmed bout (classifier silence can last several seconds between individual snores).
-    /// Alerts clear on `.snoreEnded` or after sustained silence when no bout is active.
+    /// Once push or sound has fired, keep alerts active through brief classifier dropouts between
+    /// snores, then clear within ``alertClassifierSilenceBridge`` after snoring stops.
     private func updateAlertSnoringState() {
         let alertAlreadyActive = alertPhase == .notified || alertPhase == .alarming
 
@@ -674,17 +706,47 @@ final class MonitorViewModel {
         alertManager.update(isSnoring: snoringForAlerts, at: Date())
     }
 
-    /// While an alert is live, treat a confirmed bout as ongoing snoring even when the classifier
-    /// briefly drops between individual snores (otherwise the 3 s clear delay stops the alarm early).
+    /// While an alert is live, bridge brief classifier dropouts between snores; stop once silence
+    /// exceeds ``alertClassifierSilenceBridge`` instead of waiting for the full bout to end.
     private func snoringActiveForOngoingAlert() -> Bool {
-        if isSnoring { return true }
-        if isEpisodeConfirmed, activeEventID != nil { return true }
+        if isSnoring {
+            alertClassifierInactiveSince = nil
+            return true
+        }
+
+        if alertClassifierInactiveSince == nil {
+            alertClassifierInactiveSince = Date()
+        }
+
+        let gap = Date().timeIntervalSince(alertClassifierInactiveSince!)
+        if gap < alertClassifierSilenceBridge { return true }
+
         if requiresBackgroundAlarmVerification,
            let pauseStart = backgroundSnoringInactiveSince,
            Date().timeIntervalSince(pauseStart) < backgroundSnoringGapBridge {
             return true
         }
+
         return false
+    }
+
+    /// Cuts off the current burst and prevents queued pulses when snoring pauses.
+    private func stopActiveSoundAlarmImmediately() {
+        guard alertPhase == .alarming else { return }
+        cancelSoundAlarmPulseLoop()
+        alarmPlayer.stop()
+    }
+
+    /// Clears push/sound phase right at the silence bridge without waiting for the 1 Hz timer.
+    private func scheduleAlertSilenceClearCheck() {
+        alertSilenceClearTask?.cancel()
+        guard alertPhase == .notified || alertPhase == .alarming else { return }
+
+        alertSilenceClearTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(self?.alertClassifierSilenceBridge ?? 1))
+            guard let self, !Task.isCancelled, !isSnoring else { return }
+            updateAlertSnoringState()
+        }
     }
 
     /// True while the app is locked or backgrounded — RMS fallback replaces live SoundAnalysis.
@@ -868,6 +930,8 @@ final class MonitorViewModel {
 
         case .idle, .cleared:
             cancelSoundAlarmPulseLoop()
+            alertSilenceClearTask?.cancel()
+            alertSilenceClearTask = nil
             lastAlarmPipelineRecoveryAt = nil
             pushRepeatTask?.cancel()
             pushRepeatTask = nil
@@ -909,10 +973,41 @@ final class MonitorViewModel {
                 AudioSessionManager.shared.prepareOutputRouteForAlarm()
                 player.playBurstImmediate(volume: context.volume)
 
-                let wait = player.burstDurationSeconds + pause
-                try? await Task.sleep(for: .seconds(wait))
+                guard await self.waitForBurstOrAlertEnd(
+                    player: player,
+                    burstSeconds: player.burstDurationSeconds
+                ) else { break }
+
+                guard await self.waitWhileAlarming(seconds: pause) else { break }
             }
         }
+    }
+
+    /// Returns false when the task is cancelled or the alarm phase ends before `seconds` elapse.
+    private func waitWhileAlarming(seconds: TimeInterval) async -> Bool {
+        let deadline = Date().addingTimeInterval(seconds)
+        while Date() < deadline {
+            if Task.isCancelled { return false }
+            let stillAlarming = await MainActor.run { isMonitoring && alertPhase == .alarming }
+            if !stillAlarming { return false }
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        return !Task.isCancelled
+    }
+
+    /// Waits for a burst to finish, stopping playback early if snoring ends mid-tone.
+    private func waitForBurstOrAlertEnd(player: AlarmTonePlayer, burstSeconds: TimeInterval) async -> Bool {
+        let deadline = Date().addingTimeInterval(burstSeconds)
+        while Date() < deadline {
+            if Task.isCancelled { return false }
+            let stillAlarming = await MainActor.run { alertPhase == .alarming }
+            if !stillAlarming {
+                player.stop()
+                return false
+            }
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        return !Task.isCancelled
     }
 
     private func cancelSoundAlarmPulseLoop() {

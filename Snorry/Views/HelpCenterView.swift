@@ -223,7 +223,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "timer",
                                 title: "Alert timings",
-                                detail: "Push is sent after a fixed 2 s of continuous snoring. The sound alarm fires after the delay you choose on its slider (1–30 s). Alerts clear once snoring has stayed off for about 3 s (timing adapts slightly if the phone is locked during the session)."
+                                detail: "Push is sent after a fixed 2 s of continuous snoring. The sound alarm fires after the delay you choose on its slider (1–30 s). Alerts clear within about 1 s after snoring stops (timing adapts slightly if the phone is locked during the session)."
                             )
                             HelpBullet(
                                 icon: "speaker.wave.3.fill",
