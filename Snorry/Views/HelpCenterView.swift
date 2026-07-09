@@ -58,7 +58,7 @@ struct HelpCenterView: View {
                             tabChip(icon: "moon.stars.fill", name: "Tonight", hint: "Start recording and see your latest summary.")
                             tabChip(icon: "clock.arrow.circlepath", name: "History", hint: "Browse past nights and open session details.")
                             tabChip(icon: "chart.line.uptrend.xyaxis", name: "Insights", hint: "Trends, charts, and how settings relate to snore duration.")
-                            tabChip(icon: "gearshape", name: "Settings", hint: "Alert channels and timings, alarm style, Premium, support, reset/delete logs, and legal links.")
+                            tabChip(icon: "gearshape", name: "Settings", hint: "Alert channels, alarm style, Premium, support, reset/delete logs, and legal links.")
                         }
 
                         helpAccordion(
@@ -75,7 +75,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "slider.horizontal.3",
                                 title: "Alert setup summary",
-                                detail: "The card mirrors your saved choices: push on/off, sound alarm on/off, fixed 2 s push delay, your sound-alarm delay, and repeat-push interval (1–10 s) when push is enabled—exactly what Settings will apply to the next session."
+                                detail: "The card mirrors your saved choices: push on/off, sound alarm on/off, and alarm style. Alert timing is fixed in the app—push after 2 s of snoring, sound after 5 s, clear after 3 s of silence. When both channels are on, push and sound repeat together on the same pulse."
                             )
                             HelpBullet(
                                 icon: "clock.fill",
@@ -119,7 +119,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "bell.and.waves.left.and.right.fill",
                                 title: "Alert phases",
-                                detail: "When push notifications are enabled, an in-app card confirms “Push notification sent” while the alert is active. The sound alarm, if enabled, plays through your speaker or connected earbuds without a separate on-screen card—the tone ramps in 2 s steps until snoring stops. On a locked phone the sound alarm stops automatically after five seconds so it does not drone indefinitely; silence thresholds also relax while locked so alerts can clear."
+                                detail: "When push is enabled, an in-app card confirms “Push notification sent” while the alert is active. When the sound alarm is enabled, short tone bursts play through your speaker or connected earbuds—no separate on-screen card. With both on, push and sound fire on the same pulse after the sound alarm starts at 5 s. While snoring continues, alerts repeat at the alarm’s burst cadence. Alerts clear once snoring has stayed off for about 3 s (timing adapts slightly if the phone is locked during the session)."
                             )
                             HelpBullet(
                                 icon: "chart.line.uptrend.xyaxis",
@@ -200,7 +200,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "mappin.and.ellipse",
                                 title: "Settings change markers",
-                                detail: "Expand the legend under the chart to read each saved change; you can also remove individual markers from Insights without touching your current Settings values."
+                                detail: "Expand the legend under the chart to read each saved change (push on/off, sound on/off, or alarm style). You can also remove individual markers from Insights without touching your current Settings values."
                             )
                             HelpBullet(
                                 icon: "chart.bar.xaxis",
@@ -212,23 +212,23 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .settings,
                             title: "Settings tab",
-                            subtitle: "Alerts, sound, support, data & legal",
+                            subtitle: "Alert channels, alarm style, support, data & legal",
                             systemImage: "gearshape.fill"
                         ) {
                             HelpBullet(
                                 icon: "bell.badge.fill",
                                 title: "Alert channels",
-                                detail: "Turn on push notifications, the in-app sound alarm, or both. With both enabled, push is sent after 2 s of snoring, then the tone after 5 s. While snoring continues, push and sound fire together on the same pulse."
+                                detail: "Turn on push notifications, the in-app sound alarm, or both—there are no timing sliders. Push-only sends notifications; sound-only plays tone bursts; with both on, push starts after 2 s of snoring and the tone joins after 5 s, then push and sound repeat together on the same pulse until snoring stops."
                             )
                             HelpBullet(
                                 icon: "timer",
-                                title: "Alert timings",
-                                detail: "Push is sent after 2 s of continuous snoring. The sound alarm fires after 5 s. Alerts clear once snoring has stayed off for about 3 s (timing adapts slightly if the phone is locked during the session)."
+                                title: "When alerts fire",
+                                detail: "Timing is fixed: first push after 2 s of continuous snoring, sound alarm after 5 s, and alerts clear after about 3 s without snoring. On a locked phone, confirmation and alert delays use a slightly faster profile so alerts still reach you reliably."
                             )
                             HelpBullet(
                                 icon: "speaker.wave.3.fill",
                                 title: "Alarm style",
-                                detail: "Pick the alarm character you notice best and use Play / Stop to preview the selected style."
+                                detail: "Pick the alarm character you notice best and use Play / Stop to preview the selected style. The chosen style sets burst length, which also paces repeated push and sound alerts when snoring continues."
                             )
                             HelpBullet(
                                 icon: "star.circle.fill",
@@ -243,7 +243,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "arrow.counterclockwise",
                                 title: "Reset & delete logs",
-                                detail: "Reset to Defaults recreates alert preferences. Delete All Sleep & Settings Logs removes every sleep session, snore clip, waveform, and Insights settings-change marker—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
+                                detail: "Reset to Defaults restores push/sound toggles and alarm style. Delete All Sleep & Settings Logs removes every sleep session, snore clip, waveform, and Insights settings-change marker—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
                             )
                             HelpBullet(
                                 icon: "doc.text.fill",
@@ -449,8 +449,7 @@ struct HelpCenterView: View {
                     icon: "bell.slash.fill",
                     iconColor: Theme.warning,
                     title: "Alerts Stop Automatically",
-                    description: "The moment snoring stops, alerts cease on their own. " +
-                                 "No alarm to dismiss, no disruption beyond the nudge itself."
+                    description: "When snoring stops, alerts cease on their own after about 3 seconds of silence—no alarm to dismiss, no disruption beyond the nudge itself."
                 )
 
                 HowSnorryWorksFeatureRow(
