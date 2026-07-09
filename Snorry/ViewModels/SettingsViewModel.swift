@@ -6,15 +6,8 @@ import UserNotifications
 @MainActor
 final class SettingsViewModel {
 
-    private static let timingRange: ClosedRange<Double> = 1...10
-
-    var notifyDelay: Double     = 2
-    var soundAlarmAfter: Double = 5
-
     var pushNotificationEnabled: Bool = true
     var soundAlarmEnabled: Bool       = true
-    var pushRepeatEnabled: Bool       = true
-    var pushRepeatInterval: Double    = 3
 
     /// Selected alarm tone style.
     var alarmStyle: AlarmStyle = .bell
@@ -46,13 +39,8 @@ final class SettingsViewModel {
     private func load() {
         let stored = AlertSettings.load(context: context)
         settings = stored
-        notifyDelay                   = Self.clampTiming(stored.notifyDelaySeconds)
-        soundAlarmAfter               = Self.clampTiming(stored.soundAlarmAfterSeconds)
         pushNotificationEnabled       = stored.pushNotificationEnabled
         soundAlarmEnabled             = stored.soundAlarmEnabled
-        // Repeat push notifications are now always enabled; only interval is user-configurable.
-        pushRepeatEnabled             = true
-        pushRepeatInterval            = Self.clampTiming(stored.pushRepeatIntervalSeconds)
         alarmStyle                    = AlarmStyle(rawValue: stored.alarmStyleRaw) ?? .classic
     }
 
@@ -60,46 +48,33 @@ final class SettingsViewModel {
         stopAlarmStylePreview()
         guard let stored = settings else { return }
 
-        // Enforce supported timing slider range even for legacy persisted values.
-        notifyDelay = Self.clampTiming(notifyDelay)
-        soundAlarmAfter = Self.clampTiming(soundAlarmAfter)
-        pushRepeatInterval = Self.clampTiming(pushRepeatInterval)
-
         // Record a change snapshot before writing if any tracked push/alarm field changed.
         let changeFlags = SettingsChangeFlags(
             pushEnabled: stored.pushNotificationEnabled != pushNotificationEnabled,
             soundAlarmEnabled: stored.soundAlarmEnabled != soundAlarmEnabled,
-            notifyDelay: stored.notifyDelaySeconds != notifyDelay,
-            soundAlarmAfter: stored.soundAlarmAfterSeconds != soundAlarmAfter,
-            pushRepeatInterval: stored.pushRepeatIntervalSeconds != pushRepeatInterval,
             alarmTone: stored.alarmStyleRaw != alarmStyle.rawValue
         )
         let hasChanged = changeFlags.pushEnabled
             || changeFlags.soundAlarmEnabled
-            || stored.pushRepeatEnabled != true
-            || changeFlags.notifyDelay
-            || changeFlags.soundAlarmAfter
-            || changeFlags.pushRepeatInterval
             || changeFlags.alarmTone
 
-        stored.notifyDelaySeconds              = notifyDelay
-        stored.soundAlarmAfterSeconds          = soundAlarmAfter
+        stored.notifyDelaySeconds              = AlertTimingDefaults.notifyDelaySeconds
+        stored.soundAlarmAfterSeconds          = AlertTimingDefaults.soundAlarmAfterSeconds
         stored.alarmVolume                     = 1.0
         stored.pushNotificationEnabled         = pushNotificationEnabled
         stored.soundAlarmEnabled               = soundAlarmEnabled
         stored.pushRepeatEnabled               = true
-        stored.pushRepeatIntervalSeconds       = pushRepeatInterval
         stored.snoringDetectionSensitivity     = 5
         stored.alarmStyleRaw                   = alarmStyle.rawValue
 
         if hasChanged {
             let change = AlertSettingsChange(
                 pushNotificationEnabled: pushNotificationEnabled,
-                notifyDelaySeconds: notifyDelay,
+                notifyDelaySeconds: AlertTimingDefaults.notifyDelaySeconds,
                 pushRepeatEnabled: true,
-                pushRepeatIntervalSeconds: pushRepeatInterval,
+                pushRepeatIntervalSeconds: 0,
                 soundAlarmEnabled: soundAlarmEnabled,
-                soundAlarmAfterSeconds: soundAlarmAfter,
+                soundAlarmAfterSeconds: AlertTimingDefaults.soundAlarmAfterSeconds,
                 alarmStyleRaw: alarmStyle.rawValue
             )
             context.insert(change)
@@ -232,10 +207,6 @@ final class SettingsViewModel {
         previewingAlarmStyle = style
         alarmPreviewPlayer.setStyle(style)
         alarmPreviewPlayer.play(volume: 1.0)
-    }
-
-    private static func clampTiming(_ value: Double) -> Double {
-        min(max(value, timingRange.lowerBound), timingRange.upperBound)
     }
 
     /// Best-effort background cleanup for persisted clip files after DB rows are removed.

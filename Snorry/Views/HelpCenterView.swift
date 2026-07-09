@@ -218,12 +218,12 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "bell.badge.fill",
                                 title: "Alert channels",
-                                detail: "Turn on push notifications, the in-app sound alarm, or both. With both enabled, push is sent first, then the tone after your chosen sound delay. While a push alert is active and snoring continues, Snorry can repeat the notification on the interval you set (1–10 s)."
+                                detail: "Turn on push notifications, the in-app sound alarm, or both. With both enabled, push is sent after 2 s of snoring, then the tone after 5 s. While snoring continues, push and sound fire together on the same pulse."
                             )
                             HelpBullet(
                                 icon: "timer",
                                 title: "Alert timings",
-                                detail: "Push is sent after a fixed 2 s of continuous snoring. The sound alarm fires after the delay you choose on its slider (1–30 s). Alerts clear within about 1 s after snoring stops (timing adapts slightly if the phone is locked during the session)."
+                                detail: "Push is sent after 2 s of continuous snoring. The sound alarm fires after 5 s. Alerts clear once snoring has stayed off for about 3 s (timing adapts slightly if the phone is locked during the session)."
                             )
                             HelpBullet(
                                 icon: "speaker.wave.3.fill",

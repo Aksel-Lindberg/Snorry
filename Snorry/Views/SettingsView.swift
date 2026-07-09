@@ -69,7 +69,6 @@ struct SettingsView: View {
         List {
             profileSection
             alertChannelsSection(vm: vm)
-            alertTimingsSection(vm: vm)
             alarmStyleSection(vm: vm)
             actionsSection(vm: vm)
             subscriptionSection()
@@ -201,23 +200,15 @@ struct SettingsView: View {
                 }
             }
             .tint(Theme.accent)
-
-            SliderRow(
-                label: "Repeat push notification every",
-                value: Binding(get: { vm.pushRepeatInterval },
-                               set: { vm.pushRepeatInterval = $0 }),
-                range: 1...10,
-                unit: "s",
-                step: 1
-            )
-            .disabled(!vm.pushNotificationEnabled)
-            .opacity(vm.pushNotificationEnabled ? 1 : 0.45)
         } header: {
             Text("Alert Channels")
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Turn on one or both. With both on: push fires first, then sound after the configured delay. Sound-only skips push; push-only never plays sound.")
+                Text(
+                    "Turn on one or both. With both on: push is sent after 2 s of snoring, then the sound alarm after 5 s. "
+                        + "While snoring continues, push and sound fire together on the same pulse and alerts clear after 3 s of silence."
+                )
                     .foregroundStyle(Theme.labelSecondary)
                 Text("The first time you turn on push, iOS asks whether Snorry may send notifications.")
                     .foregroundStyle(Theme.labelSecondary)
@@ -279,34 +270,6 @@ struct SettingsView: View {
         }
         .opacity(vm.soundAlarmEnabled ? 1 : 0.45)
         .disabled(!vm.soundAlarmEnabled)
-        .listRowBackground(Theme.surface)
-    }
-
-    private func alertTimingsSection(vm: SettingsViewModel) -> some View {
-        Section {
-            TimingInfoRow(label: "Send push notification after", value: "2 s")
-                .opacity(vm.pushNotificationEnabled ? 1 : 0.45)
-            SliderRow(
-                label: "Sound alarm after",
-                value: Binding(get: { vm.soundAlarmAfter },
-                               set: { vm.soundAlarmAfter = $0 }),
-                range: 1...30,
-                unit: "s",
-                step: 1
-            )
-            .disabled(!vm.soundAlarmEnabled)
-            .opacity(vm.soundAlarmEnabled ? 1 : 0.45)
-        } header: {
-            Text("Alert Timings")
-                .foregroundStyle(Theme.labelSecondary)
-        } footer: {
-            Text(
-                "Push notification fires after a fixed 2 s. Sound alarm fires after the selected delay " +
-                "(from snoring start). Alerts stop within about 1 s after snoring ends."
-            )
-                .foregroundStyle(Theme.labelSecondary)
-                .font(.caption)
-        }
         .listRowBackground(Theme.surface)
     }
 
@@ -597,48 +560,4 @@ private struct SleepAllyDiscoverPromoRowBackground: View {
     }
 }
 
-// MARK: - Reusable slider rows
-
-private struct SliderRow: View {
-    let label: String
-    @Binding var value: Double
-    let range: ClosedRange<Double>
-    let unit: String
-    let step: Double
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(label)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.labelPrimary)
-                Spacer()
-                Text("\(Int(value)) \(unit)")
-                    .font(Theme.monoDigit(size: 13))
-                    .foregroundStyle(Theme.accent)
-            }
-            Slider(value: $value, in: range, step: step)
-                .tint(Theme.accent)
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-/// Read-only row that displays a fixed timing value alongside its label.
-private struct TimingInfoRow: View {
-    let label: String
-    let value: String
-
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(Theme.labelPrimary)
-            Spacer()
-            Text(value)
-                .font(Theme.monoDigit(size: 13))
-                .foregroundStyle(Theme.accent)
-        }
-        .padding(.vertical, 4)
-    }
-}
+// MARK: - SleepAlly discover promo (animated Settings row)

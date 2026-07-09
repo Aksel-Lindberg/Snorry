@@ -1,6 +1,19 @@
 import Foundation
 import SwiftData
 
+// MARK: - Fixed alert escalation timings (not user-configurable)
+
+enum AlertTimingDefaults {
+    /// Seconds of continuous snoring before the first push notification.
+    static let notifyDelaySeconds: TimeInterval = 2
+    /// Seconds of continuous snoring before the sound alarm begins.
+    static let soundAlarmAfterSeconds: TimeInterval = 5
+    /// Seconds without snoring before alerts clear.
+    static let clearDelaySeconds: TimeInterval = 3
+    /// Pause between sound-alarm bursts while snoring continues.
+    static let soundAlarmPauseSeconds: TimeInterval = 3
+}
+
 // MARK: - User-configurable alert escalation thresholds
 /// One row is always maintained; use AlertSettings.load(context:) to access it.
 @Model
@@ -41,7 +54,7 @@ final class AlertSettings {
         pushRepeatIntervalSeconds = 3
     }
 
-    /// Returns existing or creates default settings. Normalizes snore sensitivity and alarm volume to current app defaults.
+    /// Returns existing or creates default settings. Normalizes legacy rows to current fixed defaults.
     @MainActor
     static func load(context: ModelContext) -> AlertSettings {
         let descriptor = FetchDescriptor<AlertSettings>()
@@ -49,9 +62,15 @@ final class AlertSettings {
             let needsNormalize =
                 existing.snoringDetectionSensitivity != 5
                 || abs(Double(existing.alarmVolume) - 1.0) > 0.0001
+                || existing.notifyDelaySeconds != AlertTimingDefaults.notifyDelaySeconds
+                || existing.soundAlarmAfterSeconds != AlertTimingDefaults.soundAlarmAfterSeconds
+                || !existing.pushRepeatEnabled
             if needsNormalize {
                 existing.snoringDetectionSensitivity = 5
                 existing.alarmVolume = 1.0
+                existing.notifyDelaySeconds = AlertTimingDefaults.notifyDelaySeconds
+                existing.soundAlarmAfterSeconds = AlertTimingDefaults.soundAlarmAfterSeconds
+                existing.pushRepeatEnabled = true
                 try? context.save()
             }
             return existing

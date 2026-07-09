@@ -40,9 +40,6 @@ enum AppAnalytics {
         var params: [String: Any] = [:]
         if changes.pushEnabled { params["push_enabled_changed"] = true }
         if changes.soundAlarmEnabled { params["sound_alarm_changed"] = true }
-        if changes.notifyDelay { params["notify_delay_changed"] = true }
-        if changes.soundAlarmAfter { params["sound_alarm_after_changed"] = true }
-        if changes.pushRepeatInterval { params["push_repeat_interval_changed"] = true }
         if changes.alarmTone { params["alert_tone_changed"] = true }
         guard !params.isEmpty else { return }
         log("settings_saved", params)
@@ -115,8 +112,5 @@ enum AppAnalytics {
 struct SettingsChangeFlags {
     var pushEnabled = false
     var soundAlarmEnabled = false
-    var notifyDelay = false
-    var soundAlarmAfter = false
-    var pushRepeatInterval = false
     var alarmTone = false
 }

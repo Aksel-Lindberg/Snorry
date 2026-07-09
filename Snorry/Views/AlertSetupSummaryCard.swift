@@ -7,15 +7,11 @@ struct AlertSetupDisplay {
     let pushNotificationEnabled: Bool
     let soundAlarmEnabled: Bool
     let alarmStyleRaw: Int
-    let pushRepeatIntervalSeconds: Double
-    let soundAlarmAfterSeconds: Double
 
     init(settings: AlertSettings) {
         pushNotificationEnabled = settings.pushNotificationEnabled
         soundAlarmEnabled = settings.soundAlarmEnabled
         alarmStyleRaw = settings.alarmStyleRaw
-        pushRepeatIntervalSeconds = settings.pushRepeatIntervalSeconds
-        soundAlarmAfterSeconds = settings.soundAlarmAfterSeconds
     }
 
     /// Builds from fields captured when a recording session started.
@@ -28,8 +24,6 @@ struct AlertSetupDisplay {
         pushNotificationEnabled = push
         soundAlarmEnabled = sound
         alarmStyleRaw = style
-        soundAlarmAfterSeconds = session.snapshotSoundAlarmAfterSeconds ?? 5
-        pushRepeatIntervalSeconds = session.snapshotPushRepeatIntervalSeconds ?? 3
     }
 }
 
@@ -355,15 +349,14 @@ struct AlertSetupSummaryCard: View {
         guard display.pushNotificationEnabled else {
             return "Off"
         }
-        let repeatEvery = Int(display.pushRepeatIntervalSeconds)
-        return "On · first push after 2 s of snoring · repeats every \(repeatEvery) s"
+        return "On · first push after 2 s · repeats with sound alarm"
     }
 
     private static func soundAlarmSummary(display: AlertSetupDisplay) -> String {
         guard display.soundAlarmEnabled else {
             return "Off"
         }
-        let delay = Int(display.soundAlarmAfterSeconds)
+        let delay = Int(AlertTimingDefaults.soundAlarmAfterSeconds)
         return "On · starts after \(delay) s"
     }
 

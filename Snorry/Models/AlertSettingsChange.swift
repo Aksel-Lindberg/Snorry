@@ -44,16 +44,16 @@ final class AlertSettingsChange {
     var summaryLabel: String {
         var parts: [String] = []
         if pushNotificationEnabled {
-            parts.append("Push ON · after \(formatSeconds(notifyDelaySeconds))")
+            parts.append("Push ON · after \(formatSeconds(AlertTimingDefaults.notifyDelaySeconds))")
             if pushRepeatEnabled {
-                parts.append("repeat \(formatSeconds(pushRepeatIntervalSeconds))")
+                parts.append("repeat with sound alarm")
             }
         } else {
             parts.append("Push OFF")
         }
         if soundAlarmEnabled {
             let style = AlarmStyle(rawValue: alarmStyleRaw)?.displayName ?? "Alarm"
-            parts.append("\(style) · after \(formatSeconds(soundAlarmAfterSeconds))")
+            parts.append("\(style) · after \(formatSeconds(AlertTimingDefaults.soundAlarmAfterSeconds))")
         } else {
             parts.append("Alarm OFF")
         }
