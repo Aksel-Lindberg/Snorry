@@ -355,7 +355,14 @@ private struct SnoreDailyBarsChart: View {
     @ChartContentBuilder
     private func changeRules(yMax: Double) -> some ChartContent {
         ForEach(Array(settingsChanges.enumerated()), id: \.offset) { index, change in
-            RuleMark(x: .value("Settings changed", change.timestamp))
+            // Snap to start-of-day so markers align with daily bars.
+            RuleMark(
+                x: .value(
+                    "Settings changed",
+                    Calendar.current.startOfDay(for: change.timestamp),
+                    unit: .day
+                )
+            )
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
                 .foregroundStyle(Theme.warning.opacity(0.80))
                 .annotation(position: .top, alignment: .center, spacing: 6) {
