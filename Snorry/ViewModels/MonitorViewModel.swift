@@ -119,6 +119,10 @@ final class MonitorViewModel {
     private var lastPipelineRecoveryAt: Date?
     /// Throttles mic-pipeline recovery while the sound alarm is pulsing.
     private var lastAlarmPipelineRecoveryAt: Date?
+    /// True once a live sound alarm has touched routing or playback this bout.
+    private var soundAlarmAffectedMonitoring = false
+    /// After an alert clears, allow faster mic recovery if ticks stay stale.
+    private var monitoringRestoreGraceUntil: Date?
 
     /// Copied from settings at session start (alert UI / playback).
     private var sessionPushEnabled = true
@@ -241,6 +245,8 @@ final class MonitorViewModel {
         alertPhase = .idle
         soundAlertVolumePercent = 0
         needsMonitoringRestoreAfterAlarm = false
+        soundAlarmAffectedMonitoring = false
+        monitoringRestoreGraceUntil = nil
         monitoringStartedAt = nil
         lastPipelineRecoveryAt = nil
 
@@ -392,6 +398,8 @@ final class MonitorViewModel {
         isEpisodeConfirmed = false
         alertPhase         = .idle
         needsMonitoringRestoreAfterAlarm = false
+        soundAlarmAffectedMonitoring = false
+        monitoringRestoreGraceUntil = nil
         monitoringStartedAt = nil
         lastPipelineRecoveryAt = nil
 
@@ -573,9 +581,19 @@ final class MonitorViewModel {
             return
         }
 
-        guard Date().timeIntervalSince(lastPipelineRecoveryAt ?? .distantPast) > 10 else { return }
+        let recoveryCooldown: TimeInterval
+        if let graceUntil = monitoringRestoreGraceUntil, Date() < graceUntil {
+            recoveryCooldown = 2
+        } else {
+            recoveryCooldown = 10
+        }
+        guard Date().timeIntervalSince(lastPipelineRecoveryAt ?? .distantPast) > recoveryCooldown else { return }
         lastPipelineRecoveryAt = Date()
-        audioService.reconfigureAfterRouteChange()
+        if soundAlarmAffectedMonitoring || needsMonitoringRestoreAfterAlarm {
+            AudioSessionManager.shared.restoreMonitoringAfterAlarm()
+        } else {
+            audioService.reconfigureAfterRouteChange()
+        }
     }
 
     // MARK: Event handling
@@ -883,6 +901,9 @@ final class MonitorViewModel {
 
         case .alarming:
             alertDeliveredForCurrentEvent = true
+            if sessionSoundEnabled {
+                soundAlarmAffectedMonitoring = true
+            }
             if sessionSoundEnabled, alarmPlayer.style.usesContinuousLivePlayback {
                 startContinuousSoundAlarm()
             }
@@ -897,10 +918,7 @@ final class MonitorViewModel {
             primaryPushDeliveredForCurrentAlert = false
             lastAlarmPipelineRecoveryAt = nil
             alarmPlayer.stop()
-            if isMonitoring, needsMonitoringRestoreAfterAlarm {
-                AudioSessionManager.shared.restoreMonitoringAfterAlarm()
-                needsMonitoringRestoreAfterAlarm = false
-            }
+            resumeMonitoringAudioAfterAlert()
             notifications.cancelSnoringAlert()
             // Only tear down the bout when logging has ended — brief pauses mid-event may clear the alarm.
             if activeEventID == nil {
@@ -1099,6 +1117,35 @@ final class MonitorViewModel {
     private func cancelAlertPulseLoop() {
         alertPulseTask?.cancel()
         alertPulseTask = nil
+    }
+
+    /// Restores mic capture promptly after a sound alarm so the live spectrum does not freeze.
+    private func resumeMonitoringAudioAfterAlert() {
+        guard isMonitoring else {
+            needsMonitoringRestoreAfterAlarm = false
+            soundAlarmAffectedMonitoring = false
+            monitoringRestoreGraceUntil = nil
+            return
+        }
+
+        let shouldRestore = needsMonitoringRestoreAfterAlarm || soundAlarmAffectedMonitoring
+        needsMonitoringRestoreAfterAlarm = false
+        soundAlarmAffectedMonitoring = false
+        guard shouldRestore else { return }
+
+        lastPipelineRecoveryAt = nil
+        monitoringRestoreGraceUntil = Date().addingTimeInterval(15)
+
+        let audioService = self.audioService
+        Task.detached(priority: .userInitiated) {
+            AudioSessionManager.shared.restoreMonitoringAfterAlarm()
+            // If ticks are still stale after routing restore, retry the light tap restart once.
+            try? await Task.sleep(for: .milliseconds(400))
+            let stalled = audioService.lastTickTime.map { Date().timeIntervalSince($0) > 0.75 } ?? true
+            if stalled {
+                audioService.restartMicTapPreservingSession()
+            }
+        }
     }
 
     /// Ends an in-flight AAC encode and persists the SwiftData row when stopping mid-snore bout.

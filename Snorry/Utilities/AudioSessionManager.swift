@@ -161,9 +161,18 @@ final class AudioSessionManager: @unchecked Sendable {
         }
     }
 
-    /// Re-applies monitoring session routing after alarm playback ends.
+    /// Re-applies monitoring output routing and restarts the mic tap after alarm playback ends.
     func restoreMonitoringAfterAlarm() {
         alarmOutputRoutePrepared = false
+        guard monitoringAudioActive() else { return }
+
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try preferBuiltInMicrophone()
+            try applyMonitoringOutputRoute(for: session)
+        } catch {
+            logger.error("Failed to restore monitoring output route after alarm: \(error)")
+        }
         AudioMonitorService.shared.restoreMonitoringAfterAlarm()
     }
 

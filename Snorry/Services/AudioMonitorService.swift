@@ -175,10 +175,15 @@ final class AudioMonitorService: @unchecked Sendable {
         }
     }
 
-    /// Restores built-in mic routing and restarts the mic tap after alarm playback.
+    /// Restarts the mic tap after alarm playback. Prefer a light tap restart because a full
+    /// session reconfigure can leave the live spectrum frozen for several seconds.
     func restoreMonitoringAfterAlarm() {
         guard stream != nil else { return }
-        reconfigureAfterRouteChange()
+        restartMicTapPreservingSession()
+        if !engine.isRunning {
+            logger.warning("Mic tap restart after alarm failed — falling back to full reconfigure")
+            reconfigureAfterRouteChange()
+        }
     }
 
     /// Restarts the mic tap without touching `AVAudioSession` category — safe during alarm bursts.
