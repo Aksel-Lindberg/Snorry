@@ -40,30 +40,16 @@ final class AlertSettingsChange {
         self.alarmStyleRaw = alarmStyleRaw
     }
 
-    /// Compact human-readable summary of the key push/alarm configuration for legend display.
+    /// Compact human-readable summary of push/alarm on/off state for the Insights legend.
     var summaryLabel: String {
         var parts: [String] = []
-        if pushNotificationEnabled {
-            parts.append("Push ON · after \(formatSeconds(AlertTimingDefaults.notifyDelaySeconds))")
-            if pushRepeatEnabled {
-                parts.append("repeat with sound alarm")
-            }
-        } else {
-            parts.append("Push OFF")
-        }
+        parts.append(pushNotificationEnabled ? "Push ON" : "Push OFF")
         if soundAlarmEnabled {
             let style = AlarmStyle(rawValue: alarmStyleRaw)?.displayName ?? "Alarm"
-            parts.append("\(style) · after \(formatSeconds(AlertTimingDefaults.soundAlarmAfterSeconds))")
+            parts.append("Alarm ON · \(style)")
         } else {
             parts.append("Alarm OFF")
         }
-        return parts.joined(separator: "  ·  ")
-    }
-
-    private func formatSeconds(_ seconds: Double) -> String {
-        if seconds < 60 { return "\(Int(seconds))s" }
-        let mins = Int(seconds) / 60
-        let secs = Int(seconds) % 60
-        return secs > 0 ? "\(mins)m \(secs)s" : "\(mins)m"
+        return parts.joined(separator: " · ")
     }
 }
