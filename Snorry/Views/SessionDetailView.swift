@@ -43,7 +43,6 @@ struct SessionDetailView: View {
         .navigationTitle(session.startDate.formatted(date: .abbreviated, time: .shortened))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .task(id: session.id) {
             vm = await SessionDetailViewModel.prepare(session: session, modelContext: modelContext)
         }

@@ -22,7 +22,6 @@ struct LiveSpectrumInfoSheet: View {
             .navigationTitle("Live Power Spectrum")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Theme.background, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }

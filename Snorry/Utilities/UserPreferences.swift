@@ -1,4 +1,49 @@
 import Foundation
+import SwiftUI
+
+// MARK: - App UI theme
+
+enum AppUITheme: String, CaseIterable, Identifiable {
+    case light = "light"
+    case dark = "dark"
+    case system = "system"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .light:  return "Light"
+        case .dark:   return "Dark"
+        case .system: return "System (Default Dark)"
+        }
+    }
+
+    /// `nil` follows the system appearance when `.system` is selected.
+    var preferredColorScheme: ColorScheme? {
+        switch self {
+        case .light:  return .light
+        case .dark:   return .dark
+        case .system: return nil
+        }
+    }
+}
+
+// MARK: - App metadata
+
+enum AppMetadata {
+    static var marketingVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+
+    static var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
+    }
+
+    /// User-facing version label for Settings (e.g. `1.7 (2)`).
+    static var versionLabel: String {
+        "\(marketingVersion) (\(buildNumber))"
+    }
+}
 
 /// Local user preferences stored in UserDefaults (not synced).
 enum UserPreferences {
@@ -6,6 +51,7 @@ enum UserPreferences {
     static let displayNameKey = "userDisplayName"
     /// Set after the user's first visit to the Tonight tab so later visits use a time-of-day greeting.
     static let hasSeenTonightWelcomeKey = "hasSeenTonightWelcome"
+    static let appUIThemeKey = "appUITheme"
 
     /// Recording-screen greeting — uses first name only when a multi-word name is entered.
     static func goodNightGreeting(displayName: String) -> String {

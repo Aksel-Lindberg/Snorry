@@ -28,7 +28,6 @@ struct SleepAllyPromoView: View {
         .navigationTitle("SleepAlly")
         .navigationBarTitleDisplayMode(.large)
         .toolbarBackground(Theme.background, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
             AppAnalytics.logSleepAllyPromoOpened(source: "settings")
         }

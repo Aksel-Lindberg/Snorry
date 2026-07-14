@@ -68,7 +68,6 @@ struct SubscriptionView: View {
         } message: {
             Text(subscription.errorMessage ?? "")
         }
-        .preferredColorScheme(.dark)
     }
 
     // MARK: - Sections

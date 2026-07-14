@@ -272,7 +272,6 @@ struct HelpCenterView: View {
             .navigationTitle("Help & How-To")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
@@ -281,7 +280,6 @@ struct HelpCenterView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
         .presentationDragIndicator(.visible)
         .onAppear {
             if openSection == nil { openSection = .gettingStarted }

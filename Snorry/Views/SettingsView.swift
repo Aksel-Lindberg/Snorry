@@ -16,6 +16,7 @@ struct SettingsView: View {
     @State private var confirmDeleteAllLogs = false
     @State private var showSubscription = false
     @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
+    @AppStorage(UserPreferences.appUIThemeKey) private var appUIThemeRaw = AppUITheme.dark.rawValue
 
     var body: some View {
         NavigationStack {
@@ -31,7 +32,6 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
@@ -74,6 +74,7 @@ struct SettingsView: View {
             subscriptionSection()
             supportSection()
             discoverSection
+            appSection
             legalSection()
         }
         .scrollContentBackground(.hidden)
@@ -371,6 +372,41 @@ struct SettingsView: View {
         } message: {
             Text(subscription.errorMessage ?? "")
         }
+    }
+
+    private var appSection: some View {
+        Section {
+            Picker(
+                "App UI Theme",
+                selection: Binding(
+                    get: { AppUITheme(rawValue: appUIThemeRaw) ?? .dark },
+                    set: { appUIThemeRaw = $0.rawValue }
+                )
+            ) {
+                ForEach(AppUITheme.allCases) { theme in
+                    Text(theme.displayName).tag(theme)
+                }
+            }
+            .pickerStyle(.inline)
+            .foregroundStyle(Theme.labelPrimary)
+
+            HStack {
+                Text("App version")
+                    .foregroundStyle(Theme.labelPrimary)
+                Spacer()
+                Text(AppMetadata.versionLabel)
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(Theme.labelSecondary)
+            }
+        } header: {
+            Text("App")
+                .foregroundStyle(Theme.labelSecondary)
+        } footer: {
+            Text("Dark is Snorry’s default look. System follows your iPhone appearance.")
+                .foregroundStyle(Theme.labelSecondary)
+                .font(.caption)
+        }
+        .listRowBackground(Theme.surface)
     }
 
     private func legalSection() -> some View {

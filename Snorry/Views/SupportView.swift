@@ -27,7 +27,6 @@ struct SupportView: View {
         .navigationTitle("Support")
         .navigationBarTitleDisplayMode(.large)
         .toolbarBackground(Theme.background, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 
     private var heroCard: some View {

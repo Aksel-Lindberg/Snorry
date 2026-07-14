@@ -1,12 +1,28 @@
 import SwiftUI
+import UIKit
 
 // MARK: - App colour palette and design tokens
 enum Theme {
 
+    private static func adaptive(light: UIColor, dark: UIColor) -> Color {
+        Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? dark : light
+        })
+    }
+
     // MARK: Colours
-    static let background       = Color(red: 0.05, green: 0.06, blue: 0.14)   // deep midnight blue
-    static let surface          = Color(red: 0.09, green: 0.11, blue: 0.22)
-    static let surfaceSecondary = Color(red: 0.13, green: 0.16, blue: 0.30)
+    static let background = adaptive(
+        light: UIColor(red: 0.93, green: 0.91, blue: 0.996, alpha: 1),   // Morning Mist
+        dark: UIColor(red: 0.05, green: 0.06, blue: 0.14, alpha: 1)
+    )
+    static let surface = adaptive(
+        light: UIColor(red: 1.00, green: 1.00, blue: 1.00, alpha: 1),
+        dark: UIColor(red: 0.09, green: 0.11, blue: 0.22, alpha: 1)
+    )
+    static let surfaceSecondary = adaptive(
+        light: UIColor(red: 0.96, green: 0.95, blue: 0.99, alpha: 1),
+        dark: UIColor(red: 0.13, green: 0.16, blue: 0.30, alpha: 1)
+    )
 
     static let accent           = Color(red: 0.40, green: 0.60, blue: 1.00)   // sky blue
     static let accentGlow       = Color(red: 0.40, green: 0.60, blue: 1.00).opacity(0.35)
@@ -17,13 +33,25 @@ enum Theme {
     static let good             = Color(red: 0.30, green: 0.85, blue: 0.60)   // mint green (quiet)
     static let warning          = Color(red: 1.00, green: 0.80, blue: 0.20)   // amber (detecting pattern)
 
-    static let labelPrimary     = Color.white
+    static let labelPrimary = adaptive(
+        light: UIColor(red: 0.04, green: 0.04, blue: 0.12, alpha: 1),
+        dark: UIColor.white
+    )
     /// Body subtext — ~4.5:1 on background (WCAG AA).
-    static let labelSecondary   = Color.white.opacity(0.75)
-    /// Hints and footnotes — de-emphasized but readable on dark cards.
-    static let labelTertiary    = Color.white.opacity(0.52)
+    static let labelSecondary = adaptive(
+        light: UIColor(red: 0.04, green: 0.04, blue: 0.12, alpha: 0.72),
+        dark: UIColor.white.withAlphaComponent(0.75)
+    )
+    /// Hints and footnotes — de-emphasized but readable on cards.
+    static let labelTertiary = adaptive(
+        light: UIColor(red: 0.55, green: 0.56, blue: 0.68, alpha: 1),
+        dark: UIColor.white.withAlphaComponent(0.52)
+    )
     /// Sublabels on `surface` cards — higher opacity for WCAG AA on lighter card backgrounds.
-    static let labelOnSurfaceSecondary = Color.white.opacity(0.68)
+    static let labelOnSurfaceSecondary = adaptive(
+        light: UIColor(red: 0.04, green: 0.04, blue: 0.12, alpha: 0.62),
+        dark: UIColor.white.withAlphaComponent(0.68)
+    )
 
     static let waveformBar      = Color(red: 0.50, green: 0.70, blue: 1.00)
     static let waveformSnore    = Color(red: 1.00, green: 0.55, blue: 0.40)
@@ -31,7 +59,13 @@ enum Theme {
     // MARK: Gradients
     static var nightGradient: LinearGradient {
         LinearGradient(
-            colors: [background, Color(red: 0.04, green: 0.04, blue: 0.10)],
+            colors: [
+                background,
+                adaptive(
+                    light: UIColor(red: 0.98, green: 0.97, blue: 1.00, alpha: 1),
+                    dark: UIColor(red: 0.04, green: 0.04, blue: 0.10, alpha: 1)
+                )
+            ],
             startPoint: .top, endPoint: .bottom
         )
     }
@@ -71,10 +105,13 @@ enum Theme {
         .custom(bold ? "Noteworthy-Bold" : "Noteworthy-Light", size: size)
     }
 
-    /// Gradient used for handwritten accent text (left: sky blue → right: soft white).
+    /// Gradient used for handwritten accent text.
     static var handwrittenGradient: LinearGradient {
         LinearGradient(
-            colors: [accent, Color.white.opacity(0.88)],
+            colors: [accent, adaptive(
+                light: UIColor(red: 0.04, green: 0.04, blue: 0.12, alpha: 0.88),
+                dark: UIColor.white.withAlphaComponent(0.88)
+            )],
             startPoint: .leading, endPoint: .trailing
         )
     }

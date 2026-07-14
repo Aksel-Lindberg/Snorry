@@ -79,7 +79,6 @@ struct HomeView: View {
                 ensureAlertSettingsRowExists()
             }
             .toolbarBackground(Theme.background, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     HomeAppIconMark()

@@ -32,7 +32,6 @@ struct AnalyticsView: View {
             .navigationTitle("Insights")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
                 guard hasPremiumAccess else { return }
                 if vm == nil { vm = AnalyticsViewModel(context: context) }

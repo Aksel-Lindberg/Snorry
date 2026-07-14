@@ -43,7 +43,6 @@ struct OnboardingView: View {
             .tabViewStyle(.page(indexDisplayMode: .always))
             .indexViewStyle(.page(backgroundDisplayMode: .always))
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             draftName = userDisplayName
         }

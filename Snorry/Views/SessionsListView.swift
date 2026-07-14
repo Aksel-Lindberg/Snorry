@@ -26,7 +26,6 @@ struct SessionsListView: View {
             .navigationTitle("Sleep History")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(isPresented: $showSubscription) {
                 SubscriptionView(paywallSource: "history_locked_session")
             }
