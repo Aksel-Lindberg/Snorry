@@ -220,20 +220,24 @@ struct MonitorView: View {
 
     private var alertPhaseCard: some View {
         Group {
-            // Sound alarm runs silently in the UI — only surface the push-notification card.
-            if vm.alertPhase == .notified {
+            if vm.alertPhase == .notified || vm.alertPhase == .alarming {
                 HStack(spacing: 10) {
                     Image(systemName: alertIcon)
                         .font(.title3)
                         .foregroundStyle(alertColor)
 
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text(alertTitle)
                             .font(.subheadline.bold())
                             .foregroundStyle(Theme.labelPrimary)
                         Text(alertSubtitle)
                             .font(.caption)
                             .foregroundStyle(Theme.labelSecondary)
+
+                        if vm.alertPhase == .alarming, vm.soundAlertVolumePercent > 0 {
+                            ProgressView(value: Double(vm.soundAlertVolumePercent), total: 100)
+                                .tint(alertColor)
+                        }
                     }
                     Spacer()
                 }
@@ -247,6 +251,7 @@ struct MonitorView: View {
             }
         }
         .animation(.spring(duration: 0.4), value: vm.alertPhase)
+        .animation(.easeInOut(duration: 0.25), value: vm.soundAlertVolumePercent)
     }
 
     @ViewBuilder
@@ -348,7 +353,11 @@ struct MonitorView: View {
     private var alertSubtitle: String {
         switch vm.alertPhase {
         case .notified:   return "Check your iPhone notification."
-        case .alarming:   return "Volume rises every 2 s. Stops when snoring ends."
+        case .alarming:
+            if vm.soundAlertVolumePercent > 0 {
+                return "Alarm volume: \(vm.soundAlertVolumePercent)% — steps up while snoring continues."
+            }
+            return "Alarm active while snoring continues."
         case .cleared:    return "Snoring stopped."
         default:          return ""
         }

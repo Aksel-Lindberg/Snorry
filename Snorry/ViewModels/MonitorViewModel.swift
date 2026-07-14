@@ -17,6 +17,8 @@ final class MonitorViewModel {
     var isEpisodeConfirmed = false
     var currentDB: Float = -160
     var alertPhase: AlertPhase = .idle
+    /// Current sound-alarm output tier (0 when idle or push-only); shown in the recording UI.
+    var soundAlertVolumePercent: Int = 0
     var elapsedSeconds: Int = 0
     var snoreEventCount = 0
     /// True while tearing down audio pipelines and finalizing SwiftData — UI shows a blocking overlay.
@@ -82,6 +84,18 @@ final class MonitorViewModel {
     private let soundAlarmPauseSeconds: TimeInterval = AlertTimingDefaults.soundAlarmPauseSeconds
     /// Shared loop that delivers push and/or sound on the same cadence while an alert is active.
     private var alertPulseTask: Task<Void, Never>?
+    /// Tracks burst count for progressive volume on synthesized tone styles.
+    private var soundBurstCount = 0
+    /// Bumps continuous clip volume at tier boundaries while an alert is active.
+    private var soundVolumeEscalationTask: Task<Void, Never>?
+    /// True while continuous clip playback has been started for the current alert bout.
+    private var continuousSoundAlarmActive = false
+    /// When continuous clip playback began — used to resume at the correct volume tier.
+    private var continuousSoundStartedAt: Date?
+    /// Last time snoring was detected — keeps alerts alive through inter-snore pauses.
+    private var lastSnoringActivityAt: Date?
+    /// How long an active alert tolerates silence before clearing (matches bout gap tolerance).
+    private let alertSnoringBridgeSeconds: TimeInterval = 10
     /// Tracks whether the primary push identifier was used for the current alert bout.
     private var primaryPushDeliveredForCurrentAlert = false
     /// When continuous background snoring began (RMS + rumble path) — used for the 3 s alarm delay.
@@ -225,6 +239,7 @@ final class MonitorViewModel {
         spectrumBands = []
         timelinePoints = []
         alertPhase = .idle
+        soundAlertVolumePercent = 0
         needsMonitoringRestoreAfterAlarm = false
         monitoringStartedAt = nil
         lastPipelineRecoveryAt = nil
@@ -511,8 +526,9 @@ final class MonitorViewModel {
                 if requiresBackgroundAlarmVerification {
                     evaluateBackgroundAlarmEligibility()
                 }
-                // Drive alert silence detection at 1 Hz (alarm clears after 3 s without snoring).
+                // Drive alert silence detection at 1 Hz (alarm clears after sustained silence).
                 updateAlertSnoringState()
+                ensureSoundAlarmDelivery()
                 // Persist waveform sample every second
                 sessionStore?.addWaveformSample(
                     dBFS: currentDB,
@@ -568,6 +584,7 @@ final class MonitorViewModel {
         switch event {
         case .snoringActive(let active):
             isSnoring = active
+            if active { markSnoringActivity() }
             if requiresBackgroundAlarmVerification {
                 trackBackgroundContinuousSnoring(active: active)
             }
@@ -577,8 +594,12 @@ final class MonitorViewModel {
             activeEventID      = id
             snoreEventCount   += 1
             isEpisodeConfirmed = true
-            alertDeliveredForCurrentEvent = false
-            primaryPushDeliveredForCurrentAlert = false
+            markSnoringActivity()
+            // Keep an in-flight alert running across successive bouts in the same stretch of snoring.
+            if alertPhase != .notified, alertPhase != .alarming {
+                alertDeliveredForCurrentEvent = false
+                primaryPushDeliveredForCurrentAlert = false
+            }
             if requiresBackgroundAlarmVerification {
                 armBackgroundAlertsIfVerified()
             } else {
@@ -613,6 +634,8 @@ final class MonitorViewModel {
             if requiresBackgroundAlarmVerification {
                 startBackgroundAlarmVerification(eventID: id)
             }
+            updateAlertSnoringState()
+            ensureSoundAlarmDelivery()
 
         case .snoreOnset:
             break
@@ -632,15 +655,15 @@ final class MonitorViewModel {
             }
             activeEventID = nil
             cancelBackgroundAlarmVerification()
-            cancelAlertPulseLoop()
-            // Return UI to Quiet
             isEpisodeConfirmed = false
-            // Only force-clear when an alert already fired; otherwise let the 1 Hz loop
-            // finish the notify/sound delay (short test clips used to cancel too early).
-            if alertPhase == .notified || alertPhase == .alarming {
-                alertManager.clearAfterSnoreBoutEnded()
-            }
+            // Do not stop the alarm here — let sustained silence clear it via AlertManager.
+            updateAlertSnoringState()
+            ensureSoundAlarmDelivery()
         }
+    }
+
+    private func markSnoringActivity() {
+        lastSnoringActivityAt = Date()
     }
 
     /// Runs the alert state machine from confirmed episode state.
@@ -648,7 +671,7 @@ final class MonitorViewModel {
     /// Before an alert fires, keep the escalation clock running through brief classifier dropouts.
     /// Once push or sound has fired, keep alerts active through inter-snore pauses within the same
     /// confirmed bout (classifier silence can last several seconds between individual snores).
-    /// Alerts clear on `.snoreEnded` or after sustained silence when no bout is active.
+    /// Alerts clear after sustained silence (bridge + clear delay), not when a logged bout ends.
     private func updateAlertSnoringState() {
         let alertAlreadyActive = alertPhase == .notified || alertPhase == .alarming
 
@@ -670,13 +693,18 @@ final class MonitorViewModel {
     }
 
     /// While an alert is live, treat a confirmed bout as ongoing snoring even when the classifier
-    /// briefly drops between individual snores (otherwise the 3 s clear delay stops the alarm early).
+    /// briefly drops between individual snores (otherwise the clear delay stops the alarm early).
     private func snoringActiveForOngoingAlert() -> Bool {
         if isSnoring { return true }
         if isEpisodeConfirmed, activeEventID != nil { return true }
         if requiresBackgroundAlarmVerification,
            let pauseStart = backgroundSnoringInactiveSince,
            Date().timeIntervalSince(pauseStart) < backgroundSnoringGapBridge {
+            return true
+        }
+        guard alertPhase == .notified || alertPhase == .alarming else { return false }
+        if let lastActivity = lastSnoringActivityAt,
+           Date().timeIntervalSince(lastActivity) < alertSnoringBridgeSeconds {
             return true
         }
         return false
@@ -855,12 +883,17 @@ final class MonitorViewModel {
 
         case .alarming:
             alertDeliveredForCurrentEvent = true
-            if sessionPushEnabled || sessionSoundEnabled {
+            if sessionSoundEnabled, alarmPlayer.style.usesContinuousLivePlayback {
+                startContinuousSoundAlarm()
+            }
+            if sessionPushEnabled || (sessionSoundEnabled && !alarmPlayer.style.usesContinuousLivePlayback) {
                 startOrContinueAlertPulse(immediate: true)
             }
 
         case .idle, .cleared:
             cancelAlertPulseLoop()
+            resetSoundVolumeEscalation()
+            lastSnoringActivityAt = nil
             primaryPushDeliveredForCurrentAlert = false
             lastAlarmPipelineRecoveryAt = nil
             alarmPlayer.stop()
@@ -889,7 +922,8 @@ final class MonitorViewModel {
         case .notified:
             return sessionPushEnabled
         case .alarming:
-            return sessionPushEnabled || sessionSoundEnabled
+            if sessionPushEnabled { return true }
+            return sessionSoundEnabled && !alarmPlayer.style.usesContinuousLivePlayback
         default:
             return false
         }
@@ -897,7 +931,7 @@ final class MonitorViewModel {
 
     /// Delivers one push and/or sound pulse for the current alert phase.
     @discardableResult
-    private func deliverAlertPulse() -> (playSound: Bool, volume: Float) {
+    private func deliverAlertPulse() -> (playSound: Bool, fraction: Float) {
         guard isMonitoring else { return (false, 0) }
 
         if sessionPushEnabled, alertPhase == .notified || alertPhase == .alarming {
@@ -914,8 +948,106 @@ final class MonitorViewModel {
         }
 
         needsMonitoringRestoreAfterAlarm = true
-        let volume = max(0.10, min(1.0, alertManager.config.alarmVolume))
-        return (true, volume)
+
+        guard !alarmPlayer.style.usesContinuousLivePlayback else {
+            return (false, 0)
+        }
+
+        soundBurstCount += 1
+        let fraction = SoundAlertVolumeEscalation.volumeFraction(burstIndex: soundBurstCount)
+        updateSoundAlertVolumeDisplay(fraction: fraction)
+        return (true, fraction)
+    }
+
+    /// Starts looping playback for recorded clip styles with time-based volume tiers.
+    private func startContinuousSoundAlarm() {
+        if continuousSoundAlarmActive {
+            resumeContinuousSoundAlarmIfNeeded()
+            return
+        }
+
+        resetSoundVolumeEscalation()
+        continuousSoundAlarmActive = true
+        continuousSoundStartedAt = Date()
+
+        let baseVolume = alertManager.config.alarmVolume
+        let initialFraction = SoundAlertVolumeEscalation.volumeFraction(elapsed: 0)
+        playContinuousSoundAtCurrentTier(baseVolume: baseVolume, fraction: initialFraction)
+        scheduleContinuousVolumeEscalation(baseVolume: baseVolume)
+    }
+
+    /// Restarts continuous playback at the current tier if the engine stopped unexpectedly.
+    private func resumeContinuousSoundAlarmIfNeeded() {
+        guard continuousSoundAlarmActive, alertPhase == .alarming else { return }
+        guard !alarmPlayer.isPlaybackActive else { return }
+
+        let baseVolume = alertManager.config.alarmVolume
+        let elapsed = continuousSoundStartedAt.map { Date().timeIntervalSince($0) } ?? 0
+        let fraction = SoundAlertVolumeEscalation.volumeFraction(elapsed: elapsed)
+        playContinuousSoundAtCurrentTier(baseVolume: baseVolume, fraction: fraction)
+    }
+
+    private func playContinuousSoundAtCurrentTier(baseVolume: Float, fraction: Float) {
+        let volume = SoundAlertVolumeEscalation.effectiveVolume(
+            baseVolume: baseVolume,
+            fraction: fraction
+        )
+        updateSoundAlertVolumeDisplay(fraction: fraction)
+        needsMonitoringRestoreAfterAlarm = true
+        AudioSessionManager.shared.prepareOutputRouteForAlarm()
+        alarmPlayer.playImmediate(volume: volume)
+    }
+
+    private func scheduleContinuousVolumeEscalation(baseVolume: Float) {
+        let player = alarmPlayer
+        let tierSeconds = SoundAlertVolumeDefaults.secondsPerTier
+        soundVolumeEscalationTask = Task { [weak self] in
+            for tierIndex in 1..<SoundAlertVolumeDefaults.tierFractions.count {
+                try? await Task.sleep(for: .seconds(tierSeconds))
+                guard !Task.isCancelled else { return }
+
+                let updated = await MainActor.run { () -> Bool in
+                    guard let self, self.alertPhase == .alarming, self.continuousSoundAlarmActive else {
+                        return false
+                    }
+                    let fraction = SoundAlertVolumeEscalation.volumeFraction(
+                        elapsed: TimeInterval(tierIndex) * tierSeconds
+                    )
+                    let volume = SoundAlertVolumeEscalation.effectiveVolume(
+                        baseVolume: baseVolume,
+                        fraction: fraction
+                    )
+                    self.updateSoundAlertVolumeDisplay(fraction: fraction)
+                    player.setOutputVolume(volume)
+                    return true
+                }
+                guard updated else { return }
+            }
+        }
+    }
+
+    /// Keeps burst pulses or continuous playback running for as long as the alert stays active.
+    private func ensureSoundAlarmDelivery() {
+        guard alertPhase == .alarming, sessionSoundEnabled else { return }
+
+        if alarmPlayer.style.usesContinuousLivePlayback {
+            resumeContinuousSoundAlarmIfNeeded()
+        } else if shouldRunAlertPulseLoop(), alertPulseTask == nil {
+            startOrContinueAlertPulse()
+        }
+    }
+
+    private func updateSoundAlertVolumeDisplay(fraction: Float) {
+        soundAlertVolumePercent = SoundAlertVolumeEscalation.displayPercent(forFraction: fraction)
+    }
+
+    private func resetSoundVolumeEscalation() {
+        soundVolumeEscalationTask?.cancel()
+        soundVolumeEscalationTask = nil
+        soundBurstCount = 0
+        soundAlertVolumePercent = 0
+        continuousSoundAlarmActive = false
+        continuousSoundStartedAt = nil
     }
 
     /// Starts the shared pulse loop when needed and optionally fires one pulse immediately.
@@ -926,7 +1058,10 @@ final class MonitorViewModel {
             let sound = deliverAlertPulse()
             if sound.playSound {
                 AudioSessionManager.shared.prepareOutputRouteForAlarm()
-                alarmPlayer.playBurstImmediate(volume: sound.volume)
+                alarmPlayer.playBurstImmediate(
+                    baseVolume: alertManager.config.alarmVolume,
+                    fraction: sound.fraction
+                )
             }
         }
 
@@ -942,16 +1077,16 @@ final class MonitorViewModel {
                 let cadence = await MainActor.run { self.alertPulseCadenceSeconds() }
                 try? await Task.sleep(for: .seconds(cadence))
 
-                let context = await MainActor.run { () -> (shouldContinue: Bool, playSound: Bool, volume: Float) in
-                    guard self.shouldRunAlertPulseLoop() else { return (false, false, 0) }
+                let context = await MainActor.run { () -> (shouldContinue: Bool, playSound: Bool, fraction: Float, baseVolume: Float) in
+                    guard self.shouldRunAlertPulseLoop() else { return (false, false, 0, 0) }
                     let sound = self.deliverAlertPulse()
-                    return (true, sound.playSound, sound.volume)
+                    return (true, sound.playSound, sound.fraction, self.alertManager.config.alarmVolume)
                 }
                 guard context.shouldContinue else { break }
 
                 if context.playSound {
                     AudioSessionManager.shared.prepareOutputRouteForAlarm()
-                    player.playBurstImmediate(volume: context.volume)
+                    player.playBurstImmediate(baseVolume: context.baseVolume, fraction: context.fraction)
                 }
             }
 

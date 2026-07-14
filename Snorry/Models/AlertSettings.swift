@@ -14,6 +14,16 @@ enum AlertTimingDefaults {
     static let soundAlarmPauseSeconds: TimeInterval = 3
 }
 
+enum SoundAlertVolumeDefaults {
+    /// Starts at 12.5%, then +25% per escalation step until full level.
+    static let tierFractions: [Float] = [0.125, 0.375, 0.625, 0.875, 1.00]
+    /// One burst per tier for built-in tone styles.
+    static let burstsPerTier = 1
+    /// Seconds per tier for continuous recorded-clip playback.
+    static let secondsPerTier: TimeInterval = 3
+    static let minimumOutputVolume: Float = 0.10
+}
+
 // MARK: - User-configurable alert escalation thresholds
 /// One row is always maintained; use AlertSettings.load(context:) to access it.
 @Model

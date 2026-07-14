@@ -119,7 +119,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "bell.and.waves.left.and.right.fill",
                                 title: "Alert phases",
-                                detail: "When push is enabled, an in-app card confirms “Push notification sent” while the alert is active. When the sound alarm is enabled, short tone bursts play through your speaker or connected earbuds—no separate on-screen card. With both on, push and sound fire on the same pulse after the sound alarm starts at 5 s. While snoring continues, alerts repeat at the alarm’s burst cadence. Alerts clear once snoring has stayed off for about 3 s (timing adapts slightly if the phone is locked during the session)."
+                                detail: "When push is enabled, an in-app card confirms “Push notification sent” while the alert is active. When the sound alarm is enabled, tone bursts or a looping melody play through your speaker or connected earbuds and keep going until snoring has stopped for several seconds—not when a single logged bout ends. Volume starts at 13% of max, then rises in 25% steps to full level while snoring continues (every burst for built-in tones, or every 3 s for recorded clips). The recording screen shows the current alarm volume %. With both on, push and sound fire on the same pulse after the sound alarm starts at 5 s. Alerts clear once snoring has stayed off for about 3 s after the last detected snore (timing adapts slightly if the phone is locked during the session)."
                             )
                             HelpBullet(
                                 icon: "chart.line.uptrend.xyaxis",
@@ -228,7 +228,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "speaker.wave.3.fill",
                                 title: "Alarm style",
-                                detail: "Pick the alarm character you notice best and use Play / Stop to preview the selected style. The chosen style sets burst length, which also paces repeated push and sound alerts when snoring continues."
+                                detail: "Pick the alarm character you notice best and use Play / Stop to preview the selected style. Built-in tones (Gentle, Classic, Alert) play as short bursts; recorded clips loop continuously. The chosen style sets burst length for built-in tones, which also paces repeated push alerts when snoring continues."
                             )
                             HelpBullet(
                                 icon: "star.circle.fill",

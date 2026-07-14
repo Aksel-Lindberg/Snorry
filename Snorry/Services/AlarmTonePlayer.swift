@@ -126,6 +126,9 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .rapidWake: return "Rapid_Wake"
         }
     }
+
+    /// Synthesized tones use burst+pulse; bundled clips loop continuously during live alerts.
+    var usesContinuousLivePlayback: Bool { bundledClipName != nil }
 }
 
 // MARK: - Synthesises and plays a looping alarm tone
@@ -196,12 +199,23 @@ final class AlarmTonePlayer: @unchecked Sendable {
     /// Starts playback and jumps to `volume` immediately — use for live alarm firing.
     /// Restarts the engine so it picks up the current output route (e.g. Bluetooth).
     func playImmediate(volume: Float) {
-        playImmediate(volume: volume, loop: true)
+        playImmediate(baseVolume: volume, signalGain: 1.0, loop: true)
     }
 
     /// Plays a single alarm burst (no loop) — used for snore alarms with pauses between bursts.
-    func playBurstImmediate(volume: Float) {
-        playImmediate(volume: volume, loop: false)
+    /// Synthesized tones scale buffer gain so low tiers stay genuinely quiet.
+    func playBurstImmediate(baseVolume: Float, fraction: Float) {
+        playImmediate(baseVolume: baseVolume, signalGain: fraction, loop: false)
+    }
+
+    /// Sets output level immediately without restarting playback — used for continuous live alerts.
+    func setOutputVolume(_ volume: Float) {
+        rampTimer?.invalidate()
+        rampTimer = nil
+        targetVolume = volume
+        currentVolume = volume
+        playerNode.volume = 1.0
+        mixerNode.outputVolume = volume
     }
 
     /// Length of one alarm burst in seconds (synthesized tone or bundled clip).
@@ -210,12 +224,19 @@ final class AlarmTonePlayer: @unchecked Sendable {
         return Double(buffer.frameLength) / buffer.format.sampleRate
     }
 
-    private func playImmediate(volume: Float, loop: Bool) {
+    /// Whether alarm audio is currently playing or scheduled.
+    var isPlaybackActive: Bool {
+        isRunning && playerNode.isPlaying
+    }
+
+    private func playImmediate(baseVolume: Float, signalGain: Float, loop: Bool) {
         rampTimer?.invalidate()
         rampTimer = nil
-        targetVolume  = volume
-        currentVolume = volume
-        mixerNode.outputVolume = volume
+        targetVolume  = baseVolume
+        currentVolume = baseVolume
+        playerNode.volume = 1.0
+        mixerNode.outputVolume = baseVolume
+        pendingSignalGain = signalGain
         if engine.isRunning {
             playerNode.stop()
             engine.stop()
@@ -223,6 +244,9 @@ final class AlarmTonePlayer: @unchecked Sendable {
         }
         startEngine(loop: loop)
     }
+
+    /// Gain applied to PCM samples on the next schedule (synthesized burst playback).
+    private var pendingSignalGain: Float = 1.0
 
     /// Hard-stop with no fade — use when snoring ends.
     func stop() {
@@ -232,6 +256,8 @@ final class AlarmTonePlayer: @unchecked Sendable {
         if engine.isRunning { engine.stop() }
         isRunning     = false
         currentVolume = 0
+        pendingSignalGain = 1.0
+        playerNode.volume = 1.0
         mixerNode.outputVolume = 0
     }
 
@@ -273,8 +299,32 @@ final class AlarmTonePlayer: @unchecked Sendable {
 
     private func scheduleOnce() {
         guard let buffer = toneBuffer, isRunning else { return }
-        playerNode.scheduleBuffer(buffer, at: nil, options: [])
+        let gain = pendingSignalGain
+        pendingSignalGain = 1.0
+        let playbackBuffer = Self.bufferForPlayback(source: buffer, gain: gain) ?? buffer
+        playerNode.scheduleBuffer(playbackBuffer, at: nil, options: [])
         if !playerNode.isPlaying { playerNode.play() }
+    }
+
+    /// Returns a gain-scaled copy of `source` for quieter synthesized bursts.
+    private static func bufferForPlayback(source: AVAudioPCMBuffer, gain: Float) -> AVAudioPCMBuffer? {
+        guard gain < 0.999, gain > 0 else { return nil }
+        guard let copy = AVAudioPCMBuffer(
+            pcmFormat: source.format,
+            frameCapacity: source.frameLength
+        ) else { return nil }
+        copy.frameLength = source.frameLength
+
+        let frameCount = vDSP_Length(source.frameLength)
+        let channelCount = Int(source.format.channelCount)
+        var scale = gain
+
+        for channel in 0..<channelCount {
+            guard let src = source.floatChannelData?[channel],
+                  let dst = copy.floatChannelData?[channel] else { return nil }
+            vDSP_vsmul(src, 1, &scale, dst, 1, frameCount)
+        }
+        return copy
     }
 
     /// Keeps player-node output format aligned with the currently selected buffer format.
