@@ -70,6 +70,13 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         case .gentle:  return "440 Hz · soft slow pulse"
         case .classic: return "880 Hz · steady double-tone"
         case .alert:   return "1 kHz · triple burst"
+        case .quietFoundUs,
+                .indigoWindow,
+                .copperLightAtSix,
+                .lateNightCurb,
+                .rapidWake,
+                .marimbaIntrumental:
+            return "Song · loops continuously"
         case .bell,
                 .birds,
                 .birds2,
@@ -81,19 +88,13 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
                 .harpstrok,
                 .icecracks,
                 .marimba,
-                .marimbaIntrumental,
                 .piano,
                 .pianoArpeggio,
                 .raindrop,
                 .singball,
                 .tornado,
-                .windplay,
-                .quietFoundUs,
-                .indigoWindow,
-                .copperLightAtSix,
-                .lateNightCurb,
-                .rapidWake:
-            return "Recorded clip"
+                .windplay:
+            return "Short clip · bursts"
         }
     }
 
@@ -127,8 +128,16 @@ enum AlarmStyle: Int, Codable, CaseIterable, Sendable {
         }
     }
 
-    /// Synthesized tones use burst+pulse; bundled clips loop continuously during live alerts.
-    var usesContinuousLivePlayback: Bool { bundledClipName != nil }
+    /// Long song tracks loop continuously during live alerts; synth tones and short clips use bursts.
+    var usesContinuousLivePlayback: Bool {
+        switch self {
+        case .quietFoundUs, .indigoWindow, .copperLightAtSix,
+             .lateNightCurb, .rapidWake, .marimbaIntrumental:
+            return true
+        default:
+            return false
+        }
+    }
 }
 
 // MARK: - Synthesises and plays a looping alarm tone

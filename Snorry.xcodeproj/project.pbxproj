@@ -55,6 +55,7 @@
 		A1B2C3D4E5F60005A1B2C3D5 /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */; };
 		SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */; };
 		SAV0A0012EAA4B00C99A0004 /* SoundAlertVolumeEscalationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */; };
+		AST0A0012EAA4B00C99A0002 /* AlarmStyleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AST0A0012EAA4B00C99A0001 /* AlarmStyleTests.swift */; };
 		A4B0A49A1378A7721A654C36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 799CEF95A14F0173040FE75B /* HomeView.swift */; };
 		A98E1AF9D24946D3969651DF /* Marimba intrumental.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */; };
 		AC645F2038FE2E11B32BC934 /* Tornado.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = E8752C417837145970A7AE3E /* Tornado.mp3 */; };
@@ -175,6 +176,7 @@
 		A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UserPreferences.swift; path = Utilities/UserPreferences.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SoundAlertVolumeEscalation.swift; path = Utilities/SoundAlertVolumeEscalation.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundAlertVolumeEscalationTests.swift; sourceTree = "<group>"; };
+		AST0A0012EAA4B00C99A0001 /* AlarmStyleTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmStyleTests.swift; sourceTree = "<group>"; };
 		A1C3C8E48A75DE8B17178BC1 /* Snorry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Snorry.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WaveformView.swift; path = Views/WaveformView.swift; sourceTree = "<group>"; };
 		A854F1BE96B16C0133B0B0CD /* Icecracks.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Icecracks.mp3; path = Resources/Icecracks.mp3; sourceTree = "<group>"; };
@@ -397,6 +399,7 @@
 			isa = PBXGroup;
 			children = (
 				6B0BF8FEF9DD4EF6084ACC6C /* AlertManagerTests.swift */,
+				AST0A0012EAA4B00C99A0001 /* AlarmStyleTests.swift */,
 				SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */,
 				AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */,
 				A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */,
@@ -654,6 +657,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BD8650C6E292C580A1917E4C /* AlertManagerTests.swift in Sources */,
+				AST0A0012EAA4B00C99A0002 /* AlarmStyleTests.swift in Sources */,
 				SAV0A0012EAA4B00C99A0004 /* SoundAlertVolumeEscalationTests.swift in Sources */,
 				4F47721AC0740B9C1C3322C1 /* AudioMathTests.swift in Sources */,
 				A1B2C3D4E5F60004A1B2C3D4 /* SoundClassificationTests.swift in Sources */,
