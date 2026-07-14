@@ -9,7 +9,7 @@ struct SnorryApp: App {
 
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var appEnv = AppEnvironment()
-    @AppStorage(UserPreferences.appUIThemeKey) private var appUIThemeRaw = AppUITheme.dark.rawValue
+    @AppStorage(UserPreferences.appUIThemeKey) private var appUIThemeRaw = AppUITheme.defaultTheme.rawValue
 
     #if DEBUG
     /// True when Xcode passes Firebase’s debug launch flag (see shared Snorry scheme).
@@ -61,13 +61,16 @@ struct SnorryApp: App {
         }
     }()
 
+    private var appUITheme: AppUITheme {
+        AppUITheme(rawValue: appUIThemeRaw) ?? .defaultTheme
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(appEnv)
-                .preferredColorScheme(
-                    AppUITheme(rawValue: appUIThemeRaw)?.preferredColorScheme ?? .dark
-                )
+                // `nil` for `.system` must not fall back to dark — that would ignore iPhone appearance.
+                .preferredColorScheme(appUITheme.preferredColorScheme)
                 .task {
                     let store = SessionStore(context: sharedModelContainer.mainContext)
                     store.recoverOrphanedSession()

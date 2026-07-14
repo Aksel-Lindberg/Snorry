@@ -8,13 +8,16 @@ enum AppUITheme: String, CaseIterable, Identifiable {
     case dark = "dark"
     case system = "system"
 
+    /// Default theme for new installs and invalid stored values.
+    static let defaultTheme: AppUITheme = .dark
+
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
         case .light:  return "Light"
         case .dark:   return "Dark"
-        case .system: return "System (Default Dark)"
+        case .system: return "System"
         }
     }
 

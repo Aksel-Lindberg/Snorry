@@ -16,7 +16,7 @@ struct SettingsView: View {
     @State private var confirmDeleteAllLogs = false
     @State private var showSubscription = false
     @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
-    @AppStorage(UserPreferences.appUIThemeKey) private var appUIThemeRaw = AppUITheme.dark.rawValue
+    @AppStorage(UserPreferences.appUIThemeKey) private var appUIThemeRaw = AppUITheme.defaultTheme.rawValue
 
     var body: some View {
         NavigationStack {
@@ -379,7 +379,7 @@ struct SettingsView: View {
             Picker(
                 "App UI Theme",
                 selection: Binding(
-                    get: { AppUITheme(rawValue: appUIThemeRaw) ?? .dark },
+                    get: { AppUITheme(rawValue: appUIThemeRaw) ?? .defaultTheme },
                     set: { appUIThemeRaw = $0.rawValue }
                 )
             ) {
@@ -402,7 +402,7 @@ struct SettingsView: View {
             Text("App")
                 .foregroundStyle(Theme.labelSecondary)
         } footer: {
-            Text("Dark is Snorry’s default look. System follows your iPhone appearance.")
+            Text("System matches your iPhone light or dark appearance.")
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption)
         }
