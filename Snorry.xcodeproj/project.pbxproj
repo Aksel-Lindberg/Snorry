@@ -53,13 +53,11 @@
 		A1B2C3D4E5F60002A1B2C3D4 /* SessionClipSoundClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001A1B2C3D4 /* SessionClipSoundClassifier.swift */; };
 		A1B2C3D4E5F60004A1B2C3D4 /* SoundClassificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */; };
 		A1B2C3D4E5F60005A1B2C3D5 /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */; };
-		SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */; };
-		SAV0A0012EAA4B00C99A0004 /* SoundAlertVolumeEscalationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */; };
-		AST0A0012EAA4B00C99A0002 /* AlarmStyleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AST0A0012EAA4B00C99A0001 /* AlarmStyleTests.swift */; };
 		A4B0A49A1378A7721A654C36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 799CEF95A14F0173040FE75B /* HomeView.swift */; };
 		A98E1AF9D24946D3969651DF /* Marimba intrumental.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */; };
 		AC645F2038FE2E11B32BC934 /* Tornado.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = E8752C417837145970A7AE3E /* Tornado.mp3 */; };
 		AF86D422BDA1C67CD7A9D9F3 /* LiveSpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */; };
+		AST0A0012EAA4B00C99A0002 /* AlarmStyleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AST0A0012EAA4B00C99A0001 /* AlarmStyleTests.swift */; };
 		B075C6C506A48FFCE98C30BA /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C900E57250862B011EE8C4 /* SessionStore.swift */; };
 		B2C3D4E5F60007A1B2C3D4E6 /* RecordingInProgressBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60008A1B2C3D4E6 /* RecordingInProgressBanner.swift */; };
 		BA1ABF8B48D0F03CE67C68E9 /* SnoreEventDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */; };
@@ -103,7 +101,13 @@
 		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
 		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
 		MON00012EAA4B00C99A0002 /* MonitoringUsageTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */; };
+		SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */; };
+		SAV0A0012EAA4B00C99A0004 /* SoundAlertVolumeEscalationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */; };
 		SLP00012EAA4B00C99A0001 /* SleepAllyPromoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */; };
+		MFX0012EAA4B00C99A0002 /* MyofascialExercise.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */; };
+		MFX0012EAA4B00C99A0004 /* MyofascialExerciseCompletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0003 /* MyofascialExerciseCompletion.swift */; };
+		MFX0012EAA4B00C99A0006 /* MyofascialExercisesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0005 /* MyofascialExercisesView.swift */; };
+		MFX0012EAA4B00C99A0008 /* MyofascialExerciseCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */; };
 		SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */; };
 		SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */; };
 		SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */; };
@@ -174,14 +178,12 @@
 		A1B2C3D4E5F60001A1B2C3D4 /* SessionClipSoundClassifier.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionClipSoundClassifier.swift; path = Services/SessionClipSoundClassifier.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundClassificationTests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UserPreferences.swift; path = Utilities/UserPreferences.swift; sourceTree = "<group>"; };
-		SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SoundAlertVolumeEscalation.swift; path = Utilities/SoundAlertVolumeEscalation.swift; sourceTree = "<group>"; };
-		SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundAlertVolumeEscalationTests.swift; sourceTree = "<group>"; };
-		AST0A0012EAA4B00C99A0001 /* AlarmStyleTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmStyleTests.swift; sourceTree = "<group>"; };
 		A1C3C8E48A75DE8B17178BC1 /* Snorry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Snorry.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WaveformView.swift; path = Views/WaveformView.swift; sourceTree = "<group>"; };
 		A854F1BE96B16C0133B0B0CD /* Icecracks.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Icecracks.mp3; path = Resources/Icecracks.mp3; sourceTree = "<group>"; };
 		AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AudioMathTests.swift; sourceTree = "<group>"; };
 		AF033425D8DA29B54123B2C1 /* NotificationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NotificationManager.swift; path = Services/NotificationManager.swift; sourceTree = "<group>"; };
+		AST0A0012EAA4B00C99A0001 /* AlarmStyleTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmStyleTests.swift; sourceTree = "<group>"; };
 		B2C3D4E5F60008A1B2C3D4E6 /* RecordingInProgressBanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RecordingInProgressBanner.swift; path = Views/RecordingInProgressBanner.swift; sourceTree = "<group>"; };
 		B32091DC2B8034B37F8455EB /* AlertSettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSettings.swift; path = Models/AlertSettings.swift; sourceTree = "<group>"; };
 		B535260A902657556E2C94B2 /* Marimba.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Marimba.mp3; path = Resources/Marimba.mp3; sourceTree = "<group>"; };
@@ -223,7 +225,13 @@
 		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0001 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
+		MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExercise.swift; path = Models/MyofascialExercise.swift; sourceTree = "<group>"; };
+		MFX0012EAA4B00C99A0003 /* MyofascialExerciseCompletion.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExerciseCompletion.swift; path = Models/MyofascialExerciseCompletion.swift; sourceTree = "<group>"; };
+		MFX0012EAA4B00C99A0005 /* MyofascialExercisesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExercisesView.swift; path = Views/MyofascialExercisesView.swift; sourceTree = "<group>"; };
+		MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExerciseCardView.swift; path = Views/MyofascialExerciseCardView.swift; sourceTree = "<group>"; };
 		MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitoringUsageTracker.swift; path = Services/MonitoringUsageTracker.swift; sourceTree = "<group>"; };
+		SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SoundAlertVolumeEscalation.swift; path = Utilities/SoundAlertVolumeEscalation.swift; sourceTree = "<group>"; };
+		SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundAlertVolumeEscalationTests.swift; sourceTree = "<group>"; };
 		SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepAllyPromoView.swift; path = Views/SleepAllyPromoView.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionProductID.swift; path = Models/SubscriptionProductID.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionManager.swift; path = Services/SubscriptionManager.swift; sourceTree = "<group>"; };
@@ -299,6 +307,8 @@
 				455FBB9E12AF91E48C08F0D7 /* ContentView.swift */,
 				B32091DC2B8034B37F8455EB /* AlertSettings.swift */,
 				F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */,
+				MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */,
+				MFX0012EAA4B00C99A0003 /* MyofascialExerciseCompletion.swift */,
 				EC33EC45DDFD9E8E895030C2 /* SnoreEvent.swift */,
 				EFE39AA711F0B5E5D9F976D3 /* SnoreSession.swift */,
 				SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */,
@@ -368,6 +378,8 @@
 				E320C54E6B2C3B59E8B041C8 /* AnalyticsView.swift */,
 				A0C3E57FFA2899D2DBB53474 /* GIFView.swift */,
 				742A6FD9950680E53BE23A63 /* HelpCenterView.swift */,
+				MFX0012EAA4B00C99A0005 /* MyofascialExercisesView.swift */,
+				MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */,
 				799CEF95A14F0173040FE75B /* HomeView.swift */,
 				13777D4919BAC1C94B113483 /* MonitorView.swift */,
 				B2C3D4E5F60008A1B2C3D4E6 /* RecordingInProgressBanner.swift */,
@@ -593,6 +605,8 @@
 				8A0E7EFDB09BB1215A6FCB19 /* ContentView.swift in Sources */,
 				9B36F38783F18604D068DB12 /* AlertSettings.swift in Sources */,
 				816A252C25E70F5AEA938D82 /* AlertSettingsChange.swift in Sources */,
+				MFX0012EAA4B00C99A0002 /* MyofascialExercise.swift in Sources */,
+				MFX0012EAA4B00C99A0004 /* MyofascialExerciseCompletion.swift in Sources */,
 				0204F0527B08014F22F355E5 /* SnoreEvent.swift in Sources */,
 				73CF9829E4F68348FD3AA440 /* SnoreSession.swift in Sources */,
 				SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */,
@@ -635,6 +649,8 @@
 				E297E9221819A5E9C632A273 /* AnalyticsView.swift in Sources */,
 				126EEBF382F3787E48EAA38B /* GIFView.swift in Sources */,
 				2F07F61077B2165A37B82697 /* HelpCenterView.swift in Sources */,
+				MFX0012EAA4B00C99A0006 /* MyofascialExercisesView.swift in Sources */,
+				MFX0012EAA4B00C99A0008 /* MyofascialExerciseCardView.swift in Sources */,
 				A4B0A49A1378A7721A654C36 /* HomeView.swift in Sources */,
 				DB7F36E374350C24D327A90A /* MonitorView.swift in Sources */,
 				B2C3D4E5F60007A1B2C3D4E6 /* RecordingInProgressBanner.swift in Sources */,
@@ -896,7 +912,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -916,7 +932,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.7;
+				MARKETING_VERSION = 1.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -942,7 +958,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -962,7 +978,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.7;
+				MARKETING_VERSION = 1.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

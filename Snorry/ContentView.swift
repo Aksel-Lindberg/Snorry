@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - App root: tab bar with Tonight / History / Insights / Settings
+// MARK: - App root: tab bar with Tonight / History / Insights / Exercises
 struct RootView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -11,7 +11,7 @@ struct RootView: View {
     @State private var showRecordingScreen = false
 
     enum Tab: String {
-        case home, sessions, analytics, settings
+        case home, sessions, analytics, exercises
     }
 
     var body: some View {
@@ -28,8 +28,7 @@ struct RootView: View {
                 if let monitorVM {
                     HomeView(
                         vm: monitorVM,
-                        showRecordingScreen: $showRecordingScreen,
-                        onOpenSettings: { selectedTab = .settings }
+                        showRecordingScreen: $showRecordingScreen
                     )
                 } else {
                     ProgressView()
@@ -54,11 +53,11 @@ struct RootView: View {
                 }
                 .tag(Tab.analytics)
 
-            SettingsView(onDone: { selectedTab = .home })
+            MyofascialExercisesView()
                 .tabItem {
-                    Label("Settings", systemImage: "gearshape")
+                    Label("Exercises", systemImage: "figure.mind.and.body")
                 }
-                .tag(Tab.settings)
+                .tag(Tab.exercises)
         }
         .tint(Theme.accent)
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -101,7 +100,7 @@ private extension RootView.Tab {
         case .home: return "monitor"
         case .sessions: return "history"
         case .analytics: return "insights"
-        case .settings: return "settings"
+        case .exercises: return "exercises"
         }
     }
 }

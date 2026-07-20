@@ -37,7 +37,8 @@ struct SnorryApp: App {
             SnoreEvent.self,
             WaveformSample.self,
             AlertSettings.self,
-            AlertSettingsChange.self
+            AlertSettingsChange.self,
+            MyofascialExerciseCompletion.self
         ])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

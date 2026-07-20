@@ -13,8 +13,6 @@ struct HomeView: View {
 
     @Bindable var vm: MonitorViewModel
     @Binding var showRecordingScreen: Bool
-    /// Switches to the Settings tab (Tonight footer shortcut).
-    var onOpenSettings: () -> Void = {}
 
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -37,6 +35,7 @@ struct HomeView: View {
     }
     @State private var showPermissions = false
     @State private var showHelp = false
+    @State private var showSettings = false
     @State private var showSubscription = false
     @State private var scrollAlertIntoView = false
     @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
@@ -84,20 +83,36 @@ struct HomeView: View {
                     HomeAppIconMark()
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showHelp = true
-                    } label: {
-                        Image(systemName: "questionmark.circle")
-                            .font(.title3)
-                            .foregroundStyle(Theme.accent)
-                            .symbolRenderingMode(.hierarchical)
+                    HStack(spacing: 16) {
+                        Button {
+                            showHelp = true
+                        } label: {
+                            Image(systemName: "questionmark.circle")
+                                .font(.title3)
+                                .foregroundStyle(Theme.accent)
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        .accessibilityLabel("Help")
+                        .accessibilityHint("Opens help and how-to for Snorry")
+
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gearshape")
+                                .font(.title3)
+                                .foregroundStyle(Theme.accent)
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        .accessibilityLabel("Settings")
+                        .accessibilityHint("Opens alert and app settings")
                     }
-                    .accessibilityLabel("Help")
-                    .accessibilityHint("Opens help and how-to for Snorry")
                 }
             }
             .sheet(isPresented: $showHelp) {
                 HelpCenterView()
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView(onDone: { showSettings = false })
             }
             .fullScreenCover(isPresented: $showSubscription) {
                 SubscriptionView(paywallSource: "monitoring_limit")
@@ -236,7 +251,7 @@ struct HomeView: View {
                         }
                     },
                     footerLinkTitle: showCardShortcuts ? "Change in Settings" : nil,
-                    onFooterLinkTap: showCardShortcuts ? onOpenSettings : nil
+                    onFooterLinkTap: showCardShortcuts ? { showSettings = true } : nil
                 )
                 .id(ScrollTarget.alertSetup)
             }

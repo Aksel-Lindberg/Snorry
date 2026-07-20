@@ -211,8 +211,8 @@ struct HelpCenterView: View {
 
                         helpAccordion(
                             section: .settings,
-                            title: "Settings tab",
-                            subtitle: "Alert channels, alarm style, support, data & legal",
+                            title: "Settings",
+                            subtitle: "Open from the gear on Tonight — alerts, alarm style, support, data & legal",
                             systemImage: "gearshape.fill"
                         ) {
                             HelpBullet(
