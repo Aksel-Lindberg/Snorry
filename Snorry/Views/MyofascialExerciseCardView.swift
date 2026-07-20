@@ -9,6 +9,7 @@ struct MyofascialExerciseCardView: View {
 
     @Environment(\.modelContext) private var context
     @State private var showHistory = false
+    @State private var showImageViewer = false
     @State private var showAlreadyLoggedToday = false
 
     private var doneToday: Bool {
@@ -23,10 +24,25 @@ struct MyofascialExerciseCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Image(exercise.imageName)
-                .resizable()
-                .scaledToFit()
-                .clipShape(RoundedRectangle(cornerRadius: Theme.radiusCard))
+            Button {
+                showImageViewer = true
+            } label: {
+                Image(exercise.imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.radiusCard))
+                    .overlay(alignment: .bottomTrailing) {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.labelPrimary)
+                            .padding(8)
+                            .background(.ultraThinMaterial, in: Circle())
+                            .padding(10)
+                    }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("View \(exercise.title) guide")
+            .accessibilityHint("Opens a zoomable full-screen view")
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(exercise.title)
@@ -55,6 +71,9 @@ struct MyofascialExerciseCardView: View {
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
         .sheet(isPresented: $showHistory) {
             MyofascialExerciseHistorySheet(exercise: exercise)
+        }
+        .fullScreenCover(isPresented: $showImageViewer) {
+            MyofascialExerciseImageViewer(exercise: exercise)
         }
     }
 

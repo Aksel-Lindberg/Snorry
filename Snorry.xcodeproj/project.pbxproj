@@ -108,6 +108,8 @@
 		MFX0012EAA4B00C99A0004 /* MyofascialExerciseCompletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0003 /* MyofascialExerciseCompletion.swift */; };
 		MFX0012EAA4B00C99A0006 /* MyofascialExercisesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0005 /* MyofascialExercisesView.swift */; };
 		MFX0012EAA4B00C99A0008 /* MyofascialExerciseCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */; };
+		MFX0012EAA4B00C99A000A /* MyofascialExerciseImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0009 /* MyofascialExerciseImageViewer.swift */; };
+		MFX0012EAA4B00C99A000C /* ZoomableImageScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */; };
 		SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */; };
 		SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */; };
 		SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */; };
@@ -229,6 +231,8 @@
 		MFX0012EAA4B00C99A0003 /* MyofascialExerciseCompletion.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExerciseCompletion.swift; path = Models/MyofascialExerciseCompletion.swift; sourceTree = "<group>"; };
 		MFX0012EAA4B00C99A0005 /* MyofascialExercisesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExercisesView.swift; path = Views/MyofascialExercisesView.swift; sourceTree = "<group>"; };
 		MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExerciseCardView.swift; path = Views/MyofascialExerciseCardView.swift; sourceTree = "<group>"; };
+		MFX0012EAA4B00C99A0009 /* MyofascialExerciseImageViewer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExerciseImageViewer.swift; path = Views/MyofascialExerciseImageViewer.swift; sourceTree = "<group>"; };
+		MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ZoomableImageScrollView.swift; path = Views/ZoomableImageScrollView.swift; sourceTree = "<group>"; };
 		MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitoringUsageTracker.swift; path = Services/MonitoringUsageTracker.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SoundAlertVolumeEscalation.swift; path = Utilities/SoundAlertVolumeEscalation.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundAlertVolumeEscalationTests.swift; sourceTree = "<group>"; };
@@ -380,6 +384,8 @@
 				742A6FD9950680E53BE23A63 /* HelpCenterView.swift */,
 				MFX0012EAA4B00C99A0005 /* MyofascialExercisesView.swift */,
 				MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */,
+				MFX0012EAA4B00C99A0009 /* MyofascialExerciseImageViewer.swift */,
+				MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */,
 				799CEF95A14F0173040FE75B /* HomeView.swift */,
 				13777D4919BAC1C94B113483 /* MonitorView.swift */,
 				B2C3D4E5F60008A1B2C3D4E6 /* RecordingInProgressBanner.swift */,
@@ -651,6 +657,8 @@
 				2F07F61077B2165A37B82697 /* HelpCenterView.swift in Sources */,
 				MFX0012EAA4B00C99A0006 /* MyofascialExercisesView.swift in Sources */,
 				MFX0012EAA4B00C99A0008 /* MyofascialExerciseCardView.swift in Sources */,
+				MFX0012EAA4B00C99A000A /* MyofascialExerciseImageViewer.swift in Sources */,
+				MFX0012EAA4B00C99A000C /* ZoomableImageScrollView.swift in Sources */,
 				A4B0A49A1378A7721A654C36 /* HomeView.swift in Sources */,
 				DB7F36E374350C24D327A90A /* MonitorView.swift in Sources */,
 				B2C3D4E5F60007A1B2C3D4E6 /* RecordingInProgressBanner.swift in Sources */,
