@@ -19,10 +19,10 @@ struct SessionDetailView: View {
                     VStack(spacing: 20) {
                         statsCards(vm: vm)
                         watchSnoreCard(vm: vm)
+                        timelineChart(vm: vm)
                         if let alertCard = AlertSetupSummaryCard.forSession(session) {
                             alertCard
                         }
-                        timelineChart(vm: vm)
                         eventsList(vm: vm)
                     }
                     .padding(.horizontal, 16)

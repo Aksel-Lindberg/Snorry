@@ -103,6 +103,7 @@ private struct AnalyticsContent: View {
                 rangePicker
                 if !vm.dailyPoints.isEmpty { summaryRow }
                 snoreTrendCard
+                AlertCorrelationCard(points: vm.alertProfilePoints, xMax: vm.alertChartXMax)
                 if !vm.settingsChanges.isEmpty {
                     SettingsChangeLegend(
                         changes: vm.settingsChanges,
@@ -113,7 +114,6 @@ private struct AnalyticsContent: View {
                     )
                 }
                 if vm.settingsChanges.isEmpty { markerInfoNote }
-                AlertCorrelationCard(points: vm.alertProfilePoints, xMax: vm.alertChartXMax)
             }
             .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
             .padding(.bottom, horizontalSizeClass == .regular ? 16 : 24)

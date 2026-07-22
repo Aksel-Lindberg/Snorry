@@ -26,12 +26,15 @@ struct MyofascialExerciseImageViewer: View {
                         .foregroundStyle(Theme.accent)
                 }
             }
-            .overlay(alignment: .bottom) {
-                Text("Pinch to zoom · double-tap to zoom in or out")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelTertiary)
-                    .padding(.bottom, 12)
-                    .accessibilityHidden(true)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                Text("Double-tap to zoom in or out · pinch and drag to pan")
+                    .font(.caption)
+                    .foregroundStyle(Theme.labelSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.background.opacity(0.92))
             }
         }
     }

@@ -52,13 +52,13 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .tabBar,
                             title: "Bottom navigation",
-                            subtitle: "Four tabs — Tonight, History, Insights, Settings",
+                            subtitle: "Four tabs — Tonight, History, Insights, Exercises",
                             systemImage: "square.grid.2x2.fill"
                         ) {
-                            tabChip(icon: "moon.stars.fill", name: "Tonight", hint: "Start recording and see your latest summary.")
+                            tabChip(icon: "moon.stars.fill", name: "Tonight", hint: "Start recording and see your latest summary. Settings and Help are in the top-right toolbar.")
                             tabChip(icon: "clock.arrow.circlepath", name: "History", hint: "Browse past nights and open session details.")
                             tabChip(icon: "chart.line.uptrend.xyaxis", name: "Insights", hint: "Trends, charts, and how settings relate to snore duration.")
-                            tabChip(icon: "gearshape", name: "Settings", hint: "Alert channels, alarm style, Premium, support, reset/delete logs, and legal links.")
+                            tabChip(icon: "figure.mind.and.body", name: "Exercises", hint: "Myofascial exercise guides with completion tracking.")
                         }
 
                         helpAccordion(
@@ -73,9 +73,14 @@ struct HelpCenterView: View {
                                 detail: "Tap the large sleep animation (moon and waves) to begin. If the microphone is not yet allowed, a permissions sheet appears first; if iOS access was denied, the same tap opens the system Settings app so you can enable the mic."
                             )
                             HelpBullet(
+                                icon: "questionmark.circle",
+                                title: "Help & Settings (toolbar)",
+                                detail: "Top right on Tonight: the question mark opens this Help & How-To guide; the gear opens app Settings (alerts, alarm style, Premium, support, and data controls) in a sheet."
+                            )
+                            HelpBullet(
                                 icon: "slider.horizontal.3",
                                 title: "Alert setup summary",
-                                detail: "The card mirrors your saved choices: push on/off, sound alarm on/off, and alarm style. Alert timing is fixed in the app—push after 2 s of snoring, sound after 5 s, clear after 3 s of silence. When both channels are on, push and sound repeat together on the same pulse."
+                                detail: "The card mirrors your saved choices: push on/off, sound alarm on/off, and alarm style. Alert timing is fixed in the app—push after 2 s of snoring, sound after 5 s, clear after 3 s of silence. When both channels are on, push and sound repeat together on the same pulse. Tap Change in Settings on the card to open the gear sheet."
                             )
                             HelpBullet(
                                 icon: "clock.fill",
@@ -85,7 +90,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "star.circle.fill",
                                 title: "Free vs Premium",
-                                detail: "Free includes up to 20 recording sessions and your latest sleep session in History. Snorry Premium unlocks unlimited recording, full Sleep History, and Insights. A remaining-session count appears under Start when you are on the free plan; upgrade from Settings or when a limit is reached."
+                                detail: "Free includes up to 20 recording sessions and your latest sleep session in History. Snorry Premium unlocks unlimited recording, full Sleep History, and Insights. A remaining-session count appears under Start when you are on the free plan; upgrade from the Settings sheet (gear on Tonight) or when a limit is reached."
                             )
                             HelpBullet(
                                 icon: "applewatch",
@@ -210,6 +215,34 @@ struct HelpCenterView: View {
                         }
 
                         helpAccordion(
+                            section: .exercises,
+                            title: "Exercises tab",
+                            subtitle: "Myofascial exercises, zoomable guides, completion log",
+                            systemImage: "figure.mind.and.body"
+                        ) {
+                            HelpBullet(
+                                icon: "list.bullet.rectangle",
+                                title: "Exercise library",
+                                detail: "The Exercises tab lists guided myofascial exercises in order—from tongue posture awareness through strength drills. Each card shows the full infographic, title, and a short description."
+                            )
+                            HelpBullet(
+                                icon: "arrow.up.left.and.arrow.down.right",
+                                title: "Read & zoom images",
+                                detail: "Tap any exercise image to open it full screen. Double-tap to zoom in or out; pinch to resize and drag to pan when zoomed so small text is easier to read."
+                            )
+                            HelpBullet(
+                                icon: "checkmark.circle.fill",
+                                title: "Log completion",
+                                detail: "Tap the checkmark on a card when you finish that exercise for the day. Snorry records one entry per calendar day—tapping again the same day shows a brief “Already logged for today” message."
+                            )
+                            HelpBullet(
+                                icon: "calendar",
+                                title: "Completion history",
+                                detail: "Tap the calendar control to see every date you logged that exercise, newest first. Swipe left on a date to remove a mistaken entry."
+                            )
+                        }
+
+                        helpAccordion(
                             section: .settings,
                             title: "Settings",
                             subtitle: "Open from the gear on Tonight — alerts, alarm style, support, data & legal",
@@ -289,7 +322,7 @@ struct HelpCenterView: View {
     // MARK: - Sections
 
     private enum HelpSection: String, CaseIterable, Identifiable {
-        case gettingStarted, tabBar, monitorHome, monitorLive, history, analytics, settings
+        case gettingStarted, tabBar, monitorHome, monitorLive, history, analytics, exercises, settings
         var id: String { rawValue }
     }
 
