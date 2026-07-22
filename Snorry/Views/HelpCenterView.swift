@@ -190,17 +190,22 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "calendar",
                                 title: "Time range",
-                                detail: "Pick Week, Month, or 3 Months to focus the charts and summary pills."
+                                detail: "Pick Week, Month, or 3 Months to focus the summary cards, chart, and comparisons versus the previous period of the same length."
                             )
                             HelpBullet(
-                                icon: "timer",
-                                title: "Summary pills",
-                                detail: "Avg min/day (snore time), session count, and distinct days with data in the selected window."
+                                icon: "square.grid.3x3.fill",
+                                title: "Summary cards",
+                                detail: "Average snore minutes per recorded night, session count, and nights under 10 minutes total snore (good nights). Each card shows change versus the prior week, month, or three months."
+                            )
+                            HelpBullet(
+                                icon: "text.bubble.fill",
+                                title: "Insight banner",
+                                detail: "After enough recorded nights, Snorry summarizes whether your snore duration is trending down, up, or about the same."
                             )
                             HelpBullet(
                                 icon: "chart.bar.fill",
-                                title: "Snore duration trend",
-                                detail: "The Snore duration card plots daily snore minutes and event counts for the selected window, with optional numbered markers when alert settings were saved."
+                                title: "Daily snore duration",
+                                detail: "The main chart shows minutes for every day in the range, a dashed trend line when you have enough data, green exercise markers when you logged myofascial work that day, and numbered markers when alert settings were saved. Tap a day to open that night in Sleep History. Expand Snore events below the chart for event counts."
                             )
                             HelpBullet(
                                 icon: "mappin.and.ellipse",
@@ -233,12 +238,12 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "checkmark.circle.fill",
                                 title: "Log completion",
-                                detail: "Tap the checkmark on a card when you finish that exercise for the day. Snorry records one entry per calendar day—tapping again the same day shows a brief “Already logged for today” message."
+                                detail: "Use the seven-day strip under each exercise. Tap today’s column to mark the exercise done; tap again to undo. Green checkmarks show the last seven days you logged."
                             )
                             HelpBullet(
                                 icon: "calendar",
                                 title: "Completion history",
-                                detail: "Tap the calendar control to see every date you logged that exercise, newest first. Swipe left on a date to remove a mistaken entry."
+                                detail: "Tap All history to see every logged day grouped by month, with day count and streak. Swipe left on a date to remove it."
                             )
                         }
 

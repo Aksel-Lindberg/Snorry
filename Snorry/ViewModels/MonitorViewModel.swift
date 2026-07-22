@@ -736,7 +736,6 @@ final class MonitorViewModel {
     /// When the device locks mid-session, apply lock-screen detection / alarm timing.
     private func handleEnteredBackgroundDuringMonitoring() {
         guard isMonitoring else { return }
-        let settings = AlertSettings.load(context: modelContext)
         applyBackgroundMonitoringProfile()
         backgroundSnoringVerifiedForAlarm = false
         if isSnoring {
@@ -1136,10 +1135,8 @@ final class MonitorViewModel {
         lastPipelineRecoveryAt = nil
         monitoringRestoreGraceUntil = Date().addingTimeInterval(15)
 
-        let audioService = self.audioService
-        Task.detached(priority: .userInitiated) {
+        Task { @MainActor in
             AudioSessionManager.shared.restoreMonitoringAfterAlarm()
-            // If ticks are still stale after routing restore, retry the light tap restart once.
             try? await Task.sleep(for: .milliseconds(400))
             let stalled = audioService.lastTickTime.map { Date().timeIntervalSince($0) > 0.75 } ?? true
             if stalled {

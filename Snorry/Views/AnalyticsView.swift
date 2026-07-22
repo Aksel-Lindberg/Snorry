@@ -96,12 +96,19 @@ private struct AnalyticsContent: View {
     @Bindable var vm: AnalyticsViewModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var areSettingsChangesExpanded = true
+    @State private var areEventsExpanded = false
+    @State private var selectedChartDay: Date?
+    @State private var sessionDetailRoute: SessionDetailRoute?
+    @State private var multiSessionPicker: ChartDayPicker?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 rangePicker
-                if !vm.dailyPoints.isEmpty { summaryRow }
+                if vm.hasSessionDataInPeriod {
+                    metricCardsRow
+                    InsightBanner(message: vm.insightMessage)
+                }
                 snoreTrendCard
                 AlertCorrelationCard(points: vm.alertProfilePoints, xMax: vm.alertChartXMax)
                 if !vm.settingsChanges.isEmpty {
@@ -121,6 +128,37 @@ private struct AnalyticsContent: View {
             .frame(maxWidth: .infinity)
         }
         .clearsFloatingTabBar()
+        .navigationDestination(item: $sessionDetailRoute) { route in
+            if let session = vm.session(withID: route.sessionID) {
+                SessionDetailView(session: session)
+            }
+        }
+        .sheet(item: $multiSessionPicker) { picker in
+            InsightsDaySessionsSheet(dayStart: picker.dayStart, vm: vm) { session in
+                multiSessionPicker = nil
+                sessionDetailRoute = SessionDetailRoute(sessionID: session.id)
+            }
+        }
+        .onChange(of: selectedChartDay) { _, newValue in
+            handleChartDaySelection(newValue)
+        }
+    }
+
+    private func handleChartDaySelection(_ date: Date?) {
+        guard let date else { return }
+        let calendar = Calendar.current
+        let dayStart = calendar.startOfDay(for: date)
+        let sessions = vm.sessions(on: dayStart)
+        guard !sessions.isEmpty else {
+            selectedChartDay = nil
+            return
+        }
+        if sessions.count == 1, let session = sessions.first {
+            sessionDetailRoute = SessionDetailRoute(sessionID: session.id)
+        } else {
+            multiSessionPicker = ChartDayPicker(dayStart: dayStart)
+        }
+        selectedChartDay = nil
     }
 
     // MARK: Range picker
@@ -136,14 +174,40 @@ private struct AnalyticsContent: View {
         .onChange(of: vm.selectedRange) { _, _ in vm.refresh() }
     }
 
-    // MARK: Summary stats row
+    // MARK: Summary metric cards
 
-    private var summaryRow: some View {
-        HStack(spacing: 12) {
-            statPill("Avg min/day", avgSnoreLabel, Theme.snoring)
-            statPill("Sessions",   "\(vm.sessionCount)", Theme.accent)
-            statPill("Days",       "\(vm.dailyPoints.count)", Theme.good)
+    private var metricCardsRow: some View {
+        HStack(alignment: .top, spacing: 10) {
+            metricCard(
+                icon: "clock.fill",
+                title: "Avg duration",
+                value: avgSnoreLabel,
+                delta: avgDurationDeltaLabel,
+                deltaIsPositive: vm.averageDurationPercentChange.map { $0 < 0 } ?? false,
+                accent: Theme.snoring
+            )
+            metricCard(
+                icon: "chart.line.uptrend.xyaxis",
+                title: "Sessions",
+                value: "\(vm.sessionCount)",
+                delta: sessionDeltaLabel,
+                deltaIsPositive: true,
+                accent: Theme.accent
+            )
+            metricCard(
+                icon: "moon.stars.fill",
+                title: goodNightsTitle,
+                value: "\(vm.currentPeriod.nightsUnderThreshold)",
+                delta: goodNightsDeltaLabel,
+                deltaIsPositive: vm.goodNightsDelta >= 0,
+                accent: Theme.good
+            )
         }
+    }
+
+    private var goodNightsTitle: String {
+        let threshold = Int(InsightsConfiguration.goodNightSnoreMinutesThreshold)
+        return "Nights <\(threshold)m"
     }
 
     private var avgSnoreLabel: String {
@@ -153,19 +217,63 @@ private struct AnalyticsContent: View {
         return "\(Int(m.rounded()))m"
     }
 
-    private func statPill(_ title: String, _ value: String, _ color: Color) -> some View {
-        VStack(spacing: 4) {
+    private var priorLabel: String { vm.selectedRange.previousPeriodLabel }
+
+    private var avgDurationDeltaLabel: String {
+        guard let change = vm.averageDurationPercentChange else {
+            return vm.previousPeriod.sessionCount == 0 ? "— vs \(priorLabel)" : "new vs \(priorLabel)"
+        }
+        let rounded = Int(abs(change).rounded())
+        let arrow = change < 0 ? "↓" : "↑"
+        return "\(arrow) \(rounded)% vs \(priorLabel)"
+    }
+
+    private var sessionDeltaLabel: String {
+        let delta = vm.sessionCountDelta
+        if delta == 0 { return "same vs \(priorLabel)" }
+        let sign = delta > 0 ? "+" : ""
+        return "\(sign)\(delta) vs \(priorLabel)"
+    }
+
+    private var goodNightsDeltaLabel: String {
+        let delta = vm.goodNightsDelta
+        if delta == 0 { return "same vs \(priorLabel)" }
+        let sign = delta > 0 ? "+" : ""
+        return "\(sign)\(delta) vs \(priorLabel)"
+    }
+
+    private func metricCard(
+        icon: String,
+        title: String,
+        value: String,
+        delta: String,
+        deltaIsPositive: Bool,
+        accent: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: icon)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(accent)
+
             Text(value)
-                .font(Theme.monoDigit(size: 20, weight: .bold))
-                .foregroundStyle(color)
+                .font(Theme.monoDigit(size: 22, weight: .bold))
+                .foregroundStyle(Theme.labelPrimary)
+                .minimumScaleFactor(0.8)
+                .lineLimit(1)
+
             Text(title)
-                .font(.caption2)
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 .textCase(.uppercase)
-                .tracking(0.5)
+                .tracking(0.4)
+
+            Text(delta)
+                .font(.caption2)
+                .foregroundStyle(deltaIsPositive ? Theme.good : Theme.labelOnSurfaceSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
     }
 
@@ -174,16 +282,26 @@ private struct AnalyticsContent: View {
     private var snoreTrendCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             cardHeader
-            if vm.dailyPoints.isEmpty {
+            if !vm.hasSessionDataInPeriod {
                 emptyChartState
             } else {
-                SnoreDailyBarsChart(
+                SnoreDurationHeroChart(
                     dailyPoints: vm.dailyPoints,
                     settingsChanges: vm.settingsChanges,
+                    trendLinePoints: vm.trendLinePoints,
+                    exerciseLoggedDayStarts: vm.exerciseLoggedDayStarts,
                     cutoffDate: vm.cutoffDate,
                     snoreMinutesYMax: vm.snoreMinutesYMax,
+                    selectedRange: vm.selectedRange,
+                    selectedDay: $selectedChartDay
+                )
+
+                CollapsibleSnoreEventsChart(
+                    dailyPoints: vm.dailyPoints,
+                    cutoffDate: vm.cutoffDate,
                     eventCountYMax: vm.eventCountYMax,
-                    selectedRange: vm.selectedRange
+                    selectedRange: vm.selectedRange,
+                    isExpanded: $areEventsExpanded
                 )
             }
         }
@@ -192,16 +310,47 @@ private struct AnalyticsContent: View {
     }
 
     private var cardHeader: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Snore duration")
-                    .font(.headline)
-                    .foregroundStyle(Theme.labelPrimary)
-                Text("Daily totals · \(vm.selectedRange.rawValue.lowercased())")
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Daily snore duration")
+                        .font(.headline)
+                        .foregroundStyle(Theme.labelPrimary)
+                    Text("Minutes per night · \(vm.selectedRange.rawValue.lowercased())")
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                }
+                Spacer()
+                HStack(spacing: 10) {
+                    if vm.trendLinePoints != nil {
+                        HStack(spacing: 4) {
+                            trendLegendDash
+                            Text("Trend")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                        }
+                    }
+                    if showsExerciseLegend {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Theme.good)
+                                .frame(width: 8, height: 8)
+                            Text("Exercises completed")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                        }
+                    }
+                }
+            }
+
+            if let best = vm.bestSnoreDay, let worst = vm.worstSnoreDay,
+               vm.currentPeriod.sessionDays.count >= 2,
+               best.date != worst.date || best.snoreMinutes != worst.snoreMinutes {
+                Text("Best: \(daySnoreLabel(best)) · Worst: \(daySnoreLabel(worst))")
                     .font(.caption)
                     .foregroundStyle(Theme.labelOnSurfaceSecondary)
             }
-            Spacer()
+
             if !vm.settingsChanges.isEmpty {
                 HStack(spacing: 4) {
                     Circle().fill(Theme.warning).frame(width: 8, height: 8)
@@ -211,6 +360,27 @@ private struct AnalyticsContent: View {
                 }
             }
         }
+    }
+
+    private var showsExerciseLegend: Bool {
+        vm.dailyPoints.contains { vm.exerciseLoggedDayStarts.contains($0.date) }
+    }
+
+    private var trendLegendDash: some View {
+        RoundedRectangle(cornerRadius: 1)
+            .stroke(style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
+            .foregroundStyle(Color.purple.opacity(0.85))
+            .frame(width: 18, height: 2)
+    }
+
+    private func daySnoreLabel(_ point: DailySnorePoint) -> String {
+        let day = point.date.formatted(.dateTime.weekday(.abbreviated))
+        return "\(day) \(minuteLabel(point.snoreMinutes))"
+    }
+
+    private func minuteLabel(_ minutes: Double) -> String {
+        if minutes < 1 { return "<1m" }
+        return "\(Int(minutes.rounded()))m"
     }
 
     private var emptyChartState: some View {
@@ -253,83 +423,141 @@ private struct AnalyticsContent: View {
     }
 }
 
-// MARK: - Dual daily bar chart (snore events + snore duration)
-private struct SnoreDailyBarsChart: View {
+// MARK: - Navigation route for session detail from chart
+private struct SessionDetailRoute: Identifiable, Hashable {
+    let sessionID: UUID
+    var id: UUID { sessionID }
+}
+
+private struct ChartDayPicker: Identifiable {
+    let dayStart: Date
+    var id: TimeInterval { dayStart.timeIntervalSinceReferenceDate }
+}
+
+// MARK: - Insight narrative banner
+private struct InsightBanner: View {
+
+    let message: InsightMessage
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: iconName)
+                .font(.title3)
+                .foregroundStyle(iconColor)
+                .symbolRenderingMode(.hierarchical)
+
+            Text(message.text)
+                .font(.subheadline)
+                .foregroundStyle(Theme.labelPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+    }
+
+    private var iconName: String {
+        switch message.tone {
+        case .trendingDown: return "arrow.down.circle.fill"
+        case .trendingUp: return "arrow.up.circle.fill"
+        case .flat: return "minus.circle.fill"
+        case .insufficientData: return "chart.line.uptrend.xyaxis.circle"
+        }
+    }
+
+    private var iconColor: Color {
+        switch message.tone {
+        case .trendingDown: return Theme.good
+        case .trendingUp: return Theme.snoring
+        case .flat: return Theme.accent
+        case .insufficientData: return Theme.labelTertiary
+        }
+    }
+}
+
+// MARK: - Multiple sessions on one chart day
+private struct InsightsDaySessionsSheet: View {
+
+    let dayStart: Date
+    let vm: AnalyticsViewModel
+    let onSelect: (SnoreSession) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var sessions: [SnoreSession] { vm.sessions(on: dayStart) }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Theme.nightGradient.ignoresSafeArea()
+                List {
+                    let maxSnore = sessions.map(\.totalSnoreDuration).max() ?? 0
+                    ForEach(sessions, id: \.id) { session in
+                        Button {
+                            onSelect(session)
+                            dismiss()
+                        } label: {
+                            SessionRowView(session: session, maxSnoreDuration: maxSnore)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(Theme.surface)
+                    }
+                }
+                .scrollContentBackground(.hidden)
+                .listStyle(.insetGrouped)
+            }
+            .navigationTitle(dayStart.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Hero duration chart (bars, trend, markers, selection)
+private struct SnoreDurationHeroChart: View {
 
     let dailyPoints: [DailySnorePoint]
     let settingsChanges: [AlertSettingsChange]
+    let trendLinePoints: [TrendLinePoint]?
+    let exerciseLoggedDayStarts: Set<Date>
     let cutoffDate: Date
     let snoreMinutesYMax: Double
-    let eventCountYMax: Double
     let selectedRange: AnalyticsRange
+    @Binding var selectedDay: Date?
 
-    /// Fixed width for trailing Y-axis tick labels so both charts’ plot areas share the same horizontal inset.
     private enum Layout {
         static let trailingYLabelWidth: CGFloat = 42
-        static let chartSubtitleHeight: CGFloat = 16
     }
 
     var body: some View {
-        VStack(spacing: 12) {
-            // Events chart
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Snore events")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Theme.snoring)
-                    .textCase(.uppercase)
-                    .tracking(0.4)
-                    .frame(maxWidth: .infinity, minHeight: Layout.chartSubtitleHeight, alignment: .leading)
-                Chart {
-                    eventBars
-                    changeRules(yMax: eventCountYMax)
+        Chart {
+            durationBars
+            if let trendLinePoints {
+                ForEach(trendLinePoints) { point in
+                    LineMark(
+                        x: .value("Date", point.date, unit: .day),
+                        y: .value("Trend", point.predictedMinutes)
+                    )
+                    .foregroundStyle(Color.purple.opacity(0.85))
+                    .lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                    .interpolationMethod(.linear)
                 }
-                .chartXScale(domain: cutoffDate...Date())
-                .chartYScale(domain: 0...eventCountYMax)
-                .chartXAxis { xAxisContent }
-                .chartYAxis { intYAxisContent() }
-                .frame(height: 110)
             }
-
-            // Snore duration chart
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Snore duration (min)")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
-                    .textCase(.uppercase)
-                    .tracking(0.4)
-                    .frame(maxWidth: .infinity, minHeight: Layout.chartSubtitleHeight, alignment: .leading)
-                Chart {
-                    durationBars
-                    changeRules(yMax: snoreMinutesYMax)
-                }
-                .chartXScale(domain: cutoffDate...Date())
-                .chartYScale(domain: 0...snoreMinutesYMax)
-                .chartXAxis { xAxisContent }
-                .chartYAxis { minuteYAxisContent() }
-                .frame(height: 110)
-            }
+            exerciseMarkers
+            changeRules(yMax: snoreMinutesYMax)
         }
-    }
-
-    // MARK: Bar marks
-
-    @ChartContentBuilder
-    private var eventBars: some ChartContent {
-        ForEach(dailyPoints) { point in
-            BarMark(
-                x: .value("Date", point.date, unit: .day),
-                y: .value("Events", point.eventCount)
-            )
-            .foregroundStyle(Theme.snoring.opacity(0.85))
-            .cornerRadius(4)
-            .annotation(position: .top, spacing: 2) {
-                if point.eventCount > 0 {
-                    Text("\(point.eventCount)")
-                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Theme.labelSecondary)
-                }
-            }
-        }
+        .chartXScale(domain: cutoffDate...Date())
+        .chartYScale(domain: 0...snoreMinutesYMax)
+        .chartXAxis { xAxisContent }
+        .chartYAxis { minuteYAxisContent() }
+        .chartXSelection(value: $selectedDay)
+        .frame(height: 172)
+        .accessibilityLabel("Daily snore duration chart")
+        .accessibilityHint("Select a day to open that night's sleep session")
     }
 
     @ChartContentBuilder
@@ -352,9 +580,31 @@ private struct SnoreDailyBarsChart: View {
     }
 
     @ChartContentBuilder
+    private var exerciseMarkers: some ChartContent {
+        ForEach(exerciseDaysInRange, id: \.self) { day in
+            PointMark(
+                x: .value("Date", day, unit: .day),
+                y: .value("Exercise", 0)
+            )
+            .symbolSize(28)
+            .foregroundStyle(Theme.good.opacity(0.9))
+            .annotation(position: .bottom, spacing: 2) {
+                Image(systemName: "figure.mind.and.body")
+                    .font(.system(size: 8, weight: .semibold))
+                    .foregroundStyle(Theme.good)
+            }
+        }
+    }
+
+    private var exerciseDaysInRange: [Date] {
+        dailyPoints
+            .map(\.date)
+            .filter { exerciseLoggedDayStarts.contains($0) }
+    }
+
+    @ChartContentBuilder
     private func changeRules(yMax: Double) -> some ChartContent {
         ForEach(Array(settingsChanges.enumerated()), id: \.offset) { index, change in
-            // Snap to start-of-day so markers align with daily bars.
             RuleMark(
                 x: .value(
                     "Settings changed",
@@ -362,15 +612,13 @@ private struct SnoreDailyBarsChart: View {
                     unit: .day
                 )
             )
-                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
-                .foregroundStyle(Theme.warning.opacity(0.80))
-                .annotation(position: .top, alignment: .center, spacing: 6) {
-                    markerBadge(number: index + 1)
-                }
+            .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+            .foregroundStyle(Theme.warning.opacity(0.80))
+            .annotation(position: .top, alignment: .center, spacing: 6) {
+                markerBadge(number: index + 1)
+            }
         }
     }
-
-    // MARK: Axis helpers
 
     @AxisContentBuilder
     private var xAxisContent: some AxisContent {
@@ -379,25 +627,6 @@ private struct SnoreDailyBarsChart: View {
             AxisValueLabel(format: xAxisFormat)
                 .foregroundStyle(Theme.labelSecondary)
                 .font(.caption2)
-        }
-    }
-
-    @AxisContentBuilder
-    private func intYAxisContent() -> some AxisContent {
-        AxisMarks(
-            preset: .automatic,
-            position: .trailing,
-            values: .automatic(desiredCount: 4)
-        ) { value in
-            AxisGridLine().foregroundStyle(Theme.surfaceSecondary.opacity(0.6))
-            AxisValueLabel {
-                if let n = yAxisInt(from: value) {
-                    Text("\(n)")
-                        .font(Theme.monoDigit(size: 11))
-                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                        .frame(width: Layout.trailingYLabelWidth, alignment: .trailing)
-                }
-            }
         }
     }
 
@@ -418,13 +647,6 @@ private struct SnoreDailyBarsChart: View {
                 }
             }
         }
-    }
-
-    /// Axis mark values use `Double` for numeric domains; normalise so labels always render with stable width.
-    private func yAxisInt(from value: Charts.AxisValue) -> Int? {
-        if let v = value.as(Int.self) { return v }
-        if let v = value.as(Double.self) { return Int(v.rounded()) }
-        return nil
     }
 
     private var xAxisMarkCount: Int {
@@ -460,6 +682,123 @@ private struct SnoreDailyBarsChart: View {
             )
     }
 }
+
+// MARK: - Collapsible snore events chart
+private struct CollapsibleSnoreEventsChart: View {
+
+    let dailyPoints: [DailySnorePoint]
+    let cutoffDate: Date
+    let eventCountYMax: Double
+    let selectedRange: AnalyticsRange
+    @Binding var isExpanded: Bool
+
+    private enum Layout {
+        static let trailingYLabelWidth: CGFloat = 42
+        static let chartSubtitleHeight: CGFloat = 16
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack {
+                    Text("Snore events")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.snoring)
+                        .textCase(.uppercase)
+                        .tracking(0.4)
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                }
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                Chart {
+                    ForEach(dailyPoints) { point in
+                        BarMark(
+                            x: .value("Date", point.date, unit: .day),
+                            y: .value("Events", point.eventCount)
+                        )
+                        .foregroundStyle(Theme.snoring.opacity(0.85))
+                        .cornerRadius(4)
+                        .annotation(position: .top, spacing: 2) {
+                            if point.eventCount > 0 {
+                                Text("\(point.eventCount)")
+                                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                                    .foregroundStyle(Theme.labelSecondary)
+                            }
+                        }
+                    }
+                }
+                .chartXScale(domain: cutoffDate...Date())
+                .chartYScale(domain: 0...eventCountYMax)
+                .chartXAxis { xAxisContent }
+                .chartYAxis { intYAxisContent() }
+                .frame(height: 110)
+            }
+        }
+    }
+
+    @AxisContentBuilder
+    private var xAxisContent: some AxisContent {
+        AxisMarks(values: .automatic(desiredCount: xAxisMarkCount)) { _ in
+            AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
+            AxisValueLabel(format: xAxisFormat)
+                .foregroundStyle(Theme.labelSecondary)
+                .font(.caption2)
+        }
+    }
+
+    @AxisContentBuilder
+    private func intYAxisContent() -> some AxisContent {
+        AxisMarks(
+            preset: .automatic,
+            position: .trailing,
+            values: .automatic(desiredCount: 4)
+        ) { value in
+            AxisGridLine().foregroundStyle(Theme.surfaceSecondary.opacity(0.6))
+            AxisValueLabel {
+                if let n = yAxisInt(from: value) {
+                    Text("\(n)")
+                        .font(Theme.monoDigit(size: 11))
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                        .frame(width: Layout.trailingYLabelWidth, alignment: .trailing)
+                }
+            }
+        }
+    }
+
+    private func yAxisInt(from value: Charts.AxisValue) -> Int? {
+        if let v = value.as(Int.self) { return v }
+        if let v = value.as(Double.self) { return Int(v.rounded()) }
+        return nil
+    }
+
+    private var xAxisMarkCount: Int {
+        switch selectedRange {
+        case .week:        return 7
+        case .month:       return 5
+        case .threeMonths: return 3
+        }
+    }
+
+    private var xAxisFormat: Date.FormatStyle {
+        switch selectedRange {
+        case .week:        return .dateTime.weekday(.abbreviated)
+        case .month:       return .dateTime.month(.abbreviated).day()
+        case .threeMonths: return .dateTime.month(.abbreviated)
+        }
+    }
+}
+
+// MARK: - Legacy dual chart removed; settings legend unchanged below
 
 // MARK: - Settings change legend card
 private struct SettingsChangeLegend: View {

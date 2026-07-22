@@ -1,4 +1,3 @@
-import AppTrackingTransparency
 import FacebookCore
 import StoreKit
 
@@ -13,13 +12,8 @@ enum MetaAnalytics {
     @discardableResult
     static func syncCollectionWithATT() -> Bool {
         let collectionEnabled = TrackingAuthorizationManager.isAnalyticsCollectionEnabled
-        #if DEBUG
-        let trackingAuthorized = collectionEnabled
-        #else
-        let trackingAuthorized = ATTrackingManager.trackingAuthorizationStatus == .authorized
-        #endif
 
-        Settings.shared.isAdvertiserTrackingEnabled = trackingAuthorized
+        // FBSDK v17+ on iOS 17+ reads ATT via ATTrackingManager; do not set isAdvertiserTrackingEnabled.
         Settings.shared.isAutoLogAppEventsEnabled = collectionEnabled
         Settings.shared.isAdvertiserIDCollectionEnabled = collectionEnabled
 
@@ -71,7 +65,7 @@ enum MetaAnalytics {
     static func logSubscriptionSuccess(product: Product, transaction: Transaction) {
         guard TrackingAuthorizationManager.isAnalyticsCollectionEnabled else { return }
 
-        if transaction.offerType == .introductory {
+        if isIntroductorySubscription(transaction) {
             AppEvents.shared.logEvent(
                 .startTrial,
                 parameters: subscriptionParameters(for: product, contentID: product.id)
@@ -82,6 +76,13 @@ enum MetaAnalytics {
     }
 
     // MARK: - Helpers
+
+    private static func isIntroductorySubscription(_ transaction: Transaction) -> Bool {
+        if #available(iOS 17.2, *) {
+            return transaction.offer?.type == .introductory
+        }
+        return transaction.offerType == .introductory
+    }
 
     private static func logSubscribe(product: Product) {
         AppEvents.shared.logEvent(

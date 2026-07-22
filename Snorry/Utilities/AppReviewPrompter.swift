@@ -38,6 +38,10 @@ enum AppReviewPrompter {
             .first(where: { $0.activationState == .foregroundActive })
         else { return }
 
-        SKStoreReviewController.requestReview(in: scene)
+        if #available(iOS 18.0, *) {
+            AppStore.requestReview(in: scene)
+        } else {
+            SKStoreReviewController.requestReview(in: scene)
+        }
     }
 }
