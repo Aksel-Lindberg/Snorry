@@ -100,16 +100,16 @@
 		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
 		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
 		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
-		MON00012EAA4B00C99A0002 /* MonitoringUsageTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */; };
-		SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */; };
-		SAV0A0012EAA4B00C99A0004 /* SoundAlertVolumeEscalationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */; };
-		SLP00012EAA4B00C99A0001 /* SleepAllyPromoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */; };
 		MFX0012EAA4B00C99A0002 /* MyofascialExercise.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */; };
 		MFX0012EAA4B00C99A0004 /* MyofascialExerciseCompletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0003 /* MyofascialExerciseCompletion.swift */; };
 		MFX0012EAA4B00C99A0006 /* MyofascialExercisesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0005 /* MyofascialExercisesView.swift */; };
 		MFX0012EAA4B00C99A0008 /* MyofascialExerciseCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */; };
 		MFX0012EAA4B00C99A000A /* MyofascialExerciseImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0009 /* MyofascialExerciseImageViewer.swift */; };
 		MFX0012EAA4B00C99A000C /* ZoomableImageScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */; };
+		MON00012EAA4B00C99A0002 /* MonitoringUsageTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */; };
+		SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */; };
+		SAV0A0012EAA4B00C99A0004 /* SoundAlertVolumeEscalationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */; };
+		SLP00012EAA4B00C99A0001 /* SleepAllyPromoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */; };
 		SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */; };
 		SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */; };
 		SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */; };
@@ -940,7 +940,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.9;
+				MARKETING_VERSION = 1.10;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -986,7 +986,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.9;
+				MARKETING_VERSION = 1.10;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
