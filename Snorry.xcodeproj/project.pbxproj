@@ -26,7 +26,6 @@
 		4FE5C5B5A8628421E3FCF11E /* Windplay.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = F31A2AC4A47FF8C24F8259B1 /* Windplay.mp3 */; };
 		5A0E2D2F4C1745B890A1D3E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A0E2D2F4C1745B890A1D3E2 /* Assets.xcassets */; };
 		5AE41B3C3FD7C95969F2831C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0D7E4820D5B40D5D01D18D1 /* Theme.swift */; };
-		INS00012EAA4B00C99A0002 /* InsightsConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */; };
 		5B89E8165FC1A8B789037BD7 /* Birds.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 279BCEFABDD69D92780F30DE /* Birds.mp3 */; };
 		619277A0FEAB50A31193F873 /* AudioMonitorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */; };
 		65C469C1EF899DFC639AE675 /* Rapid_Wake.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 78A70941B37140F2EDDE04BA /* Rapid_Wake.mp3 */; };
@@ -99,6 +98,7 @@
 		FBAA00012EAA4B00C99A0006 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = FBAA00012EAA4B00C99A0008 /* FirebaseCore */; };
 		FBF5D5B5DD8B447E0C510FBE /* Raindrop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */; };
 		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
+		INS00012EAA4B00C99A0002 /* InsightsConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */; };
 		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
 		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
 		MFX0012EAA4B00C99A0002 /* MyofascialExercise.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */; };
@@ -210,7 +210,6 @@
 		D99A00012EAA4B00C99A0005 /* SleepLogsDeletionActor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepLogsDeletionActor.swift; path = Services/SleepLogsDeletionActor.swift; sourceTree = "<group>"; };
 		DCE4FE625B3757CCE6D15E39 /* SnorryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnorryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0D7E4820D5B40D5D01D18D1 /* Theme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Theme.swift; path = Utilities/Theme.swift; sourceTree = "<group>"; };
-		INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InsightsConfiguration.swift; path = Utilities/InsightsConfiguration.swift; sourceTree = "<group>"; };
 		E320C54E6B2C3B59E8B041C8 /* AnalyticsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AnalyticsView.swift; path = Views/AnalyticsView.swift; sourceTree = "<group>"; };
 		E5F60009A1B2C3D4E5F6000A /* AppReviewPrompter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppReviewPrompter.swift; path = Utilities/AppReviewPrompter.swift; sourceTree = "<group>"; };
 		E8752C417837145970A7AE3E /* Tornado.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Tornado.mp3; path = Resources/Tornado.mp3; sourceTree = "<group>"; };
@@ -227,6 +226,7 @@
 		FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppAnalytics.swift; path = Services/AppAnalytics.swift; sourceTree = "<group>"; };
 		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
+		INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InsightsConfiguration.swift; path = Utilities/InsightsConfiguration.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0001 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
 		MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExercise.swift; path = Models/MyofascialExercise.swift; sourceTree = "<group>"; };
@@ -944,7 +944,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.10;
+				MARKETING_VERSION = 1.11;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -990,7 +990,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.10;
+				MARKETING_VERSION = 1.11;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
