@@ -10,12 +10,12 @@ Companion to the marketing **Snorry Brand Guide v3.0** (PDF). The PDF covers Ins
 
 ## 1. Vocabulary (hybrid model)
 
-Use consistent user-facing language. Internal Swift names (`MonitorViewModel`, `MonitoringUsageTracker`, analytics keys) stay unchanged.
+Use consistent user-facing language. Internal Swift names (`MonitorViewModel`, `InsightsTrialTracker`, analytics keys) stay unchanged.
 
 | Context | Term | Example |
 |---------|------|---------|
 | Tab label | **Tonight** | Bottom nav (formerly Monitor) |
-| Session limits / counts | **recording** | "20 free recording sessions remaining" |
+| Session limits / counts | **recording** | (no free recording cap) |
 | Start / stop actions | **recording** | Nav title **Recording**; "Stop Recording"; VoiceOver "Start recording" |
 | Live session reassurance | **listening** | Subline **We're listening for snores.** (not the nav title) |
 | Marketing primary | **Understand your Nights** | Future header/onboarding pass |
@@ -115,7 +115,6 @@ Default easing: ease-in-out. Spring damping ≥ 0.7 for sheets only. Respect `pr
 - **Nav:** Toolbar app icon + Help (?)
 - **Header:** Snorry wordmark; handwritten subtitle (brand alignment TBD)
 - **Hero:** Large START circle — moon, waveform, mic + **START**; caption **Tap to start recording** directly below the circle
-- **Free tier hint:** `N free recording session(s) remaining`
 - **Alert Setup card:** Collapsed by default; caption "Used for the next recording session"
 - **Last Session card:** Always visible. Three columns: Sleep duration / Snore events / Snore duration. Empty state: all **—** + footer *No recordings yet.*
 
@@ -154,8 +153,8 @@ When the user leaves Recording while a session is still active:
 | Return caption (session active, off Recording screen) | Return to recording |
 | In-progress banner (all tabs) | Recording in progress · Return |
 | Watch hint (below free-tier line) | Connect your watch · get Snore alerts on your wrist |
-| Free sessions | `{N} free recording session(s) remaining` |
-| Free limit | Free recording limit reached. Upgrade to Premium to continue. |
+| Insights trial | Insights is free for your first 7 recorded nights |
+| Insights paywall | Subscribe to keep snore trends, charts, and habit correlations |
 | Last Session empty footer | No recordings yet. |
 | Alert Setup caption | Used for the next recording session |
 | Mic permission | Microphone access required to record snoring |
@@ -187,8 +186,9 @@ When the user leaves Recording while a session is still active:
 |-----|-------|------|
 | Home | Tonight | Moon + star (`moon.stars.fill` or `TabTonightIcon` asset) |
 | History | History | clock.arrow.circlepath |
+| Habits | Habits | checklist |
 | Insights | Insights | chart.line.uptrend.xyaxis |
-| Settings | Settings | gearshape |
+| Exercises | Exercises | figure.mind.and.body |
 
 ---
 

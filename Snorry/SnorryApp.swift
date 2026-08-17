@@ -38,7 +38,8 @@ struct SnorryApp: App {
             WaveformSample.self,
             AlertSettings.self,
             AlertSettingsChange.self,
-            MyofascialExerciseCompletion.self
+            MyofascialExerciseCompletion.self,
+            HabitLog.self
         ])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -77,6 +78,7 @@ struct SnorryApp: App {
                     store.recoverOrphanedSession()
                     store.reconcileEndedSessionsOnLaunch()
                     await appEnv.subscription.refreshEntitlements()
+                    InsightsTrialTracker.updateMaxCompletedNights(from: sharedModelContainer.mainContext)
                 }
         }
         .modelContainer(sharedModelContainer)

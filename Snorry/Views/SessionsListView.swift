@@ -6,15 +6,10 @@ struct SessionsListView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @Environment(AppEnvironment.self) private var appEnv
-
-    @State private var showSubscription = false
 
     /// Live-updates when logs are bulk-deleted from Settings (no stale `SnoreSession` references).
     @Query(sort: \SnoreSession.startDate, order: .reverse)
     private var sessions: [SnoreSession]
-
-    private var hasPremiumAccess: Bool { appEnv.subscription.hasPremiumAccess }
 
     var body: some View {
         NavigationStack {
@@ -26,9 +21,6 @@ struct SessionsListView: View {
             .navigationTitle("Sleep History")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
-            .sheet(isPresented: $showSubscription) {
-                SubscriptionView(paywallSource: "history_locked_session")
-            }
         }
     }
 
@@ -40,22 +32,14 @@ struct SessionsListView: View {
             } else {
                 List {
                     let maxSnore = sessions.map(\.totalSnoreDuration).max() ?? 0
-                    ForEach(Array(sessions.enumerated()), id: \.element.id) { index, session in
-                        sessionRow(index: index, session: session, maxSnore: maxSnore)
-                            .listRowBackground(Theme.surface)
-                            .listRowSeparatorTint(Theme.surfaceSecondary)
+                    ForEach(sessions) { session in
+                        NavigationLink(destination: SessionDetailView(session: session)) {
+                            SessionRowView(session: session, maxSnoreDuration: maxSnore)
+                        }
+                        .listRowBackground(Theme.surface)
+                        .listRowSeparatorTint(Theme.surfaceSecondary)
                     }
                     .onDelete(perform: deleteSessions)
-
-                    if !hasPremiumAccess, sessions.count > 1 {
-                        Section {
-                            EmptyView()
-                        } footer: {
-                            Text("Upgrade to Premium to view older sleep sessions.")
-                                .foregroundStyle(Theme.labelSecondary)
-                                .font(.caption)
-                        }
-                    }
                 }
                 .scrollContentBackground(.hidden)
                 .listStyle(.insetGrouped)
@@ -64,23 +48,6 @@ struct SessionsListView: View {
         }
         .frame(maxWidth: horizontalSizeClass == .regular ? 840 : .infinity)
         .frame(maxWidth: .infinity)
-    }
-
-    @ViewBuilder
-    private func sessionRow(index: Int, session: SnoreSession, maxSnore: Double) -> some View {
-        if hasPremiumAccess || index == 0 {
-            NavigationLink(destination: SessionDetailView(session: session)) {
-                SessionRowView(session: session, maxSnoreDuration: maxSnore)
-            }
-        } else {
-            Button {
-                AppAnalytics.logPaywallViewed(source: "history_locked_session")
-                showSubscription = true
-            } label: {
-                LockedSessionRowView(session: session, maxSnoreDuration: maxSnore)
-            }
-            .buttonStyle(.plain)
-        }
     }
 
     private func deleteSessions(at offsets: IndexSet) {
@@ -197,25 +164,5 @@ struct SessionRowView: View {
             }
         }
         .frame(height: 6)
-    }
-}
-
-// MARK: - Locked session row (Free plan — older sessions)
-private struct LockedSessionRowView: View {
-    let session: SnoreSession
-    let maxSnoreDuration: Double
-
-    var body: some View {
-        HStack(spacing: 12) {
-            SessionRowView(session: session, maxSnoreDuration: maxSnoreDuration)
-                .opacity(0.4)
-                .allowsHitTesting(false)
-
-            Image(systemName: "lock.fill")
-                .font(.caption)
-                .foregroundStyle(Theme.labelTertiary)
-        }
-        .accessibilityLabel("Locked sleep session. Upgrade to Premium to view.")
-        .accessibilityAddTraits(.isButton)
     }
 }

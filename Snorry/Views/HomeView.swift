@@ -17,7 +17,6 @@ struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
-    @Environment(AppEnvironment.self) private var appEnv
     @Query private var alertSettingsRows: [AlertSettings]
     /// All sessions, newest first. Filter completed rows in-memory so `endDate` updates after stop
     /// are visible immediately (SwiftData `#Predicate` queries can lag when optional fields change).
@@ -36,7 +35,6 @@ struct HomeView: View {
     @State private var showPermissions = false
     @State private var showHelp = false
     @State private var showSettings = false
-    @State private var showSubscription = false
     @State private var scrollAlertIntoView = false
     @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
     @AppStorage(UserPreferences.hasSeenTonightWelcomeKey) private var hasSeenTonightWelcome = false
@@ -69,8 +67,7 @@ struct HomeView: View {
                         PermissionsView(
                             vm: vm,
                             isPresented: $showPermissions,
-                            showMonitor: $showRecordingScreen,
-                            showSubscription: $showSubscription
+                            showMonitor: $showRecordingScreen
                         )
                     }
             }
@@ -113,9 +110,6 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView(onDone: { showSettings = false })
-            }
-            .fullScreenCover(isPresented: $showSubscription) {
-                SubscriptionView(paywallSource: "monitoring_limit")
             }
         }
     }
@@ -332,22 +326,9 @@ struct HomeView: View {
             if vm.microphonePermission == .undetermined ||
                vm.microphonePermission == .denied {
                 permissionPrompt(vm: vm)
-            } else if !sessionActiveOnHome, !appEnv.subscription.hasPremiumAccess {
-                Text(freeMonitoringHint)
-                    .font(.caption)
-                    .foregroundStyle(Theme.labelSecondary)
-                    .multilineTextAlignment(.center)
             }
 
         }
-    }
-
-    private var freeMonitoringHint: String {
-        let remaining = MonitoringUsageTracker.remainingFreeStarts
-        if remaining == 0 {
-            return "Free recording limit reached. Upgrade to Premium to continue."
-        }
-        return "\(remaining) free recording \(remaining == 1 ? "session" : "sessions") remaining"
     }
 
     /// Ensures the singleton settings row exists so the home card can read alerts configuration.
@@ -462,14 +443,6 @@ struct HomeView: View {
             return
         }
 
-        let hasPremium = appEnv.subscription.hasPremiumAccess
-        guard MonitoringUsageTracker.canStartMonitoring(hasPremium: hasPremium) else {
-            AppAnalytics.logPaywallViewed(source: "monitoring_limit")
-            showSubscription = true
-            return
-        }
-
-        MonitoringUsageTracker.recordMonitoringStart(hasPremium: hasPremium)
         vm.startMonitoring()
         showRecordingScreen = true
     }

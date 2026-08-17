@@ -54,6 +54,24 @@ struct AlertProfilePoint: Identifiable {
     var isLowConfidence: Bool { sessionCount < 3 }
 }
 
+// MARK: - One habit bucket for the correlation chart
+struct HabitCorrelationPoint: Identifiable {
+    let id: String
+    let title: String
+    /// Average snore minutes on nights when this habit was logged.
+    let avgWithHabitMinutes: Double
+    /// Average snore minutes on nights when this habit was not logged.
+    let avgWithoutHabitMinutes: Double
+    let nightsWithHabit: Int
+    let nightsWithoutHabit: Int
+
+    /// Positive delta means more snoring when the habit was present.
+    var deltaMinutes: Double { avgWithHabitMinutes - avgWithoutHabitMinutes }
+
+    var isLowConfidenceWith: Bool { nightsWithHabit < 3 }
+    var isLowConfidenceWithout: Bool { nightsWithoutHabit < 3 }
+}
+
 // MARK: - Metrics for one analytics time window
 struct PeriodSnapshot {
     let sessionCount: Int
@@ -111,6 +129,7 @@ final class AnalyticsViewModel {
     )
     var settingsChanges: [AlertSettingsChange] = []
     var alertProfilePoints: [AlertProfilePoint] = []
+    var habitCorrelationPoints: [HabitCorrelationPoint] = []
     var exerciseLoggedDayStarts: Set<Date> = []
 
     private let context: ModelContext
@@ -191,6 +210,7 @@ final class AnalyticsViewModel {
         loadSettingsChanges(since: currentCutoff)
         loadAlertCorrelation(since: currentCutoff)
         loadExerciseDays(since: currentCutoff, calendar: cal)
+        loadHabitCorrelation(since: currentCutoff, calendar: cal)
     }
 
     func sessions(on dayStart: Date) -> [SnoreSession] {
@@ -358,6 +378,91 @@ final class AnalyticsViewModel {
         )
         let rows = (try? context.fetch(descriptor)) ?? []
         exerciseLoggedDayStarts = Set(rows.map { calendar.startOfDay(for: $0.completedAt) })
+    }
+
+    private func loadHabitCorrelation(since cutoff: Date, calendar: Calendar) {
+        let habitDescriptor = FetchDescriptor<HabitLog>(
+            predicate: #Predicate { $0.dayStart >= cutoff },
+            sortBy: [SortDescriptor(\.dayStart)]
+        )
+        let habitLogs = (try? context.fetch(habitDescriptor)) ?? []
+
+        let exerciseDescriptor = FetchDescriptor<MyofascialExerciseCompletion>(
+            predicate: #Predicate { $0.completedAt >= cutoff },
+            sortBy: [SortDescriptor(\.completedAt)]
+        )
+        let exerciseRows = (try? context.fetch(exerciseDescriptor)) ?? []
+        let exerciseDays = Set(exerciseRows.map { calendar.startOfDay(for: $0.completedAt) })
+
+        let sessionNights = currentPeriod.sessionDays
+        guard !sessionNights.isEmpty else {
+            habitCorrelationPoints = []
+            return
+        }
+
+        habitCorrelationPoints = Self.buildHabitCorrelationPoints(
+            sessionNights: sessionNights,
+            habitLogs: habitLogs,
+            exerciseDays: exerciseDays,
+            calendar: calendar
+        )
+    }
+
+    static func buildHabitCorrelationPoints(
+        sessionNights: [DailySnorePoint],
+        habitLogs: [HabitLog],
+        exerciseDays: Set<Date>,
+        calendar: Calendar
+    ) -> [HabitCorrelationPoint] {
+        var points: [HabitCorrelationPoint] = []
+
+        for habit in HabitKind.allCases {
+            let loggedDays = HabitLog.loggedDayStarts(
+                for: habit,
+                in: habitLogs,
+                since: .distantPast,
+                calendar: calendar
+            )
+            let effectiveDays: Set<Date>
+            if habit == .myofascialExercise {
+                effectiveDays = loggedDays.union(exerciseDays)
+            } else {
+                effectiveDays = loggedDays
+            }
+
+            guard effectiveDays.contains(where: { day in
+                sessionNights.contains { calendar.isDate($0.date, inSameDayAs: day) }
+            }) else { continue }
+
+            var withValues: [Double] = []
+            var withoutValues: [Double] = []
+
+            for night in sessionNights {
+                let day = calendar.startOfDay(for: night.date)
+                if effectiveDays.contains(day) {
+                    withValues.append(night.snoreMinutes)
+                } else {
+                    withoutValues.append(night.snoreMinutes)
+                }
+            }
+
+            guard !withValues.isEmpty else { continue }
+
+            points.append(
+                HabitCorrelationPoint(
+                    id: habit.id,
+                    title: habit.title,
+                    avgWithHabitMinutes: withValues.reduce(0, +) / Double(withValues.count),
+                    avgWithoutHabitMinutes: withoutValues.isEmpty
+                        ? 0
+                        : withoutValues.reduce(0, +) / Double(withoutValues.count),
+                    nightsWithHabit: withValues.count,
+                    nightsWithoutHabit: withoutValues.count
+                )
+            )
+        }
+
+        return points.sorted { abs($0.deltaMinutes) > abs($1.deltaMinutes) }
     }
 
     private func loadAlertCorrelation(since cutoff: Date) {

@@ -107,7 +107,12 @@
 		MFX0012EAA4B00C99A0008 /* MyofascialExerciseCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */; };
 		MFX0012EAA4B00C99A000A /* MyofascialExerciseImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0009 /* MyofascialExerciseImageViewer.swift */; };
 		MFX0012EAA4B00C99A000C /* ZoomableImageScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */; };
-		MON00012EAA4B00C99A0002 /* MonitoringUsageTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */; };
+		HBT0012EAA4B00C99A0002 /* HabitKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0001 /* HabitKind.swift */; };
+		HBT0012EAA4B00C99A0004 /* HabitLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0003 /* HabitLog.swift */; };
+		HBT0012EAA4B00C99A0006 /* HabitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0005 /* HabitsView.swift */; };
+		HBT0012EAA4B00C99A0008 /* HabitCorrelationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */; };
+		TRI00012EAA4B00C99A0002 /* InsightsTrialTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRI00012EAA4B00C99A0001 /* InsightsTrialTracker.swift */; };
+		TRI00012EAA4B00C99A0004 /* InsightsTrialTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */; };
 		SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */; };
 		SAV0A0012EAA4B00C99A0004 /* SoundAlertVolumeEscalationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */; };
 		SLP00012EAA4B00C99A0001 /* SleepAllyPromoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */; };
@@ -235,7 +240,12 @@
 		MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExerciseCardView.swift; path = Views/MyofascialExerciseCardView.swift; sourceTree = "<group>"; };
 		MFX0012EAA4B00C99A0009 /* MyofascialExerciseImageViewer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExerciseImageViewer.swift; path = Views/MyofascialExerciseImageViewer.swift; sourceTree = "<group>"; };
 		MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ZoomableImageScrollView.swift; path = Views/ZoomableImageScrollView.swift; sourceTree = "<group>"; };
-		MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitoringUsageTracker.swift; path = Services/MonitoringUsageTracker.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0001 /* HabitKind.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitKind.swift; path = Models/HabitKind.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0003 /* HabitLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitLog.swift; path = Models/HabitLog.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0005 /* HabitsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitsView.swift; path = Views/HabitsView.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HabitCorrelationTests.swift; sourceTree = "<group>"; };
+		TRI00012EAA4B00C99A0001 /* InsightsTrialTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InsightsTrialTracker.swift; path = Services/InsightsTrialTracker.swift; sourceTree = "<group>"; };
+		TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsTrialTrackerTests.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SoundAlertVolumeEscalation.swift; path = Utilities/SoundAlertVolumeEscalation.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundAlertVolumeEscalationTests.swift; sourceTree = "<group>"; };
 		SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepAllyPromoView.swift; path = Views/SleepAllyPromoView.swift; sourceTree = "<group>"; };
@@ -315,6 +325,8 @@
 				F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */,
 				MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */,
 				MFX0012EAA4B00C99A0003 /* MyofascialExerciseCompletion.swift */,
+				HBT0012EAA4B00C99A0001 /* HabitKind.swift */,
+				HBT0012EAA4B00C99A0003 /* HabitLog.swift */,
 				EC33EC45DDFD9E8E895030C2 /* SnoreEvent.swift */,
 				EFE39AA711F0B5E5D9F976D3 /* SnoreSession.swift */,
 				SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */,
@@ -349,7 +361,7 @@
 				FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */,
 				META00012EAA4B00C99A0003 /* MetaAnalytics.swift */,
 				SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */,
-				MON00012EAA4B00C99A0001 /* MonitoringUsageTracker.swift */,
+				TRI00012EAA4B00C99A0001 /* InsightsTrialTracker.swift */,
 				TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */,
 				C47BD28A2BFED416769A000D /* AlertManager.swift */,
 				88C6854C5231A19735F5BF26 /* AudioMonitorService.swift */,
@@ -385,6 +397,7 @@
 				E320C54E6B2C3B59E8B041C8 /* AnalyticsView.swift */,
 				A0C3E57FFA2899D2DBB53474 /* GIFView.swift */,
 				742A6FD9950680E53BE23A63 /* HelpCenterView.swift */,
+				HBT0012EAA4B00C99A0005 /* HabitsView.swift */,
 				MFX0012EAA4B00C99A0005 /* MyofascialExercisesView.swift */,
 				MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */,
 				MFX0012EAA4B00C99A0009 /* MyofascialExerciseImageViewer.swift */,
@@ -427,6 +440,8 @@
 				C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */,
 				6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */,
 				F8A2B3C4D5E60718293A4B5E /* SnoreRumbleGateTests.swift */,
+				HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */,
+				TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */,
 				7CAA098990B7D477424D611E /* SnorryTests.swift */,
 			);
 			path = SnorryTests;
@@ -616,6 +631,8 @@
 				816A252C25E70F5AEA938D82 /* AlertSettingsChange.swift in Sources */,
 				MFX0012EAA4B00C99A0002 /* MyofascialExercise.swift in Sources */,
 				MFX0012EAA4B00C99A0004 /* MyofascialExerciseCompletion.swift in Sources */,
+				HBT0012EAA4B00C99A0002 /* HabitKind.swift in Sources */,
+				HBT0012EAA4B00C99A0004 /* HabitLog.swift in Sources */,
 				0204F0527B08014F22F355E5 /* SnoreEvent.swift in Sources */,
 				73CF9829E4F68348FD3AA440 /* SnoreSession.swift in Sources */,
 				SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */,
@@ -626,7 +643,7 @@
 				FBAA00012EAA4B00C99A0003 /* AppAnalytics.swift in Sources */,
 				META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */,
 				SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */,
-				MON00012EAA4B00C99A0002 /* MonitoringUsageTracker.swift in Sources */,
+				TRI00012EAA4B00C99A0002 /* InsightsTrialTracker.swift in Sources */,
 				TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */,
 				733C5279F76F30354CDA23D8 /* AlertManager.swift in Sources */,
 				619277A0FEAB50A31193F873 /* AudioMonitorService.swift in Sources */,
@@ -659,6 +676,7 @@
 				E297E9221819A5E9C632A273 /* AnalyticsView.swift in Sources */,
 				126EEBF382F3787E48EAA38B /* GIFView.swift in Sources */,
 				2F07F61077B2165A37B82697 /* HelpCenterView.swift in Sources */,
+				HBT0012EAA4B00C99A0006 /* HabitsView.swift in Sources */,
 				MFX0012EAA4B00C99A0006 /* MyofascialExercisesView.swift in Sources */,
 				MFX0012EAA4B00C99A0008 /* MyofascialExerciseCardView.swift in Sources */,
 				MFX0012EAA4B00C99A000A /* MyofascialExerciseImageViewer.swift in Sources */,
@@ -692,6 +710,8 @@
 				204A3710F3EFE4F903D04FEC /* SnoreClipSpectralAnalyzerTests.swift in Sources */,
 				BA1ABF8B48D0F03CE67C68E9 /* SnoreEventDetectorTests.swift in Sources */,
 				F8A2B3C4D5E60718293A4B5F /* SnoreRumbleGateTests.swift in Sources */,
+				HBT0012EAA4B00C99A0008 /* HabitCorrelationTests.swift in Sources */,
+				TRI00012EAA4B00C99A0004 /* InsightsTrialTrackerTests.swift in Sources */,
 				DD9AEAE799E3D63F37D484D5 /* SnorryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

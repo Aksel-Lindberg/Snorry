@@ -12,11 +12,15 @@ struct AnalyticsView: View {
 
     private var hasPremiumAccess: Bool { appEnv.subscription.hasPremiumAccess }
 
+    private var canAccessInsights: Bool {
+        InsightsTrialTracker.canAccessInsights(hasPremium: hasPremiumAccess, context: context)
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Theme.nightGradient.ignoresSafeArea()
-                if hasPremiumAccess {
+                if canAccessInsights {
                     if let vm {
                         AnalyticsContent(vm: vm)
                     } else {
@@ -33,12 +37,18 @@ struct AnalyticsView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
             .onAppear {
-                guard hasPremiumAccess else { return }
+                InsightsTrialTracker.updateMaxCompletedNights(from: context)
+                guard canAccessInsights else {
+                    AppAnalytics.logPaywallViewed(source: "insights_tab")
+                    showSubscription = true
+                    return
+                }
                 if vm == nil { vm = AnalyticsViewModel(context: context) }
                 vm?.refresh()
             }
-            .onChange(of: hasPremiumAccess) { _, isPremium in
-                guard isPremium else {
+            .onChange(of: hasPremiumAccess) { _, _ in
+                InsightsTrialTracker.updateMaxCompletedNights(from: context)
+                guard canAccessInsights else {
                     vm = nil
                     return
                 }
@@ -67,7 +77,10 @@ private struct AnalyticsLockedView: View {
                 .foregroundStyle(Theme.labelSecondary)
                 .multilineTextAlignment(.center)
 
-            Text("Upgrade to Premium to see snore trends, daily charts, and alert correlations.")
+            Text(
+                "Insights is free for your first \(InsightsTrialTracker.freeNightLimit) recorded nights. " +
+                "Subscribe to keep snore trends, daily charts, habit correlations, and alert comparisons."
+            )
                 .font(.subheadline)
                 .foregroundStyle(Theme.labelSecondary)
                 .multilineTextAlignment(.center)
@@ -111,6 +124,7 @@ private struct AnalyticsContent: View {
                 }
                 snoreTrendCard
                 AlertCorrelationCard(points: vm.alertProfilePoints, xMax: vm.alertChartXMax)
+                HabitCorrelationCard(points: vm.habitCorrelationPoints)
                 if !vm.settingsChanges.isEmpty {
                     SettingsChangeLegend(
                         changes: vm.settingsChanges,
@@ -1021,5 +1035,143 @@ private struct AlertCorrelationChart: View {
 
     private var xTicks: [Double] {
         stride(from: 0, through: xMax, by: max(1, xMax / 4).rounded()).map { $0 }
+    }
+}
+
+// MARK: - Habit vs snore duration card
+private struct HabitCorrelationCard: View {
+
+    let points: [HabitCorrelationPoint]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            cardHeader
+            if points.isEmpty {
+                emptyState
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(points) { point in
+                        HabitCorrelationRow(point: point)
+                    }
+                }
+                disclaimer
+            }
+        }
+        .padding(16)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+    }
+
+    private var cardHeader: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Habits vs Snore duration")
+                .font(.headline)
+                .foregroundStyle(Theme.labelPrimary)
+            Text("Average snore minutes with vs without each habit · nights in this period")
+                .font(.caption)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "checklist")
+                .font(.system(size: 38, weight: .thin))
+                .foregroundStyle(Theme.labelTertiary)
+            Text("No habit logs yet")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Theme.labelSecondary)
+            Text("Log habits on the Habits tab to see how they relate to your snore duration over time.")
+                .font(.caption)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+    }
+
+    private var disclaimer: some View {
+        Text("Shorter is better. Correlation only — not a causal measure.")
+            .font(.caption2)
+            .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            .padding(.top, 2)
+    }
+}
+
+// MARK: - One habit correlation row
+private struct HabitCorrelationRow: View {
+
+    let point: HabitCorrelationPoint
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(point.title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.labelPrimary)
+
+            HStack(spacing: 12) {
+                metricColumn(
+                    title: "With habit",
+                    minutes: point.avgWithHabitMinutes,
+                    nights: point.nightsWithHabit,
+                    isLowConfidence: point.isLowConfidenceWith
+                )
+                metricColumn(
+                    title: "Without",
+                    minutes: point.avgWithoutHabitMinutes,
+                    nights: point.nightsWithoutHabit,
+                    isLowConfidence: point.isLowConfidenceWithout
+                )
+                Spacer(minLength: 0)
+                deltaBadge
+            }
+        }
+        .padding(12)
+        .background(Theme.surfaceSecondary.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func metricColumn(
+        title: String,
+        minutes: Double,
+        nights: Int,
+        isLowConfidence: Bool
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            Text(minuteLabel(minutes))
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .foregroundStyle(Theme.labelPrimary)
+            Text("n=\(nights)")
+                .font(.system(size: 10, weight: .regular, design: .monospaced))
+                .foregroundStyle(isLowConfidence ? Theme.warning : Theme.labelOnSurfaceSecondary)
+        }
+    }
+
+    private var deltaBadge: some View {
+        let delta = point.deltaMinutes
+        let sign = delta >= 0 ? "+" : "−"
+        let value = abs(delta)
+        let color: Color = {
+            if abs(delta) < 1 { return Theme.labelSecondary }
+            return delta > 0 ? Theme.snoring : Theme.good
+        }()
+
+        return Text("\(sign)\(minuteLabel(value))")
+            .font(.system(size: 12, weight: .bold, design: .monospaced))
+            .foregroundStyle(color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.12), in: Capsule())
+            .accessibilityLabel("Difference with habit: \(sign)\(minuteLabel(value))")
+    }
+
+    private func minuteLabel(_ minutes: Double) -> String {
+        if minutes < 1 { return "<1m" }
+        let total = Int(minutes.rounded())
+        let h = total / 60
+        let m = total % 60
+        return h > 0 ? (m > 0 ? "\(h)h \(m)m" : "\(h)h") : "\(m)m"
     }
 }

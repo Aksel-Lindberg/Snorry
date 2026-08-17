@@ -274,7 +274,7 @@ struct SubscriptionView: View {
         case .yearly:
             return "Get Snorry Premium for $0 if you start your trial today"
         case .monthly:
-            return "Get unlimited recording, full Sleep History, and Insights"
+            return "Keep Insights after your first \(InsightsTrialTracker.freeNightLimit) recorded nights"
         }
     }
 

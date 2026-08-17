@@ -15,7 +15,7 @@ Before changing user-facing UI copy, colors, or tab labels, read [BRAND_GUIDE_AP
 - Sessions / limits / start-stop: **recording** (not monitoring)
 - Live session nav title: **Recording**
 - Live session reassurance subline: **listening** ("We're listening for snores.")
-- Do not rename Swift types (`MonitorViewModel`, `MonitoringUsageTracker`) or analytics keys for copy changes.
+- Do not rename Swift types (`MonitorViewModel`, `InsightsTrialTracker`) or analytics keys for copy changes.
 
 ## Design tokens
 

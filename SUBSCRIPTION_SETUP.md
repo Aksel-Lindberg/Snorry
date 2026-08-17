@@ -11,9 +11,9 @@ The app uses StoreKit 2 with product IDs:
 
 | Plan | Price | Features |
 |------|-------|----------|
-| **Free** | Included | Up to 20 recording sessions, latest Sleep History session only |
-| **Premium Yearly** | $29.99/year (~$2.49/mo) | Unlimited recording, full Sleep History, Insights |
-| **Premium Monthly** | $4.99/month | Unlimited recording, full Sleep History, Insights |
+| **Free** | Included | Unlimited recording, full Sleep History, Habits, Insights for first 7 recorded nights |
+| **Premium Yearly** | $29.99/year (~$2.49/mo) | Insights after first 7 recorded nights |
+| **Premium Monthly** | $4.99/month | Insights after first 7 recorded nights |
 | **Trial** | 7 days free | Applies to **Premium Yearly** only (first-time eligible subscribers) |
 
 ---
@@ -70,7 +70,7 @@ Inside the **Snorry Premium** group:
 
 4. **Localization** (English U.S. minimum):
    - **Display name:** `Premium Yearly`
-   - **Description:** `Unlimited recording, full Sleep History, and Insights.`
+   - **Description:** `Keep Insights after your first 7 recorded nights.`
 
 5. Save the subscription
 
@@ -109,7 +109,7 @@ Inside the **Snorry Premium** group:
 
 4. **Localization** (English U.S. minimum):
    - **Display name:** `Premium Monthly`
-   - **Description:** `Unlimited recording, full Sleep History, and Insights.`
+   - **Description:** `Keep Insights after your first 7 recorded nights.`
 
 5. **Do not** add an introductory offer on the monthly plan.
 
@@ -129,7 +129,7 @@ On the subscription group page, provide:
 Before App Store submission, update your privacy policy to mention:
 - Auto-renewable subscriptions are billed through Apple
 - Payment and subscription management are handled by Apple (not stored by Snorry)
-- Free vs Premium feature differences (20 recording sessions on Free)
+- Free vs Premium feature differences (Insights after 7 recorded nights on Free)
 
 ---
 
@@ -159,7 +159,7 @@ Before App Store submission, update your privacy policy to mention:
 3. On test device: **Settings → App Store → Sandbox Account** → sign in
 4. Remove the StoreKit configuration from the Xcode scheme (set to **None**) to hit real sandbox APIs
 5. Verify:
-   - Free user: 20 recording starts allowed, then paywall on 21st; older History rows locked; Insights locked
+   - Free user: full access to recording, History, and Habits; Insights free for first 7 recorded nights, then paywall on Insights tab
    - Subscribe (yearly): 1-week trial starts; full access unlocks immediately
    - Subscribe (monthly): charged immediately; full access unlocks
    - **Restore Purchases** in Settings works on a second device
@@ -197,9 +197,10 @@ Before App Store submission, update your privacy policy to mention:
 |------|------|
 | `SubscriptionProductID.swift` | Product ID constants and `PremiumPlan` enum |
 | `SubscriptionManager.swift` | StoreKit 2 purchase, restore, entitlements |
-| `MonitoringUsageTracker.swift` | Free-tier 20 recording session limit |
+| `InsightsTrialTracker.swift` | Free Insights for first 7 completed recording nights |
+| `HabitKind.swift` / `HabitLog.swift` | Habit definitions and SwiftData logging |
+| `HabitsView.swift` | Habits tab UI |
 | `SubscriptionView.swift` | Paywall UI (yearly default, plan picker) |
-| `HomeView.swift` | Monitoring start gating |
-| `SessionsListView.swift` | History gating (latest session only on Free) |
-| `AnalyticsView.swift` | Insights tab gating |
+| `AnalyticsViewModel.swift` | Habit correlation stats |
+| `AnalyticsView.swift` | Insights tab gating and habit correlation card |
 | `SettingsView.swift` | Plan status, upgrade, restore, manage |

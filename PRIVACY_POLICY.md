@@ -42,7 +42,7 @@ We use **Google Firebase Analytics** (Google LLC / Google Ireland Limited, depen
   - Settings saved (which **categories** of settings changed, not exact values)
   - Tab navigation (e.g. Tonight, History, Insights, Settings)
   - Subscription-related events (non-financial), such as:
-    - Paywall viewed (optional source, e.g. History, Insights, Settings, or recording limit — not tied to sleep content)
+    - Paywall viewed (optional source, e.g. Insights or Settings — not tied to sleep content)
     - Purchase started, purchase completed, or restore purchases tapped
     - These events do **not** include payment amounts, Apple ID, receipt data, or subscription account identifiers
 - Technical diagnostics the Firebase SDK may collect (e.g. device model, OS version, app version, crash-related data if enabled by the SDK)
@@ -100,8 +100,8 @@ Meta may combine App Events with information it already holds if you use Meta se
 
 Snorry offers two usage tiers:
 
-- **Free plan** — Includes up to **20 recording sessions**, access to your **most recent** sleep session in Sleep History, and local storage of older sessions on your device (older sessions are not fully accessible without Premium). The Insights feature is not available on the Free plan.
-- **Premium plan** — Optional auto-renewable subscription (yearly or monthly) that unlocks **unlimited recording**, full Sleep History, and Insights. Pricing, free-trial eligibility, and renewal terms are shown in the App and on Apple’s purchase sheet before you subscribe.
+- **Free plan** — Includes **unlimited recording**, full Sleep History, **Habits**, and **Insights for your first 7 recorded nights**. After that, Insights requires Premium.
+- **Premium plan** — Optional auto-renewable subscription (yearly or monthly) that keeps **Insights** after your first 7 recorded nights. Pricing, free-trial eligibility, and renewal terms are shown in the App and on Apple’s purchase sheet before you subscribe.
 
 ### Premium subscription options
 

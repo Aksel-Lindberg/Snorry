@@ -2,7 +2,7 @@
 
 Welcome to Snorry support.
 
-Snorry helps you **record snoring overnight**, review **Sleep History**, explore trends in **Insights** (Premium), and manage snore alerts. All sleep audio and session data stay on your iPhone.
+Snorry helps you **record snoring overnight**, review **Sleep History**, log **Habits**, explore trends in **Insights** (Premium after 7 recorded nights), and manage snore alerts. All sleep audio and session data stay on your iPhone.
 
 ## Contact Support
 
@@ -48,7 +48,7 @@ You can delete all sleep and settings logs in the app:
 1. Open **Settings** in Snorry.
 2. Tap **Delete All Sleep & Settings Logs**.
 
-This permanently removes every saved sleep session, snore clip, waveform, and **Insights** settings-change marker. Your current Settings values are not changed. You must **stop recording** before deleting logs.
+This permanently removes every saved sleep session, snore clip, waveform, **habit log**, and **Insights** settings-change marker. Your current Settings values are not changed. You must **stop recording** before deleting logs.
 
 ### Audio Clips
 
@@ -56,8 +56,8 @@ Snore clips are stored locally on your device and used for session review featur
 
 ### Free and Premium Plans
 
-- **Free** — Up to **20 recording sessions**, your latest sleep session in Sleep History, and local storage of older sessions (older sessions are locked without Premium). **Insights** is not available on the Free plan.
-- **Premium** — Unlimited recording, full Sleep History, and Insights. Manage or restore subscriptions in **Settings → Subscription** or through your [Apple ID subscriptions](https://apps.apple.com/account/subscriptions).
+- **Free** — Unlimited recording, full Sleep History, Habits, and Insights for your **first 7 recorded nights**.
+- **Premium** — Keeps Insights after your first 7 recorded nights. Manage or restore subscriptions in **Settings → Subscription** or through your [Apple ID subscriptions](https://apps.apple.com/account/subscriptions).
 
 ## Troubleshooting
 

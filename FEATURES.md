@@ -18,25 +18,29 @@
 5. [Alerts & escalation](#5-alerts--escalation)
 6. [History (Sleep History)](#6-history-sleep-history)
 7. [Session detail & playback](#7-session-detail--playback)
-8. [Insights (trends)](#8-insights-trends)
-9. [Settings](#9-settings)
-10. [Help & support](#10-help--support)
-11. [Privacy & data](#11-privacy--data)
-12. [Use case scenarios](#12-use-case-scenarios)
-13. [Limitations & good practices](#13-limitations--good-practices)
+8. [Habits](#8-habits)
+9. [Insights (trends)](#9-insights-trends)
+10. [Settings](#10-settings)
+11. [Help & support](#11-help--support)
+12. [Privacy & data](#12-privacy--data)
+13. [Use case scenarios](#13-use-case-scenarios)
+14. [Limitations & good practices](#14-limitations--good-practices)
 
 ---
 
 ## 1. App structure
 
-After onboarding, Snorry uses a **four-tab** layout:
+After onboarding, Snorry uses a **five-tab** layout:
 
 | Tab | Purpose |
 |-----|---------|
 | **Tonight** | Start/stop overnight recording; alert summary; last session snapshot |
 | **History** | List of past nights (“Sleep History”); open any session for detail |
-| **Insights** | Charts and trends over time; settings-change markers; alert-profile comparison |
-| **Settings** | Alert channels, timings, alarm tone, support, reset/delete data, legal links |
+| **Habits** | One-tap logging of lifestyle factors that may affect snoring |
+| **Insights** | Charts and trends; habit and alert correlations; settings-change markers |
+| **Exercises** | Myofascial exercise guides with completion tracking |
+
+**Settings** opens from the gear icon on Tonight (alert channels, Premium, support, reset/delete data, legal links).
 
 A contextual **Help** sheet is available from the Tonight tab (toolbar).
 
@@ -71,7 +75,6 @@ A contextual **Help** sheet is available from the Tonight tab (toolbar).
 ### Features
 
 - **Large start control** (sleep animation) — tap to begin recording; caption *Tap to start recording* below the circle  
-- **Free tier hint** — remaining recording sessions (Premium users omit this line)  
 - **Watch hint** — *Connect your watch · get Snore alerts on your wrist* below the hero stack  
 - **Alert setup summary card** — mirrors saved Settings: push on/off, sound alarm on/off, push delay (fixed 2 s), sound-alarm delay, repeat-push interval  
 - **Last Session card** — always visible; shows sleep duration, snore event count, and total snore time for the most recent **completed** night, or an empty state with em-dash placeholders and *No recordings yet.*
@@ -195,9 +198,28 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 ---
 
-## 8. Insights (trends)
+## 8. Habits
 
-**Note:** This tab is **on-device sleep analytics** (charts from your sessions), not the Firebase usage dashboard.
+### Features
+
+- **Night picker** — choose which calendar night habits apply to (defaults to last night before noon)  
+- **One-tap toggles** — Ate late, Drank alcohol, Caffeine late, Used nasal spray, Used nasal clip, Myofascial exercise, Congested, Slept on back  
+- **Insights integration** — logged habits feed the **Habits vs Snore duration** card  
+- **Myofascial exercise** — counts exercise completions from the Exercises tab as well; turning off here does not delete exercise history  
+
+### Typical use
+
+| Scenario | How to use |
+|----------|------------|
+| Morning check-in | Open Habits → confirm last night → tap what you did before bed |
+| Test a change | Log nasal clip or exercises for a week → review correlation in Insights |
+| Spot patterns | Compare “with habit” vs “without” averages on Insights |
+
+---
+
+## 9. Insights (trends)
+
+**Note:** This tab is **on-device sleep analytics** (charts from your sessions), not the Firebase usage dashboard. **Free for your first 7 recorded nights**; Premium keeps Insights after that.
 
 ### Features
 
@@ -206,6 +228,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 - **Snore duration trend** — daily snore minutes and event counts; optional **numbered markers** when you saved Settings changes  
 - **Settings change legend** — expand to read what changed; delete individual markers without changing current Settings  
 - **Alert type vs snore duration** — average snore minutes per alert configuration profile (correlation only, not medical advice)  
+- **Habits vs snore duration** — average snore minutes with vs without each logged habit (correlation only)  
 
 ### Typical use
 
@@ -214,11 +237,12 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 | “Am I improving?” | Month view → trend line of daily snore minutes |
 | Test a settings experiment | Save new push/sound setup → marker appears on chart → compare weeks before/after |
 | See which alert profile correlates with less snoring | Review Alert Type vs Snore duration card (interpret cautiously) |
+| See which habits correlate with more or less snoring | Review Habits vs Snore duration card after logging on the Habits tab |
 | Clean chart markers | Remove obsolete settings-change markers from legend |
 
 ---
 
-## 9. Settings
+## 10. Settings
 
 ### Profile
 
@@ -234,7 +258,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 ### Data & maintenance
 
 - **Reset to Defaults** — restores alert preferences to app defaults  
-- **Delete All Sleep & Settings Logs** — removes all sessions, clips, waveforms, and analytics markers (must **stop monitoring** first)  
+- **Delete All Sleep & Settings Logs** — removes all sessions, clips, waveforms, habit logs, and analytics markers (must **stop monitoring** first)  
 
 ### Other
 
@@ -253,11 +277,11 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 ---
 
-## 10. Help & support
+## 11. Help & support
 
 ### Features
 
-- **Help Center** (Tonight toolbar) — accordion sections: getting started, tabs, Tonight home, live recording session, History, Insights, Settings  
+- **Help Center** (Tonight toolbar) — accordion sections: getting started, tabs, Tonight home, live recording session, History, Habits, Insights, Exercises, Settings  
 - **Support** (Settings) — email link, common topics (mic, notifications, delete logs, clips), troubleshooting steps, privacy text  
 
 ### Typical use
@@ -270,7 +294,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 ---
 
-## 11. Privacy & data
+## 12. Privacy & data
 
 | Data type | Where it lives |
 |-----------|----------------|
@@ -283,7 +307,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 ---
 
-## 12. Use case scenarios
+## 13. Use case scenarios
 
 ### A. Nightly self-monitoring
 
@@ -383,7 +407,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 ---
 
-## 13. Limitations & good practices
+## 14. Limitations & good practices
 
 ### Limitations
 

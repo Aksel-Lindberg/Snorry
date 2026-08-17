@@ -11,7 +11,7 @@ struct RootView: View {
     @State private var showRecordingScreen = false
 
     enum Tab: String {
-        case home, sessions, analytics, exercises
+        case home, sessions, habits, analytics, exercises
     }
 
     var body: some View {
@@ -46,6 +46,12 @@ struct RootView: View {
                     Label("History", systemImage: "clock.arrow.circlepath")
                 }
                 .tag(Tab.sessions)
+
+            HabitsView()
+                .tabItem {
+                    Label("Habits", systemImage: "checklist")
+                }
+                .tag(Tab.habits)
 
             AnalyticsView()
                 .tabItem {
@@ -99,6 +105,7 @@ private extension RootView.Tab {
         switch self {
         case .home: return "monitor"
         case .sessions: return "history"
+        case .habits: return "habits"
         case .analytics: return "insights"
         case .exercises: return "exercises"
         }

@@ -56,6 +56,7 @@ final class SessionStore {
         UserDefaults.standard.removeObject(forKey: "currentSessionID")
         activeSession = nil
         openEvents.removeAll()
+        InsightsTrialTracker.updateMaxCompletedNights(from: context)
         logger.info("Session finalized: \(session.id)")
     }
 

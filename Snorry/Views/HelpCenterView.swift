@@ -52,12 +52,13 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .tabBar,
                             title: "Bottom navigation",
-                            subtitle: "Four tabs — Tonight, History, Insights, Exercises",
+                            subtitle: "Five tabs — Tonight, History, Habits, Insights, Exercises",
                             systemImage: "square.grid.2x2.fill"
                         ) {
                             tabChip(icon: "moon.stars.fill", name: "Tonight", hint: "Start recording and see your latest summary. Settings and Help are in the top-right toolbar.")
                             tabChip(icon: "clock.arrow.circlepath", name: "History", hint: "Browse past nights and open session details.")
-                            tabChip(icon: "chart.line.uptrend.xyaxis", name: "Insights", hint: "Trends, charts, and how settings relate to snore duration.")
+                            tabChip(icon: "checklist", name: "Habits", hint: "Log lifestyle factors that may affect snoring.")
+                            tabChip(icon: "chart.line.uptrend.xyaxis", name: "Insights", hint: "Trends, charts, habit correlations, and how settings relate to snore duration.")
                             tabChip(icon: "figure.mind.and.body", name: "Exercises", hint: "Myofascial exercise guides with completion tracking.")
                         }
 
@@ -90,7 +91,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "star.circle.fill",
                                 title: "Free vs Premium",
-                                detail: "Free includes up to 20 recording sessions and your latest sleep session in History. Snorry Premium unlocks unlimited recording, full Sleep History, and Insights. A remaining-session count appears under Start when you are on the free plan; upgrade from the Settings sheet (gear on Tonight) or when a limit is reached."
+                                detail: "Free includes unlimited recording, full Sleep History, Habits, and Insights for your first \(InsightsTrialTracker.freeNightLimit) recorded nights. Snorry Premium keeps Insights after that. Upgrade from Settings (gear on Tonight) or when Insights prompts you."
                             )
                             HelpBullet(
                                 icon: "applewatch",
@@ -169,23 +170,41 @@ struct HelpCenterView: View {
                                 title: "Share event clips",
                                 detail: "Tap the share icon on any Sound Events row that has playback. iOS opens the standard share sheet so you can AirDrop, Messages, Mail, or save the file. Snorry exports a single .m4a clip named with the event time—only that bout is shared, not your full night."
                             )
+                        }
+
+                        helpAccordion(
+                            section: .habits,
+                            title: "Habits tab",
+                            subtitle: "One-tap nightly lifestyle logging",
+                            systemImage: "checklist"
+                        ) {
                             HelpBullet(
-                                icon: "lock.fill",
-                                title: "Premium & older sessions",
-                                detail: "On the free plan, only your most recent sleep session opens in detail; older rows appear locked until you upgrade to Premium. Your data is kept on device—Premium simply unlocks browsing the full list."
+                                icon: "calendar",
+                                title: "Pick the night",
+                                detail: "Use the arrows to choose which calendar night a habit applies to. Before noon, Habits defaults to last night so a morning check-in matches your sleep."
+                            )
+                            HelpBullet(
+                                icon: "hand.tap.fill",
+                                title: "Toggle habits",
+                                detail: "Tap a button to log or remove a habit for that night—Ate late, Drank alcohol, nasal aids, myofascial exercise, and more. Logged habits appear in Insights alongside your snore duration."
+                            )
+                            HelpBullet(
+                                icon: "figure.mind.and.body",
+                                title: "Myofascial exercise",
+                                detail: "Logging myofascial exercise here also counts exercise completions from the Exercises tab for Insights. Turning the habit off here does not delete detailed exercise history."
                             )
                         }
 
                         helpAccordion(
                             section: .analytics,
                             title: "Insights tab",
-                            subtitle: "Ranges, trends, settings markers (Premium)",
+                            subtitle: "Ranges, trends, habit & settings markers",
                             systemImage: "chart.line.uptrend.xyaxis"
                         ) {
                             HelpBullet(
                                 icon: "star.circle.fill",
-                                title: "Premium feature",
-                                detail: "Insights requires Snorry Premium. Free users see an upgrade prompt; subscribers get trend charts, summary pills, and alert-correlation views described below."
+                                title: "Premium after 7 nights",
+                                detail: "Insights is free for your first \(InsightsTrialTracker.freeNightLimit) recorded nights. After that, Snorry Premium unlocks trend charts, summary pills, habit correlations, and alert-comparison views described below."
                             )
                             HelpBullet(
                                 icon: "calendar",
@@ -216,6 +235,11 @@ struct HelpCenterView: View {
                                 icon: "chart.bar.xaxis",
                                 title: "Alert type vs snore duration",
                                 detail: "The Alert Type vs Snore duration card averages snore minutes per alert configuration profile in the period—the footer reminds you this is correlation, not causation or medical advice."
+                            )
+                            HelpBullet(
+                                icon: "checklist",
+                                title: "Habits vs snore duration",
+                                detail: "Compare average snore minutes on nights when you logged each habit versus nights you did not. Log habits on the Habits tab to populate this card. Low night counts are flagged as low confidence."
                             )
                         }
 
@@ -271,7 +295,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "star.circle.fill",
                                 title: "Snorry Premium",
-                                detail: "Shows Free or Premium status. Upgrade for unlimited recording, full Sleep History, and Insights; manage billing through your Apple ID subscriptions."
+                                detail: "Shows Free or Premium status. Free includes unlimited recording, full History, Habits, and Insights for your first \(InsightsTrialTracker.freeNightLimit) recorded nights; Premium keeps Insights after that. Manage billing through your Apple ID subscriptions."
                             )
                             HelpBullet(
                                 icon: "lifepreserver.fill",
@@ -281,7 +305,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "arrow.counterclockwise",
                                 title: "Reset & delete logs",
-                                detail: "Reset to Defaults restores push/sound toggles and alarm style. Delete All Sleep & Settings Logs removes every sleep session, snore clip, waveform, and Insights settings-change marker—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
+                                detail: "Reset to Defaults restores push/sound toggles and alarm style. Delete All Sleep & Settings Logs removes every sleep session, snore clip, waveform, habit log, and Insights settings-change marker—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
                             )
                             HelpBullet(
                                 icon: "doc.text.fill",
@@ -327,7 +351,7 @@ struct HelpCenterView: View {
     // MARK: - Sections
 
     private enum HelpSection: String, CaseIterable, Identifiable {
-        case gettingStarted, tabBar, monitorHome, monitorLive, history, analytics, exercises, settings
+        case gettingStarted, tabBar, monitorHome, monitorLive, history, habits, analytics, exercises, settings
         var id: String { rawValue }
     }
 

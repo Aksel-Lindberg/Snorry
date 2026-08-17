@@ -298,7 +298,7 @@ struct SettingsView: View {
             }
         } footer: {
             Text(
-                "Removes every sleep session, snore clip, waveform, and Insights settings-change marker. Current Settings values are not changed."
+                "Removes every sleep session, snore clip, waveform, habit log, and Insights settings-change marker. Current Settings values are not changed."
             )
             .foregroundStyle(Theme.labelSecondary)
             .font(.caption)
@@ -354,8 +354,8 @@ struct SettingsView: View {
         } footer: {
             Text(
                 subscription.hasPremiumAccess
-                    ? "Premium includes unlimited recording, full Sleep History, and Insights. Manage billing in your Apple ID subscriptions."
-                    : "Free includes up to \(MonitoringUsageTracker.freeLimit) recording sessions and your latest sleep session. Upgrade for unlimited recording, full Sleep History, and Insights."
+                    ? "Premium includes unlimited Insights after your first \(InsightsTrialTracker.freeNightLimit) recorded nights. Manage billing in your Apple ID subscriptions."
+                    : "Free includes unlimited recording, full Sleep History, Habits, and Insights for your first \(InsightsTrialTracker.freeNightLimit) recorded nights. Upgrade to keep Insights after that."
             )
             .foregroundStyle(Theme.labelSecondary)
             .font(.caption)
