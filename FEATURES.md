@@ -38,7 +38,7 @@ After onboarding, Snorry uses a **five-tab** layout:
 | **History** | List of past nights (“Sleep History”); open any session for detail |
 | **Habits** | One-tap logging of lifestyle factors that may affect snoring |
 | **Insights** | Charts and trends; habit and alert correlations; settings-change markers |
-| **Exercises** | Myofascial exercise guides with completion tracking |
+| **Exercises** | Airway exercise guides with completion tracking |
 
 **Settings** opens from the gear icon on Tonight (alert channels, Premium, support, reset/delete data, legal links).
 
@@ -181,7 +181,6 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 - **Summary stats** — sleep duration, snore events, snore duration, average BRPM when available  
 - **Snore Clock** — visual timeline of snoring bouts only  
-- **Session timeline chart** — loudness/waveform from saved samples  
 - **Sound events list** — each snore bout as a row  
 - **Clip playback** — tap events with audio to hear the saved **AAC clip** (when recorded)  
 - **Sound labels** (after background/locked nights) — events may show **Snoring**, **Sleep talking**, or **Environment**  
@@ -192,7 +191,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 | Scenario | How to use |
 |----------|------------|
 | “Was that really snoring?” | Play back clips; read sound kind label |
-| Understand timing | Use Snore Clock and timeline to see when bouts clustered |
+| Understand timing | Use Snore Clock to see when bouts clustered |
 | Share with clinician (informal) | Review stats locally; Snorry does not export medical reports |
 | Distinguish talk vs snore | Rely on post-session classification on nights that used background detection |
 
@@ -203,17 +202,18 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 ### Features
 
 - **Night picker** — choose which calendar night habits apply to (defaults to last night before noon)  
-- **One-tap toggles** — Ate late, Drank alcohol, Caffeine late, Used nasal spray, Used nasal clip, Myofascial exercise, Congested, Slept on back  
+- **One-tap toggles** — grouped as **May add snoring** (Ate late, Drank alcohol, Had caffeine late, Congested, Slept on your back) and **May help** (Used nasal spray, Used nasal strip, Did airway exercises)  
+- **Custom habits** — **Yours** section; add your own buttons (editable and removable); long-press to edit or delete  
 - **Insights integration** — logged habits feed the **Habits vs Snore duration** card  
-- **Myofascial exercise** — counts exercise completions from the Exercises tab as well; turning off here does not delete exercise history  
+- **Did airway exercises** — counts exercise completions from the Exercises tab as well; turning off here does not delete exercise history  
 
 ### Typical use
 
 | Scenario | How to use |
 |----------|------------|
 | Morning check-in | Open Habits → confirm last night → tap what you did before bed |
-| Test a change | Log nasal clip or exercises for a week → review correlation in Insights |
-| Spot patterns | Compare “with habit” vs “without” averages on Insights |
+| Test a change | Log nasal strip or exercises for a week → review correlation in Insights |
+| Spot patterns | Open Insights on Month or 3 Months and compare each habit’s Logged vs Not logged bars |
 
 ---
 
@@ -228,7 +228,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 - **Snore duration trend** — daily snore minutes and event counts; optional **numbered markers** when you saved Settings changes  
 - **Settings change legend** — expand to read what changed; delete individual markers without changing current Settings  
 - **Alert type vs snore duration** — average snore minutes per alert configuration profile (correlation only, not medical advice)  
-- **Habits vs snore duration** — average snore minutes with vs without each logged habit (correlation only)  
+- **Habits vs snore duration** — Month and 3 Months show one card per logged habit (Logged vs Not logged; typical May add snoring / May help chip); Week prompts you to switch range (correlation only)  
 
 ### Typical use
 
@@ -237,7 +237,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 | “Am I improving?” | Month view → trend line of daily snore minutes |
 | Test a settings experiment | Save new push/sound setup → marker appears on chart → compare weeks before/after |
 | See which alert profile correlates with less snoring | Review Alert Type vs Snore duration card (interpret cautiously) |
-| See which habits correlate with more or less snoring | Review Habits vs Snore duration card after logging on the Habits tab |
+| See which habits correlate with more or less snoring | Month or 3 Months → Habits vs Snore duration cards |
 | Clean chart markers | Remove obsolete settings-change markers from legend |
 
 ---
@@ -360,7 +360,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 1. History → select the night.  
 2. Read duration and event count.  
-3. Snore Clock + timeline for timing.  
+3. Snore Clock for timing.  
 4. Play individual **Sound events** clips.  
 5. Check labels (snoring vs sleep talking vs environment) if classification ran.
 

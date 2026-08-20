@@ -78,10 +78,7 @@ enum MetaAnalytics {
     // MARK: - Helpers
 
     private static func isIntroductorySubscription(_ transaction: Transaction) -> Bool {
-        if #available(iOS 17.2, *) {
-            return transaction.offer?.type == .introductory
-        }
-        return transaction.offerType == .introductory
+        transaction.offer?.type == .introductory
     }
 
     private static func logSubscribe(product: Product) {

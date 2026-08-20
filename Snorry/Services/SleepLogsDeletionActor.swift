@@ -8,7 +8,7 @@ import SwiftData
 actor SleepLogsDeletionActor {
 
     /// Deletes every `SnoreSession` (cascades events + waveform samples), all `AlertSettingsChange` rows,
-    /// and all `HabitLog` rows. Returns resolved clip file URLs for best-effort cleanup after commit.
+    /// all `HabitLog` rows, and all `CustomHabit` rows. Returns resolved clip file URLs for best-effort cleanup after commit.
     func deleteAllSessionsAndSettingsMarkers() throws -> [URL] {
         let events = try modelContext.fetch(FetchDescriptor<SnoreEvent>())
         var clipURLs: [URL] = []
@@ -22,6 +22,7 @@ actor SleepLogsDeletionActor {
         try modelContext.delete(model: SnoreSession.self, where: #Predicate { _ in true })
         try modelContext.delete(model: AlertSettingsChange.self, where: #Predicate { _ in true })
         try modelContext.delete(model: HabitLog.self, where: #Predicate { _ in true })
+        try modelContext.delete(model: CustomHabit.self, where: #Predicate { _ in true })
         try modelContext.save()
         return clipURLs
     }

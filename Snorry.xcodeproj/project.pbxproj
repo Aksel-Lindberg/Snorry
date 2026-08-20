@@ -111,6 +111,8 @@
 		HBT0012EAA4B00C99A0004 /* HabitLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0003 /* HabitLog.swift */; };
 		HBT0012EAA4B00C99A0006 /* HabitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0005 /* HabitsView.swift */; };
 		HBT0012EAA4B00C99A0008 /* HabitCorrelationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */; };
+		HBT0012EAA4B00C99A000A /* CustomHabit.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0009 /* CustomHabit.swift */; };
+		HBT0012EAA4B00C99A000C /* HabitDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A000B /* HabitDefinition.swift */; };
 		TRI00012EAA4B00C99A0002 /* InsightsTrialTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRI00012EAA4B00C99A0001 /* InsightsTrialTracker.swift */; };
 		TRI00012EAA4B00C99A0004 /* InsightsTrialTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */; };
 		SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */; };
@@ -244,6 +246,8 @@
 		HBT0012EAA4B00C99A0003 /* HabitLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitLog.swift; path = Models/HabitLog.swift; sourceTree = "<group>"; };
 		HBT0012EAA4B00C99A0005 /* HabitsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitsView.swift; path = Views/HabitsView.swift; sourceTree = "<group>"; };
 		HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HabitCorrelationTests.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0009 /* CustomHabit.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CustomHabit.swift; path = Models/CustomHabit.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A000B /* HabitDefinition.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitDefinition.swift; path = Models/HabitDefinition.swift; sourceTree = "<group>"; };
 		TRI00012EAA4B00C99A0001 /* InsightsTrialTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InsightsTrialTracker.swift; path = Services/InsightsTrialTracker.swift; sourceTree = "<group>"; };
 		TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsTrialTrackerTests.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SoundAlertVolumeEscalation.swift; path = Utilities/SoundAlertVolumeEscalation.swift; sourceTree = "<group>"; };
@@ -327,6 +331,8 @@
 				MFX0012EAA4B00C99A0003 /* MyofascialExerciseCompletion.swift */,
 				HBT0012EAA4B00C99A0001 /* HabitKind.swift */,
 				HBT0012EAA4B00C99A0003 /* HabitLog.swift */,
+				HBT0012EAA4B00C99A0009 /* CustomHabit.swift */,
+				HBT0012EAA4B00C99A000B /* HabitDefinition.swift */,
 				EC33EC45DDFD9E8E895030C2 /* SnoreEvent.swift */,
 				EFE39AA711F0B5E5D9F976D3 /* SnoreSession.swift */,
 				SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */,
@@ -633,6 +639,8 @@
 				MFX0012EAA4B00C99A0004 /* MyofascialExerciseCompletion.swift in Sources */,
 				HBT0012EAA4B00C99A0002 /* HabitKind.swift in Sources */,
 				HBT0012EAA4B00C99A0004 /* HabitLog.swift in Sources */,
+				HBT0012EAA4B00C99A000A /* CustomHabit.swift in Sources */,
+				HBT0012EAA4B00C99A000C /* HabitDefinition.swift in Sources */,
 				0204F0527B08014F22F355E5 /* SnoreEvent.swift in Sources */,
 				73CF9829E4F68348FD3AA440 /* SnoreSession.swift in Sources */,
 				SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */,

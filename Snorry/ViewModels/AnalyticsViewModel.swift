@@ -26,6 +26,9 @@ enum AnalyticsRange: String, CaseIterable, Identifiable {
         case .threeMonths: return "prior 3 months"
         }
     }
+
+    /// Habit comparisons need more than a week of nights.
+    var showsHabitCorrelation: Bool { self != .week }
 }
 
 // MARK: - Aggregated snore data for one calendar day
@@ -58,6 +61,11 @@ struct AlertProfilePoint: Identifiable {
 struct HabitCorrelationPoint: Identifiable {
     let id: String
     let title: String
+    let systemImage: String
+    /// Spoken clause after the delta (“on nights you drank alcohol”).
+    let insightClause: String
+    /// Typical direction for built-in habits; custom is `.unknown`.
+    let expectedEffect: HabitExpectedEffect
     /// Average snore minutes on nights when this habit was logged.
     let avgWithHabitMinutes: Double
     /// Average snore minutes on nights when this habit was not logged.
@@ -70,6 +78,27 @@ struct HabitCorrelationPoint: Identifiable {
 
     var isLowConfidenceWith: Bool { nightsWithHabit < 3 }
     var isLowConfidenceWithout: Bool { nightsWithoutHabit < 3 }
+    var isLowConfidence: Bool { isLowConfidenceWith || isLowConfidenceWithout }
+
+    /// One-line finding for the selected habit.
+    var deltaSummary: String {
+        if abs(deltaMinutes) < 1 {
+            return "About the same \(insightClause)"
+        }
+        let sign = deltaMinutes > 0 ? "+" : "−"
+        return "\(sign)\(Self.minuteLabel(abs(deltaMinutes))) \(insightClause)"
+    }
+
+    static func minuteLabel(_ minutes: Double) -> String {
+        if minutes < 1 { return "<1m" }
+        let total = Int(minutes.rounded())
+        let hours = total / 60
+        let remainder = total % 60
+        if hours > 0 {
+            return remainder > 0 ? "\(hours)h \(remainder)m" : "\(hours)h"
+        }
+        return "\(remainder)m"
+    }
 }
 
 // MARK: - Metrics for one analytics time window
@@ -394,6 +423,11 @@ final class AnalyticsViewModel {
         let exerciseRows = (try? context.fetch(exerciseDescriptor)) ?? []
         let exerciseDays = Set(exerciseRows.map { calendar.startOfDay(for: $0.completedAt) })
 
+        let customDescriptor = FetchDescriptor<CustomHabit>(
+            sortBy: [SortDescriptor(\.createdAt)]
+        )
+        let customHabits = (try? context.fetch(customDescriptor)) ?? []
+
         let sessionNights = currentPeriod.sessionDays
         guard !sessionNights.isEmpty else {
             habitCorrelationPoints = []
@@ -404,6 +438,7 @@ final class AnalyticsViewModel {
             sessionNights: sessionNights,
             habitLogs: habitLogs,
             exerciseDays: exerciseDays,
+            customHabits: customHabits,
             calendar: calendar
         )
     }
@@ -412,19 +447,36 @@ final class AnalyticsViewModel {
         sessionNights: [DailySnorePoint],
         habitLogs: [HabitLog],
         exerciseDays: Set<Date>,
+        customHabits: [CustomHabit] = [],
+        calendar: Calendar
+    ) -> [HabitCorrelationPoint] {
+        buildHabitCorrelationPoints(
+            sessionNights: sessionNights,
+            habitLogs: habitLogs,
+            exerciseDays: exerciseDays,
+            habits: HabitDefinition.all(customHabits: customHabits),
+            calendar: calendar
+        )
+    }
+
+    static func buildHabitCorrelationPoints(
+        sessionNights: [DailySnorePoint],
+        habitLogs: [HabitLog],
+        exerciseDays: Set<Date>,
+        habits: [HabitDefinition],
         calendar: Calendar
     ) -> [HabitCorrelationPoint] {
         var points: [HabitCorrelationPoint] = []
 
-        for habit in HabitKind.allCases {
+        for habit in habits {
             let loggedDays = HabitLog.loggedDayStarts(
-                for: habit,
+                forHabitID: habit.id,
                 in: habitLogs,
                 since: .distantPast,
                 calendar: calendar
             )
             let effectiveDays: Set<Date>
-            if habit == .myofascialExercise {
+            if habit.builtInKind == .myofascialExercise {
                 effectiveDays = loggedDays.union(exerciseDays)
             } else {
                 effectiveDays = loggedDays
@@ -452,6 +504,9 @@ final class AnalyticsViewModel {
                 HabitCorrelationPoint(
                     id: habit.id,
                     title: habit.title,
+                    systemImage: habit.systemImage,
+                    insightClause: habit.insightClause,
+                    expectedEffect: habit.expectedEffect,
                     avgWithHabitMinutes: withValues.reduce(0, +) / Double(withValues.count),
                     avgWithoutHabitMinutes: withoutValues.isEmpty
                         ? 0

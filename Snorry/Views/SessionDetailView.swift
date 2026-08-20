@@ -1,13 +1,10 @@
 import SwiftUI
-import SwiftData
-import Charts
 import AVFoundation
 
 // MARK: - Detailed session replay screen
 struct SessionDetailView: View {
 
     let session: SnoreSession
-    @Environment(\.modelContext) private var modelContext
     @State private var vm: SessionDetailViewModel?
 
     var body: some View {
@@ -19,7 +16,6 @@ struct SessionDetailView: View {
                     VStack(spacing: 20) {
                         statsCards(vm: vm)
                         watchSnoreCard(vm: vm)
-                        timelineChart(vm: vm)
                         if let alertCard = AlertSetupSummaryCard.forSession(session) {
                             alertCard
                         }
@@ -44,7 +40,7 @@ struct SessionDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
         .task(id: session.id) {
-            vm = await SessionDetailViewModel.prepare(session: session, modelContext: modelContext)
+            vm = await SessionDetailViewModel.prepare(session: session)
         }
         .onDisappear {
             vm?.tearDownPlayback()
@@ -110,30 +106,6 @@ struct SessionDetailView: View {
             .multilineTextAlignment(.trailing)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
-    }
-
-    // MARK: Timeline chart
-
-    private func timelineChart(vm: SessionDetailViewModel) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Session Timeline")
-                .font(.subheadline.bold())
-                .foregroundStyle(Theme.labelPrimary)
-                .padding(.horizontal, 4)
-
-            if vm.chartTimelinePoints.isEmpty {
-                Text("No waveform data recorded.")
-                    .font(.caption)
-                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                    .padding()
-            } else {
-                SessionTimelineChart(samples: vm.chartTimelinePoints, events: vm.snoreEvents)
-                    .frame(height: 160)
-                    .padding(.horizontal, 4)
-            }
-        }
-        .padding(16)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
     }
 
     // MARK: Events list
@@ -330,49 +302,6 @@ private struct StatCard: View {
         let parts = label.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: false)
         guard parts.count == 2 else { return label }
         return "\(parts[0])\n\(parts[1])"
-    }
-}
-
-// MARK: - Session timeline (Swift Charts)
-private struct SessionTimelineChart: View {
-
-    let samples: [TimelineChartPoint]
-    let events: [SnoreEvent]
-
-    var body: some View {
-        Chart {
-            ForEach(samples) { s in
-                AreaMark(
-                    x: .value("Time", s.timestamp),
-                    y: .value("Level", Double(AudioMath.normalisedLevel(s.dBFS)))
-                )
-                .foregroundStyle(
-                    s.isSnoringActive ? Theme.snoringGlow : Theme.accentGlow
-                )
-                .interpolationMethod(.catmullRom)
-            }
-
-            // Vertical rule at each event start
-            ForEach(events) { event in
-                RuleMark(x: .value("Event", event.startDate))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3]))
-                    .foregroundStyle(Theme.snoring.opacity(0.5))
-                    .annotation(position: .top, alignment: .leading) {
-                        Image(systemName: "zzz")
-                            .font(.system(size: 7))
-                            .foregroundStyle(Theme.snoring)
-                    }
-            }
-        }
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
-                AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
-                AxisValueLabel(format: .dateTime.hour().minute())
-                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
-            }
-        }
-        .chartYAxis(.hidden)
-        .chartYScale(domain: 0...1)
     }
 }
 

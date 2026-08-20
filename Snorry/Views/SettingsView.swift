@@ -298,7 +298,7 @@ struct SettingsView: View {
             }
         } footer: {
             Text(
-                "Removes every sleep session, snore clip, waveform, habit log, and Insights settings-change marker. Current Settings values are not changed."
+                "Removes every sleep session, snore clip, waveform, habit log, custom habit, and Insights settings-change marker. Current Settings values are not changed."
             )
             .foregroundStyle(Theme.labelSecondary)
             .font(.caption)

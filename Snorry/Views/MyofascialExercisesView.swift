@@ -35,7 +35,7 @@ struct MyofascialExercisesView: View {
                 }
                 .clearsFloatingTabBar()
             }
-            .navigationTitle("Myofascial exercises")
+            .navigationTitle("Airway exercises")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Theme.background, for: .navigationBar)
         }

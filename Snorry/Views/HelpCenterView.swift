@@ -59,7 +59,7 @@ struct HelpCenterView: View {
                             tabChip(icon: "clock.arrow.circlepath", name: "History", hint: "Browse past nights and open session details.")
                             tabChip(icon: "checklist", name: "Habits", hint: "Log lifestyle factors that may affect snoring.")
                             tabChip(icon: "chart.line.uptrend.xyaxis", name: "Insights", hint: "Trends, charts, habit correlations, and how settings relate to snore duration.")
-                            tabChip(icon: "figure.mind.and.body", name: "Exercises", hint: "Myofascial exercise guides with completion tracking.")
+                            tabChip(icon: "figure.mind.and.body", name: "Exercises", hint: "Guided tongue and throat exercises with completion tracking.")
                         }
 
                         helpAccordion(
@@ -158,7 +158,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chevron.right.circle.fill",
                                 title: "Session detail",
-                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, a Session Timeline chart from saved waveform samples, and a Sound Events list. Each event is labeled Snoring, Sleep Talking, or Environment; background nights classify non-snore sounds more often."
+                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, and a Sound Events list. Each event is labeled Snoring, Sleep Talking, or Environment; background nights classify non-snore sounds more often."
                             )
                             HelpBullet(
                                 icon: "play.circle.fill",
@@ -175,7 +175,7 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .habits,
                             title: "Habits tab",
-                            subtitle: "One-tap nightly lifestyle logging",
+                            subtitle: "Grouped nightly logging, custom habits",
                             systemImage: "checklist"
                         ) {
                             HelpBullet(
@@ -186,12 +186,17 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "hand.tap.fill",
                                 title: "Toggle habits",
-                                detail: "Tap a button to log or remove a habit for that night—Ate late, Drank alcohol, nasal aids, myofascial exercise, and more. Logged habits appear in Insights alongside your snore duration."
+                                detail: "Habits are grouped as May add snoring (late meals, alcohol, caffeine, congestion, back sleeping) and May help (nasal spray, nasal strip, airway exercises). Tap a button to log or remove it for that night. The grouping is typical, not a diagnosis."
+                            )
+                            HelpBullet(
+                                icon: "plus.circle.fill",
+                                title: "Custom habits",
+                                detail: "Tap Add custom habit in Yours to create your own buttons (for example mouth tape or melatonin). Long-press a custom habit to edit its name or delete it. Custom habits appear in Insights without a typical-direction chip."
                             )
                             HelpBullet(
                                 icon: "figure.mind.and.body",
-                                title: "Myofascial exercise",
-                                detail: "Logging myofascial exercise here also counts exercise completions from the Exercises tab for Insights. Turning the habit off here does not delete detailed exercise history."
+                                title: "Did airway exercises",
+                                detail: "Logging this habit also counts a completion from the Exercises tab. Turning it off does not delete that history."
                             )
                         }
 
@@ -224,7 +229,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chart.bar.fill",
                                 title: "Daily snore duration",
-                                detail: "The main chart shows minutes for every day in the range, a dashed trend line when you have enough data, green exercise markers when you logged myofascial work that day, and numbered markers when alert settings were saved. Tap a day to open that night in Sleep History. Expand Snore events below the chart for event counts."
+                                detail: "The main chart shows minutes for every day in the range, a dashed trend line when you have enough data, green markers when you logged airway exercises that day, and numbered markers when alert settings were saved. Tap a day to open that night in Sleep History. Expand Snore events below the chart for event counts."
                             )
                             HelpBullet(
                                 icon: "mappin.and.ellipse",
@@ -239,20 +244,20 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "checklist",
                                 title: "Habits vs snore duration",
-                                detail: "Compare average snore minutes on nights when you logged each habit versus nights you did not. Log habits on the Habits tab to populate this card. Low night counts are flagged as low confidence."
+                                detail: "On Week, the card explains that a longer range is needed and offers View Month. Month and 3 Months show one card per logged habit with a Logged vs Not logged chart and a one-line delta, sorted by the largest difference. Built-in habits show a May add snoring or May help chip for typical direction; the bars and delta are your nights. Low night counts are flagged as an early signal. Log habits on the Habits tab to populate this section."
                             )
                         }
 
                         helpAccordion(
                             section: .exercises,
                             title: "Exercises tab",
-                            subtitle: "Myofascial exercises, zoomable guides, completion log",
+                            subtitle: "Airway exercises, zoomable guides, completion log",
                             systemImage: "figure.mind.and.body"
                         ) {
                             HelpBullet(
                                 icon: "list.bullet.rectangle",
                                 title: "Exercise library",
-                                detail: "The Exercises tab lists guided myofascial exercises in order—from tongue posture awareness through strength drills. Each card shows the full infographic, title, and a short description."
+                                detail: "The Exercises tab lists guided airway exercises in order—from tongue posture awareness through strength drills. Each card shows the full infographic, title, and a short description."
                             )
                             HelpBullet(
                                 icon: "arrow.up.left.and.arrow.down.right",

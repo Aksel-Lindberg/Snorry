@@ -5,7 +5,7 @@ import SwiftData
 @Model
 final class HabitLog {
 
-    /// Matches `HabitKind.rawValue`.
+    /// Matches built-in `HabitKind.rawValue` or `CustomHabit.logID`.
     var habitID: String
     /// Start of the calendar night this habit applies to.
     var dayStart: Date
@@ -40,7 +40,16 @@ extension HabitLog {
         in all: [HabitLog],
         calendar: Calendar = .current
     ) -> Bool {
-        logs(for: dayStart, in: all, calendar: calendar)[habit.id] != nil
+        isLogged(habitID: habit.id, on: dayStart, in: all, calendar: calendar)
+    }
+
+    static func isLogged(
+        habitID: String,
+        on dayStart: Date,
+        in all: [HabitLog],
+        calendar: Calendar = .current
+    ) -> Bool {
+        logs(for: dayStart, in: all, calendar: calendar)[habitID] != nil
     }
 
     /// Calendar days with at least one habit log in range.
@@ -63,10 +72,28 @@ extension HabitLog {
         since cutoff: Date,
         calendar: Calendar = .current
     ) -> Set<Date> {
+        loggedDayStarts(forHabitID: habit.id, in: all, since: cutoff, calendar: calendar)
+    }
+
+    static func loggedDayStarts(
+        forHabitID habitID: String,
+        in all: [HabitLog],
+        since cutoff: Date,
+        calendar: Calendar = .current
+    ) -> Set<Date> {
         Set(
             all
-                .filter { $0.habitID == habit.id && $0.dayStart >= cutoff }
+                .filter { $0.habitID == habitID && $0.dayStart >= cutoff }
                 .map { calendar.startOfDay(for: $0.dayStart) }
         )
+    }
+
+    /// Removes every log row for one habit id.
+    static func deleteLogs(forHabitID habitID: String, in context: ModelContext) throws {
+        try context.delete(
+            model: HabitLog.self,
+            where: #Predicate { $0.habitID == habitID }
+        )
+        try context.save()
     }
 }

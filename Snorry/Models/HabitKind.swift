@@ -1,6 +1,37 @@
 import Foundation
 
-// MARK: - Fixed snore-relevant habits (v1 — no custom entries)
+// MARK: - Typical direction for a habit (not a diagnosis)
+enum HabitExpectedEffect: String, CaseIterable, Identifiable {
+    case mayAddSnoring
+    case mayHelp
+    case unknown
+
+    var id: String { rawValue }
+
+    /// Habits tab section header; Insights chip uses the same wording.
+    var sectionTitle: String {
+        switch self {
+        case .mayAddSnoring: return "May add snoring"
+        case .mayHelp:       return "May help"
+        case .unknown:       return "Yours"
+        }
+    }
+
+    /// Insights chip; custom habits have no expected direction.
+    var chipTitle: String? {
+        switch self {
+        case .mayAddSnoring, .mayHelp: return sectionTitle
+        case .unknown:                 return nil
+        }
+    }
+
+    /// Built-in sections first; custom last.
+    static var habitsTabSections: [HabitExpectedEffect] {
+        [.mayAddSnoring, .mayHelp, .unknown]
+    }
+}
+
+// MARK: - Fixed snore-relevant habits (built-in set)
 enum HabitKind: String, CaseIterable, Identifiable {
     case ateLate
     case drankAlcohol
@@ -17,25 +48,25 @@ enum HabitKind: String, CaseIterable, Identifiable {
         switch self {
         case .ateLate:             return "Ate late"
         case .drankAlcohol:        return "Drank alcohol"
-        case .caffeineLate:        return "Caffeine late"
+        case .caffeineLate:        return "Had caffeine late"
         case .nasalSpray:          return "Used nasal spray"
-        case .nasalClip:           return "Used nasal clip"
-        case .myofascialExercise:  return "Myofascial exercise"
+        case .nasalClip:           return "Used nasal strip"
+        case .myofascialExercise:  return "Did airway exercises"
         case .congested:           return "Congested"
-        case .sleptOnBack:         return "Slept on back"
+        case .sleptOnBack:         return "Slept on your back"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .ateLate:             return "Meal within ~3 hours of bed"
-        case .drankAlcohol:        return "Any alcohol before sleep"
-        case .caffeineLate:        return "Coffee, tea, or energy drinks late"
-        case .nasalSpray:          return "Decongestant or saline spray"
-        case .nasalClip:           return "External nasal dilator or clip"
-        case .myofascialExercise:  return "Throat or tongue exercises"
+        case .ateLate:             return "Meal within 3 hours of bed"
+        case .drankAlcohol:        return "Any alcohol before bed"
+        case .caffeineLate:        return "Coffee, tea, or energy drinks"
+        case .nasalSpray:          return "Decongestant or saline"
+        case .nasalClip:           return "External strip or clip"
+        case .myofascialExercise:  return "Tongue or throat exercises"
         case .congested:           return "Blocked or stuffy nose"
-        case .sleptOnBack:         return "Mostly on your back"
+        case .sleptOnBack:         return "Most of the night"
         }
     }
 
@@ -49,6 +80,30 @@ enum HabitKind: String, CaseIterable, Identifiable {
         case .myofascialExercise:  return "figure.mind.and.body"
         case .congested:           return "allergens"
         case .sleptOnBack:         return "bed.double.fill"
+        }
+    }
+
+    /// Typical association used for grouping — not a claim about the user’s nights.
+    var expectedEffect: HabitExpectedEffect {
+        switch self {
+        case .ateLate, .drankAlcohol, .caffeineLate, .congested, .sleptOnBack:
+            return .mayAddSnoring
+        case .nasalSpray, .nasalClip, .myofascialExercise:
+            return .mayHelp
+        }
+    }
+
+    /// Clause used in Insights delta copy (“+13m on nights you drank alcohol”).
+    var insightClause: String {
+        switch self {
+        case .ateLate:             return "on nights you ate late"
+        case .drankAlcohol:        return "on nights you drank alcohol"
+        case .caffeineLate:        return "on nights you had caffeine late"
+        case .nasalSpray:          return "on nights you used nasal spray"
+        case .nasalClip:           return "on nights you used a nasal strip"
+        case .myofascialExercise:  return "on nights you did airway exercises"
+        case .congested:           return "on nights you were congested"
+        case .sleptOnBack:         return "on nights you slept on your back"
         }
     }
 }

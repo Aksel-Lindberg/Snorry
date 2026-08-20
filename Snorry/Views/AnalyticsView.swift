@@ -124,7 +124,14 @@ private struct AnalyticsContent: View {
                 }
                 snoreTrendCard
                 AlertCorrelationCard(points: vm.alertProfilePoints, xMax: vm.alertChartXMax)
-                HabitCorrelationCard(points: vm.habitCorrelationPoints)
+                HabitCorrelationCard(
+                    points: vm.habitCorrelationPoints,
+                    range: vm.selectedRange,
+                    onSelectMonth: {
+                        vm.selectedRange = .month
+                        vm.refresh()
+                    }
+                )
                 if !vm.settingsChanges.isEmpty {
                     SettingsChangeLegend(
                         changes: vm.settingsChanges,
@@ -1038,23 +1045,27 @@ private struct AlertCorrelationChart: View {
     }
 }
 
-// MARK: - Habit vs snore duration card
+// MARK: - Habit vs snore duration section
 private struct HabitCorrelationCard: View {
 
     let points: [HabitCorrelationPoint]
+    let range: AnalyticsRange
+    let onSelectMonth: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             cardHeader
-            if points.isEmpty {
+            if !range.showsHabitCorrelation {
+                rangeLockedState
+            } else if points.isEmpty {
                 emptyState
             } else {
                 VStack(spacing: 12) {
                     ForEach(points) { point in
-                        HabitCorrelationRow(point: point)
+                        HabitCorrelationHabitCard(point: point)
                     }
                 }
-                disclaimer
+                footnotes
             }
         }
         .padding(16)
@@ -1066,10 +1077,46 @@ private struct HabitCorrelationCard: View {
             Text("Habits vs Snore duration")
                 .font(.headline)
                 .foregroundStyle(Theme.labelPrimary)
-            Text("Average snore minutes with vs without each habit · nights in this period")
+            Text(headerSubtitle)
                 .font(.caption)
                 .foregroundStyle(Theme.labelOnSurfaceSecondary)
         }
+    }
+
+    private var headerSubtitle: String {
+        if range.showsHabitCorrelation {
+            return "Average snore minutes logged vs not logged"
+        }
+        return "Shown for Month and 3 Months"
+    }
+
+    private var rangeLockedState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "calendar")
+                .font(.system(size: 38, weight: .thin))
+                .foregroundStyle(Theme.labelTertiary)
+            Text("Need a longer range")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Theme.labelSecondary)
+            Text("A week is too short to compare habits with snore duration. Switch to Month or 3 Months to see correlations.")
+                .font(.caption)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+
+            Button(action: onSelectMonth) {
+                Text("View Month")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Theme.accentGradient, in: Capsule())
+            }
+            .padding(.top, 4)
+            .accessibilityHint("Switches Insights to the Month range")
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
     }
 
     private var emptyState: some View {
@@ -1090,88 +1137,167 @@ private struct HabitCorrelationCard: View {
         .padding(.vertical, 32)
     }
 
-    private var disclaimer: some View {
-        Text("Shorter is better. Correlation only — not a causal measure.")
-            .font(.caption2)
-            .foregroundStyle(Theme.labelOnSurfaceSecondary)
-            .padding(.top, 2)
+    private var footnotes: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("May add snoring / May help is typical, not a diagnosis. Bars are your nights.")
+            Text("Shorter is better. Correlation only — not a causal measure.")
+        }
+        .font(.caption2)
+        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+        .padding(.top, 2)
     }
 }
 
-// MARK: - One habit correlation row
-private struct HabitCorrelationRow: View {
+// MARK: - One logged habit comparison
+private struct HabitCorrelationHabitCard: View {
 
     let point: HabitCorrelationPoint
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(point.title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.labelPrimary)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: point.systemImage)
+                    .font(.body)
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 28, height: 28)
 
-            HStack(spacing: 12) {
-                metricColumn(
-                    title: "With habit",
-                    minutes: point.avgWithHabitMinutes,
-                    nights: point.nightsWithHabit,
-                    isLowConfidence: point.isLowConfidenceWith
-                )
-                metricColumn(
-                    title: "Without",
-                    minutes: point.avgWithoutHabitMinutes,
-                    nights: point.nightsWithoutHabit,
-                    isLowConfidence: point.isLowConfidenceWithout
-                )
-                Spacer(minLength: 0)
-                deltaBadge
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(point.title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.labelPrimary)
+
+                    if let chipTitle = point.expectedEffect.chipTitle {
+                        Text(chipTitle)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(expectedEffectColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(expectedEffectColor.opacity(0.14), in: Capsule())
+                    }
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(headerAccessibilityLabel)
+
+            HabitCorrelationChart(point: point)
+            deltaBadge
+
+            if point.isLowConfidence {
+                Text("Early signal · log a few more nights")
+                    .font(.caption)
+                    .foregroundStyle(Theme.warning)
             }
         }
         .padding(12)
         .background(Theme.surfaceSecondary.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private func metricColumn(
-        title: String,
-        minutes: Double,
-        nights: Int,
-        isLowConfidence: Bool
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(Theme.labelOnSurfaceSecondary)
-            Text(minuteLabel(minutes))
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
-                .foregroundStyle(Theme.labelPrimary)
-            Text("n=\(nights)")
-                .font(.system(size: 10, weight: .regular, design: .monospaced))
-                .foregroundStyle(isLowConfidence ? Theme.warning : Theme.labelOnSurfaceSecondary)
-        }
-    }
-
     private var deltaBadge: some View {
         let delta = point.deltaMinutes
-        let sign = delta >= 0 ? "+" : "−"
-        let value = abs(delta)
         let color: Color = {
             if abs(delta) < 1 { return Theme.labelSecondary }
             return delta > 0 ? Theme.snoring : Theme.good
         }()
 
-        return Text("\(sign)\(minuteLabel(value))")
-            .font(.system(size: 12, weight: .bold, design: .monospaced))
+        return Text(point.deltaSummary)
+            .font(.caption.weight(.semibold))
             .foregroundStyle(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(color.opacity(0.12), in: Capsule())
-            .accessibilityLabel("Difference with habit: \(sign)\(minuteLabel(value))")
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(color.opacity(0.14), in: Capsule())
+            .frame(maxWidth: .infinity, alignment: .center)
+            .accessibilityLabel(point.deltaSummary)
     }
 
-    private func minuteLabel(_ minutes: Double) -> String {
-        if minutes < 1 { return "<1m" }
-        let total = Int(minutes.rounded())
-        let h = total / 60
-        let m = total % 60
-        return h > 0 ? (m > 0 ? "\(h)h \(m)m" : "\(h)h") : "\(m)m"
+    private var expectedEffectColor: Color {
+        switch point.expectedEffect {
+        case .mayAddSnoring: return Theme.snoring
+        case .mayHelp:       return Theme.good
+        case .unknown:       return Theme.labelSecondary
+        }
     }
+
+    private var headerAccessibilityLabel: String {
+        if let chipTitle = point.expectedEffect.chipTitle {
+            return "\(point.title), \(chipTitle)"
+        }
+        return point.title
+    }
+}
+
+// MARK: - Two-bar comparison for one habit
+private struct HabitCorrelationChart: View {
+
+    let point: HabitCorrelationPoint
+
+    private var bars: [HabitBarDatum] {
+        [
+            HabitBarDatum(
+                id: "with",
+                label: "Logged",
+                minutes: point.avgWithHabitMinutes,
+                nights: point.nightsWithHabit,
+                isLowConfidence: point.isLowConfidenceWith,
+                color: Theme.snoring
+            ),
+            HabitBarDatum(
+                id: "without",
+                label: "Not logged",
+                minutes: point.avgWithoutHabitMinutes,
+                nights: point.nightsWithoutHabit,
+                isLowConfidence: point.isLowConfidenceWithout,
+                color: Theme.accent
+            )
+        ]
+    }
+
+    private var yMax: Double {
+        max(point.avgWithHabitMinutes, point.avgWithoutHabitMinutes, 1) * 1.35
+    }
+
+    var body: some View {
+        Chart(bars) { bar in
+            BarMark(
+                x: .value("Group", bar.label),
+                y: .value("Minutes", bar.minutes)
+            )
+            .foregroundStyle(bar.color.opacity(point.isLowConfidence ? 0.55 : 0.92))
+            .cornerRadius(8)
+            .annotation(position: .top, spacing: 4) {
+                VStack(spacing: 1) {
+                    Text(HabitCorrelationPoint.minuteLabel(bar.minutes))
+                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Theme.labelPrimary)
+                    Text("n=\(bar.nights)")
+                        .font(.system(size: 10, weight: .regular, design: .monospaced))
+                        .foregroundStyle(bar.isLowConfidence ? Theme.warning : Theme.labelOnSurfaceSecondary)
+                }
+            }
+        }
+        .chartYScale(domain: 0...yMax)
+        .chartYAxis(.hidden)
+        .chartXAxis {
+            AxisMarks { _ in
+                AxisValueLabel()
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            }
+        }
+        .frame(height: 140)
+        .opacity(point.isLowConfidence ? 0.92 : 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "\(point.title). Logged \(HabitCorrelationPoint.minuteLabel(point.avgWithHabitMinutes)) over \(point.nightsWithHabit) nights. Not logged \(HabitCorrelationPoint.minuteLabel(point.avgWithoutHabitMinutes)) over \(point.nightsWithoutHabit) nights."
+        )
+    }
+}
+
+private struct HabitBarDatum: Identifiable {
+    let id: String
+    let label: String
+    let minutes: Double
+    let nights: Int
+    let isLowConfidence: Bool
+    let color: Color
 }
