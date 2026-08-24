@@ -204,6 +204,16 @@ private struct AnalyticsContent: View {
         return vm.dailyPoints.first { calendar.isDate($0.date, inSameDayAs: dayStart) }
     }
 
+    private func settingsChangeCount(on dayStart: Date) -> Int {
+        let calendar = Calendar.current
+        let key = calendar.startOfDay(for: dayStart)
+        return vm.settingsChanges.reduce(into: 0) { count, change in
+            if calendar.isDate(change.timestamp, inSameDayAs: key) {
+                count += 1
+            }
+        }
+    }
+
     // MARK: Range picker
 
     private var rangePicker: some View {
@@ -315,9 +325,14 @@ private struct AnalyticsContent: View {
 
     private var priorLabel: String { vm.selectedRange.previousPeriodLabel }
 
+    private var insufficientPriorDataLabel: String {
+        vm.selectedRange == .threeMonths ? "— not enough prior data" : "— vs \(priorLabel)"
+    }
+
     private var avgDurationDeltaLabel: String {
+        guard vm.hasComparablePreviousPeriod else { return insufficientPriorDataLabel }
         guard let change = vm.averageDurationPercentChange else {
-            return vm.previousPeriod.sessionCount == 0 ? "— vs \(priorLabel)" : "new vs \(priorLabel)"
+            return "new vs \(priorLabel)"
         }
         let rounded = Int(abs(change).rounded())
         let arrow = change < 0 ? "↓" : "↑"
@@ -325,6 +340,7 @@ private struct AnalyticsContent: View {
     }
 
     private var sessionDeltaLabel: String {
+        guard vm.hasComparablePreviousPeriod else { return insufficientPriorDataLabel }
         let delta = vm.sessionCountDelta
         if delta == 0 { return "same vs \(priorLabel)" }
         let sign = delta > 0 ? "+" : ""
@@ -332,6 +348,7 @@ private struct AnalyticsContent: View {
     }
 
     private var goodNightsDeltaLabel: String {
+        guard vm.hasComparablePreviousPeriod else { return insufficientPriorDataLabel }
         let delta = vm.goodNightsDelta
         if delta == 0 { return "same vs \(priorLabel)" }
         let sign = delta > 0 ? "+" : ""
@@ -395,7 +412,12 @@ private struct AnalyticsContent: View {
                 )
 
                 if let dayStart = highlightedChartDay, let point = dailyPoint(for: dayStart) {
-                    ChartNightCallout(point: point, onOpen: openHighlightedChartDay)
+                    ChartNightCallout(
+                        point: point,
+                        hadExercise: vm.exerciseLoggedDayStarts.contains(dayStart),
+                        settingsChangeCount: settingsChangeCount(on: dayStart),
+                        onOpen: openHighlightedChartDay
+                    )
                 }
 
                 if let hint = sessionPresenceHint {
@@ -469,9 +491,9 @@ private struct AnalyticsContent: View {
             }
             if showsExerciseLegend {
                 HStack(spacing: 4) {
-                    Circle()
-                        .fill(Theme.good)
-                        .frame(width: 8, height: 8)
+                    Image(systemName: "figure.mind.and.body")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(Theme.good)
                     Text("Exercises")
                         .font(.caption2)
                         .foregroundStyle(Theme.labelOnSurfaceSecondary)
@@ -479,10 +501,10 @@ private struct AnalyticsContent: View {
             }
             if !vm.settingsChanges.isEmpty {
                 HStack(spacing: 4) {
-                    Circle()
-                        .fill(Theme.warning)
-                        .frame(width: 8, height: 8)
-                    Text("Settings")
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(Theme.warning)
+                    Text("Settings changed")
                         .font(.caption2)
                         .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 }
@@ -511,13 +533,30 @@ private struct AnalyticsContent: View {
         guard vm.hasSessionDataInPeriod else { return nil }
         let hasQuiet = vm.dailyPoints.contains { $0.hadSession && $0.snoreMinutes <= 0 }
         let hasGap = vm.dailyPoints.contains { !$0.hadSession }
+        let hasTrend = vm.trendLinePoints != nil
+        let isLongRange = vm.selectedRange != .week
+
         switch (hasQuiet, hasGap) {
         case (true, true):
-            return "0m is a recorded quiet night. Empty days were not recorded. Trend uses recorded nights only."
+            if isLongRange {
+                if hasTrend {
+                    return "0m is a recorded quiet night. Trend uses recorded nights only."
+                }
+                return "0m is a recorded quiet night."
+            }
+            if hasTrend {
+                return "0m is a recorded quiet night. Empty days were not recorded. Trend uses recorded nights only."
+            }
+            return "0m is a recorded quiet night. Empty days were not recorded."
         case (true, false):
             return "0m is a recorded quiet night."
         case (false, true):
-            return "Empty days were not recorded. Trend uses recorded nights only."
+            if isLongRange {
+                return hasTrend ? "Trend uses recorded nights only." : nil
+            }
+            return hasTrend
+                ? "Empty days were not recorded. Trend uses recorded nights only."
+                : "Empty days were not recorded."
         case (false, false):
             return nil
         }
@@ -697,18 +736,35 @@ private struct InsightsDaySessionsSheet: View {
 private struct ChartNightCallout: View {
 
     let point: DailySnorePoint
+    let hadExercise: Bool
+    let settingsChangeCount: Int
     let onOpen: () -> Void
 
     var body: some View {
         Button(action: onOpen) {
-            HStack(spacing: 8) {
-                Text(calloutText)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Theme.labelPrimary)
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    Text(primaryCalloutText)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Theme.labelPrimary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                }
+
+                if !eventTags.isEmpty {
+                    HStack(spacing: 6) {
+                        ForEach(eventTags, id: \.self) { tag in
+                            Text(tag)
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(tagColor(for: tag))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(tagColor(for: tag).opacity(0.14), in: Capsule())
+                        }
+                    }
+                }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -719,16 +775,34 @@ private struct ChartNightCallout: View {
         .accessibilityHint("Opens that night's sleep session")
     }
 
-    private var calloutText: String {
+    private var primaryCalloutText: String {
         let date = point.date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
         let events = point.eventCount == 1 ? "1 event" : "\(point.eventCount) events"
         return "\(date) · \(AnalyticsContent.minuteLabel(point.snoreMinutes)) · \(events)"
     }
 
+    private var eventTags: [String] {
+        var tags: [String] = []
+        if hadExercise { tags.append("Exercises") }
+        if settingsChangeCount > 0 { tags.append("Settings changed") }
+        return tags
+    }
+
+    private func tagColor(for tag: String) -> Color {
+        tag == "Exercises" ? Theme.good : Theme.warning
+    }
+
     private var calloutAccessibilityLabel: String {
         let date = point.date.formatted(.dateTime.weekday(.wide).month(.wide).day())
         let events = point.eventCount == 1 ? "1 snore event" : "\(point.eventCount) snore events"
-        return "\(date), \(AnalyticsContent.minuteLabel(point.snoreMinutes)), \(events)"
+        var label = "\(date), \(AnalyticsContent.minuteLabel(point.snoreMinutes)), \(events)"
+        if hadExercise { label += ", airway exercises logged" }
+        if settingsChangeCount == 1 {
+            label += ", settings changed"
+        } else if settingsChangeCount > 1 {
+            label += ", \(settingsChangeCount) settings changes"
+        }
+        return label
     }
 }
 
@@ -764,8 +838,7 @@ private struct SnoreDurationHeroChart: View {
                     .interpolationMethod(.linear)
                 }
             }
-            exerciseMarkers
-            changeMarkers
+            gapDayEventMarkers
         }
         .chartXScale(domain: cutoffDate...chartEndDate)
         .chartYScale(domain: 0...snoreMinutesYMax)
@@ -798,6 +871,9 @@ private struct SnoreDurationHeroChart: View {
             .annotation(position: .top, spacing: 2) {
                 durationAnnotation(for: point)
             }
+            .annotation(position: .bottom, spacing: 4) {
+                barEventMarkers(for: point)
+            }
         }
     }
 
@@ -816,7 +892,7 @@ private struct SnoreDurationHeroChart: View {
             }
         } else {
             VStack(spacing: 3) {
-                Text("0m")
+                Text(selectedRange == .week ? "0m" : "0")
                     .font(.system(size: 9, weight: .semibold, design: .monospaced))
                     .foregroundStyle(Theme.labelSecondary)
                 Capsule()
@@ -828,54 +904,113 @@ private struct SnoreDurationHeroChart: View {
 
     private func durationAccessibilityLabel(for point: DailySnorePoint) -> String {
         let day = point.date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+        var label: String
         if point.snoreMinutes <= 0 {
-            return "\(day), quiet night, 0 minutes"
+            label = "\(day), quiet night, 0 minutes"
+        } else {
+            label = "\(day), \(minuteLabel(point.snoreMinutes))"
         }
-        return "\(day), \(minuteLabel(point.snoreMinutes))"
+        if hasExercise(on: point.date) {
+            label += ", airway exercises logged"
+        }
+        let settingsCount = settingsChangeCount(on: point.date)
+        if settingsCount == 1 {
+            label += ", settings changed"
+        } else if settingsCount > 1 {
+            label += ", \(settingsCount) settings changes"
+        }
+        return label
     }
 
+    /// Markers sit on the bar base for recorded nights — not on the x-axis.
+    @ViewBuilder
+    private func barEventMarkers(for point: DailySnorePoint) -> some View {
+        dayEventMarkerStack(for: point.date, style: .onBar)
+    }
+
+    /// Gap nights with exercise or settings get a single marker below the axis.
     @ChartContentBuilder
-    private var exerciseMarkers: some ChartContent {
-        ForEach(exerciseDaysInRange, id: \.self) { day in
+    private var gapDayEventMarkers: some ChartContent {
+        ForEach(gapEventDays, id: \.self) { day in
             PointMark(
                 x: .value("Date", day, unit: .day),
-                y: .value("Exercise", 0)
+                y: .value("Event", 0)
             )
-            .symbolSize(28)
-            .foregroundStyle(Theme.good.opacity(0.9))
-            .annotation(position: .bottom, spacing: 2) {
-                Image(systemName: "figure.mind.and.body")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(Theme.good)
+            .symbolSize(1)
+            .opacity(0.001)
+            .annotation(position: .bottom, spacing: 4) {
+                dayEventMarkerStack(for: day, style: .belowAxis)
             }
         }
     }
 
-    private var exerciseDaysInRange: [Date] {
+    private var gapEventDays: [Date] {
         dailyPoints
+            .filter { !$0.hadSession }
             .map(\.date)
-            .filter { exerciseLoggedDayStarts.contains($0) }
+            .filter { hasExercise(on: $0) || settingsChangeCount(on: $0) > 0 }
     }
 
-    @ChartContentBuilder
-    private var changeMarkers: some ChartContent {
-        ForEach(Array(settingsChanges.enumerated()), id: \.offset) { index, change in
-            PointMark(
-                x: .value(
-                    "Settings changed",
-                    Calendar.current.startOfDay(for: change.timestamp),
-                    unit: .day
-                ),
-                y: .value("Settings", 0)
-            )
-            .symbolSize(42)
-            .foregroundStyle(Theme.warning.opacity(0.92))
-            .annotation(position: .bottom, spacing: 2) {
-                Text("\(index + 1)")
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .foregroundStyle(Theme.warning)
+    private func dayStart(_ date: Date) -> Date {
+        Calendar.current.startOfDay(for: date)
+    }
+
+    private func hasExercise(on date: Date) -> Bool {
+        exerciseLoggedDayStarts.contains(dayStart(date))
+    }
+
+    private func settingsChangeCount(on date: Date) -> Int {
+        settingsChangesByDay[dayStart(date)] ?? 0
+    }
+
+    private var settingsChangesByDay: [Date: Int] {
+        settingsChanges.reduce(into: [:]) { counts, change in
+            let day = dayStart(change.timestamp)
+            counts[day, default: 0] += 1
+        }
+    }
+
+    private enum DayEventMarkerStyle {
+        case onBar
+        case belowAxis
+    }
+
+    @ViewBuilder
+    private func dayEventMarkerStack(for date: Date, style: DayEventMarkerStyle) -> some View {
+        let day = dayStart(date)
+        let exercised = hasExercise(on: day)
+        let settingsCount = settingsChangeCount(on: day)
+        if exercised || settingsCount > 0 {
+            let iconSize: CGFloat = style == .onBar ? 8 : 10
+
+            HStack(spacing: 4) {
+                if exercised {
+                    eventMarkerPill(
+                        systemImage: "figure.mind.and.body",
+                        color: Theme.good,
+                        iconSize: iconSize
+                    )
+                }
+                if settingsCount > 0 {
+                    eventMarkerPill(
+                        systemImage: "gearshape.fill",
+                        color: Theme.warning,
+                        iconSize: iconSize
+                    )
+                }
             }
         }
+    }
+
+    private func eventMarkerPill(systemImage: String, color: Color, iconSize: CGFloat) -> some View {
+        Image(systemName: systemImage)
+            .font(.system(size: iconSize, weight: .bold))
+            .foregroundStyle(color)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 3)
+            .background(Theme.background.opacity(0.9), in: Capsule())
+            .overlay(Capsule().strokeBorder(color.opacity(0.7), lineWidth: 1))
+            .shadow(color: Theme.background.opacity(0.35), radius: 1, y: 1)
     }
 
     @AxisContentBuilder
@@ -1095,7 +1230,7 @@ private struct SettingsChangeLegend: View {
 
             if isExpanded {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Numbered dots on the chart correspond to rows below.")
+                    Text("Icons on the chart mark exercise and settings changed. See rows below for settings details.")
                         .font(.caption)
                         .foregroundStyle(Theme.labelOnSurfaceSecondary)
                     VStack(spacing: 10) {
@@ -1484,7 +1619,7 @@ private struct HabitCorrelationChart: View {
     let xMax: Double
 
     private var bars: [HabitBarDatum] {
-        [
+        var result = [
             HabitBarDatum(
                 id: "with",
                 label: "Logged",
@@ -1502,6 +1637,23 @@ private struct HabitCorrelationChart: View {
                 color: Theme.accent
             )
         ]
+
+        if let signedDeltaLabel = point.signedDeltaLabel {
+            let delta = point.deltaMinutes
+            result.append(
+                HabitBarDatum(
+                    id: "delta",
+                    label: "Difference",
+                    minutes: abs(delta),
+                    nights: 0,
+                    isLowConfidence: false,
+                    color: delta > 0 ? Theme.snoring : Theme.good,
+                    customAnnotation: signedDeltaLabel
+                )
+            )
+        }
+
+        return result
     }
 
     var body: some View {
@@ -1513,14 +1665,7 @@ private struct HabitCorrelationChart: View {
             .foregroundStyle(bar.color.opacity(point.isLowConfidence ? 0.55 : 0.92))
             .cornerRadius(6)
             .annotation(position: .trailing, alignment: .leading, spacing: 6) {
-                HStack(spacing: 4) {
-                    Text(CorrelationMinuteChartStyle.minuteLabel(bar.minutes))
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundStyle(Theme.labelPrimary)
-                    Text("n=\(bar.nights)")
-                        .font(.system(size: 10, weight: .regular, design: .monospaced))
-                        .foregroundStyle(bar.isLowConfidence ? Theme.warning : Theme.labelOnSurfaceSecondary)
-                }
+                barAnnotation(for: bar)
             }
         }
         .chartXScale(domain: 0...xMax)
@@ -1546,9 +1691,34 @@ private struct HabitCorrelationChart: View {
         .frame(height: max(56, CGFloat(bars.count) * 52))
         .opacity(point.isLowConfidence ? 0.92 : 1)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
+        .accessibilityLabel(habitChartAccessibilityLabel)
+    }
+
+    @ViewBuilder
+    private func barAnnotation(for bar: HabitBarDatum) -> some View {
+        if let customAnnotation = bar.customAnnotation {
+            Text(customAnnotation)
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundStyle(Theme.labelPrimary)
+        } else {
+            HStack(spacing: 4) {
+                Text(CorrelationMinuteChartStyle.minuteLabel(bar.minutes))
+                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Theme.labelPrimary)
+                Text("n=\(bar.nights)")
+                    .font(.system(size: 10, weight: .regular, design: .monospaced))
+                    .foregroundStyle(bar.isLowConfidence ? Theme.warning : Theme.labelOnSurfaceSecondary)
+            }
+        }
+    }
+
+    private var habitChartAccessibilityLabel: String {
+        var label =
             "\(point.title). Logged \(HabitCorrelationPoint.minuteLabel(point.avgWithHabitMinutes)) over \(point.nightsWithHabit) nights. Not logged \(HabitCorrelationPoint.minuteLabel(point.avgWithoutHabitMinutes)) over \(point.nightsWithoutHabit) nights."
-        )
+        if let signedDeltaLabel = point.signedDeltaLabel {
+            label += " Difference \(signedDeltaLabel)."
+        }
+        return label
     }
 }
 
@@ -1559,4 +1729,5 @@ private struct HabitBarDatum: Identifiable {
     let nights: Int
     let isLowConfidence: Bool
     let color: Color
+    var customAnnotation: String?
 }

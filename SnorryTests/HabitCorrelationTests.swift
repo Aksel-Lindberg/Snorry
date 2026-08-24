@@ -192,6 +192,18 @@ struct HabitCorrelationTests {
         #expect(ateLate?.deltaSummary == "About the same on nights you ate late")
     }
 
+    @Test func signedDeltaLabelShowsSignedMinutes() {
+        let caffeine = habit(.caffeineLate, withMinutes: 17, withoutMinutes: 7)
+        #expect(caffeine.signedDeltaLabel == "+10m")
+        #expect(caffeine.deltaSummary == "+10m on nights you had caffeine late")
+
+        let exercise = habit(.myofascialExercise, withMinutes: 4, withoutMinutes: 10)
+        #expect(exercise.signedDeltaLabel == "−6m")
+
+        let flat = habit(.ateLate, withMinutes: 8, withoutMinutes: 8.5)
+        #expect(flat.signedDeltaLabel == nil)
+    }
+
     private func day(_ offset: Int) -> Date {
         let today = calendar.startOfDay(for: Date())
         return calendar.date(byAdding: .day, value: offset, to: today)!
@@ -527,6 +539,33 @@ struct AnalyticsPeriodBoundsTests {
             ) == nil
         )
         #expect(AnalyticsRange.threeMonths.allowsPaging == false)
+    }
+
+    @Test func threeMonthsPreviousBoundsIsPrior90DayBlock() {
+        let now = date(2026, 8, 19)
+        let current = AnalyticsViewModel.visibleBounds(
+            range: .threeMonths,
+            offset: 0,
+            now: now,
+            calendar: calendar
+        )
+        let previous = AnalyticsViewModel.previousBounds(
+            before: current!.start,
+            range: .threeMonths,
+            calendar: calendar
+        )
+
+        let expectedStart = calendar.date(byAdding: .day, value: -90, to: current!.start)!
+        let expectedLastDay = calendar.date(byAdding: .day, value: -1, to: previous!.endExclusive)!
+
+        #expect(previous?.start == calendar.startOfDay(for: expectedStart))
+        #expect(previous?.endExclusive == current?.start)
+        #expect(previous?.lastDayStart == calendar.startOfDay(for: expectedLastDay))
+    }
+
+    @Test func hasComparablePreviousPeriodRequiresRecordedSessions() {
+        #expect(AnalyticsViewModel.hasComparablePreviousPeriod(previousSessionCount: 0) == false)
+        #expect(AnalyticsViewModel.hasComparablePreviousPeriod(previousSessionCount: 3) == true)
     }
 
     @Test func cannotPageBackBeforeOldestSessionWeek() {

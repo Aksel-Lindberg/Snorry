@@ -108,13 +108,21 @@ struct HabitCorrelationPoint: Identifiable {
     var isLowConfidenceWithout: Bool { nightsWithoutHabit < 3 }
     var isLowConfidence: Bool { isLowConfidenceWith || isLowConfidenceWithout }
 
-    /// One-line finding for the selected habit.
-    var deltaSummary: String {
-        if abs(deltaMinutes) < InsightsConfiguration.minimumHabitDeltaMinutesForInsight {
-            return "About the same \(insightClause)"
+    /// Signed minute label for chart delta row (e.g. "+10m", "−9m").
+    var signedDeltaLabel: String? {
+        guard abs(deltaMinutes) >= InsightsConfiguration.minimumHabitDeltaMinutesForInsight else {
+            return nil
         }
         let sign = deltaMinutes > 0 ? "+" : "−"
-        return "\(sign)\(Self.minuteLabel(abs(deltaMinutes))) \(insightClause)"
+        return "\(sign)\(Self.minuteLabel(abs(deltaMinutes)))"
+    }
+
+    /// One-line finding for the selected habit.
+    var deltaSummary: String {
+        guard let signedDeltaLabel else {
+            return "About the same \(insightClause)"
+        }
+        return "\(signedDeltaLabel) \(insightClause)"
     }
 
     static func minuteLabel(_ minutes: Double) -> String {
@@ -229,6 +237,15 @@ final class AnalyticsViewModel {
     }
 
     var hasSessionDataInPeriod: Bool { !currentPeriod.sessionDays.isEmpty }
+
+    /// True when the prior window has at least one recorded session (meaningful period-over-period KPIs).
+    var hasComparablePreviousPeriod: Bool {
+        Self.hasComparablePreviousPeriod(previousSessionCount: previousPeriod.sessionCount)
+    }
+
+    static func hasComparablePreviousPeriod(previousSessionCount: Int) -> Bool {
+        previousSessionCount > 0
+    }
 
     var averageDurationPercentChange: Double? {
         Self.percentChange(
