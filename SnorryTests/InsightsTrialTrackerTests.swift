@@ -68,6 +68,30 @@ struct InsightsTrialTrackerTests {
         #expect(InsightsTrialTracker.canAccessInsights(hasPremium: true, context: context))
     }
 
+    @Test func twoSessionsSameSleepNightCountAsOne() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        UserDefaults.standard.removeObject(forKey: maxNightCountKey)
+
+        insertCompletedSession(on: dayWithTime(offsetDays: 0, hour: 22), in: context)
+        insertCompletedSession(on: dayWithTime(offsetDays: 0, hour: 23), in: context)
+        try context.save()
+
+        #expect(InsightsTrialTracker.uniqueCompletedNightCount(in: context) == 1)
+    }
+
+    @Test func afterMidnightAndEveningSameCalendarDateCountAsTwoNights() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        UserDefaults.standard.removeObject(forKey: maxNightCountKey)
+
+        insertCompletedSession(on: dayWithTime(offsetDays: 0, hour: 0, minute: 52), in: context)
+        insertCompletedSession(on: dayWithTime(offsetDays: 0, hour: 23, minute: 11), in: context)
+        try context.save()
+
+        #expect(InsightsTrialTracker.uniqueCompletedNightCount(in: context) == 2)
+    }
+
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
@@ -80,6 +104,12 @@ struct InsightsTrialTrackerTests {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         return calendar.date(byAdding: .day, value: offset, to: today)!
+    }
+
+    private func dayWithTime(offsetDays: Int, hour: Int, minute: Int = 0) -> Date {
+        let calendar = Calendar.current
+        let day = day(offsetDays)
+        return calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day)!
     }
 
     private func insertCompletedSession(on start: Date, in context: ModelContext) {

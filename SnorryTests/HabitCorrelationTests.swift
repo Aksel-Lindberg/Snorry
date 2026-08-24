@@ -367,3 +367,249 @@ struct InsightHabitCopyTests {
         return calendar.date(byAdding: .day, value: offset, to: today)!
     }
 }
+
+// MARK: - Calendar week / month paging
+struct AnalyticsPeriodBoundsTests {
+
+    private var calendar: Calendar {
+        var cal = Calendar(identifier: .gregorian)
+        cal.firstWeekday = 2
+        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+        return cal
+    }
+
+    @Test func thisWeekCapsAtToday() {
+        let wednesday = date(2026, 8, 19)
+        let bounds = AnalyticsViewModel.visibleBounds(
+            range: .week,
+            offset: 0,
+            now: wednesday,
+            calendar: calendar
+        )
+        #expect(bounds?.start == date(2026, 8, 17))
+        #expect(bounds?.lastDayStart == date(2026, 8, 19))
+        #expect(bounds?.endExclusive == date(2026, 8, 20))
+    }
+
+    @Test func previousWeekIsFullSevenDays() {
+        let wednesday = date(2026, 8, 19)
+        let thisWeek = AnalyticsViewModel.visibleBounds(
+            range: .week,
+            offset: 0,
+            now: wednesday,
+            calendar: calendar
+        )
+        let previous = AnalyticsViewModel.previousBounds(
+            before: thisWeek!.start,
+            range: .week,
+            calendar: calendar
+        )
+        #expect(previous?.start == date(2026, 8, 10))
+        #expect(previous?.lastDayStart == date(2026, 8, 16))
+        #expect(previous?.endExclusive == date(2026, 8, 17))
+    }
+
+    @Test func thisMonthCapsAtToday() {
+        let wednesday = date(2026, 8, 19)
+        let bounds = AnalyticsViewModel.visibleBounds(
+            range: .month,
+            offset: 0,
+            now: wednesday,
+            calendar: calendar
+        )
+        #expect(bounds?.start == date(2026, 8, 1))
+        #expect(bounds?.lastDayStart == date(2026, 8, 19))
+        #expect(bounds?.endExclusive == date(2026, 8, 20))
+    }
+
+    @Test func previousMonthIsFullCalendarMonth() {
+        let wednesday = date(2026, 8, 19)
+        let thisMonth = AnalyticsViewModel.visibleBounds(
+            range: .month,
+            offset: 0,
+            now: wednesday,
+            calendar: calendar
+        )
+        let previous = AnalyticsViewModel.previousBounds(
+            before: thisMonth!.start,
+            range: .month,
+            calendar: calendar
+        )
+        #expect(previous?.start == date(2026, 7, 1))
+        #expect(previous?.lastDayStart == date(2026, 7, 31))
+        #expect(previous?.endExclusive == date(2026, 8, 1))
+    }
+
+    @Test func threeMonthsDoesNotPage() {
+        let now = date(2026, 8, 19)
+        #expect(
+            AnalyticsViewModel.visibleBounds(
+                range: .threeMonths,
+                offset: -1,
+                now: now,
+                calendar: calendar
+            ) == nil
+        )
+        #expect(AnalyticsRange.threeMonths.allowsPaging == false)
+    }
+
+    @Test func cannotPageBackBeforeOldestSessionWeek() {
+        let now = date(2026, 8, 19)
+        #expect(
+            AnalyticsViewModel.canPageBack(
+                range: .week,
+                offset: 0,
+                now: now,
+                oldestSession: date(2026, 8, 18),
+                calendar: calendar
+            ) == false
+        )
+        #expect(
+            AnalyticsViewModel.canPageBack(
+                range: .week,
+                offset: 0,
+                now: now,
+                oldestSession: date(2026, 8, 10),
+                calendar: calendar
+            ) == true
+        )
+    }
+
+    @Test func weekRangeLabelOmitsRepeatedMonth() {
+        let label = AnalyticsViewModel.weekRangeLabel(
+            from: date(2026, 8, 17),
+            through: date(2026, 8, 23)
+        )
+        #expect(label.contains("17"))
+        #expect(label.contains("23"))
+        #expect(label.contains("Aug"))
+    }
+
+    private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: day))!
+    }
+}
+
+// MARK: - Sleep night bucketing
+struct SleepNightTests {
+
+    private var calendar: Calendar {
+        var cal = Calendar(identifier: .gregorian)
+        cal.firstWeekday = 2
+        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+        return cal
+    }
+
+    @Test func beforeSixAMMapsToPreviousNight() {
+        let night = SleepNight.dayStart(
+            for: dateTime(2026, 8, 17, hour: 0, minute: 52),
+            calendar: calendar
+        )
+        #expect(night == date(2026, 8, 16))
+    }
+
+    @Test func fiveFiftyNineMapsToPreviousNight() {
+        let night = SleepNight.dayStart(
+            for: dateTime(2026, 8, 17, hour: 5, minute: 59),
+            calendar: calendar
+        )
+        #expect(night == date(2026, 8, 16))
+    }
+
+    @Test func sixAMStaysOnSameCalendarDay() {
+        let night = SleepNight.dayStart(
+            for: dateTime(2026, 8, 17, hour: 6, minute: 0),
+            calendar: calendar
+        )
+        #expect(night == date(2026, 8, 17))
+    }
+
+    @Test func lateEveningStaysOnSameCalendarDay() {
+        let night = SleepNight.dayStart(
+            for: dateTime(2026, 8, 17, hour: 23, minute: 11),
+            calendar: calendar
+        )
+        #expect(night == date(2026, 8, 17))
+    }
+
+    @Test func sameCalendarDateDifferentSleepNightsProduceTwoBuckets() {
+        let sessions = [
+            makeSession(start: dateTime(2026, 8, 17, hour: 0, minute: 52), minutes: 0, events: 0),
+            makeSession(start: dateTime(2026, 8, 17, hour: 23, minute: 11), minutes: 3, events: 12)
+        ]
+        let aggregated = SleepNight.aggregateByNight(sessions: sessions, calendar: calendar)
+        #expect(aggregated.durationByDay.count == 2)
+        #expect(aggregated.durationByDay[date(2026, 8, 16)] == 0)
+        #expect(aggregated.durationByDay[date(2026, 8, 17)] == 3)
+        #expect(aggregated.eventsByDay[date(2026, 8, 16)] == 0)
+        #expect(aggregated.eventsByDay[date(2026, 8, 17)] == 12)
+    }
+
+    @Test func twoRecordingsSameSleepNightAreSummed() {
+        let sessions = [
+            makeSession(start: dateTime(2026, 8, 17, hour: 22, minute: 30), minutes: 2, events: 4),
+            makeSession(start: dateTime(2026, 8, 17, hour: 23, minute: 45), minutes: 5, events: 8)
+        ]
+        let aggregated = SleepNight.aggregateByNight(sessions: sessions, calendar: calendar)
+        #expect(aggregated.durationByDay.count == 1)
+        #expect(aggregated.durationByDay[date(2026, 8, 17)] == 7)
+        #expect(aggregated.eventsByDay[date(2026, 8, 17)] == 12)
+        #expect(aggregated.sessionsByDay[date(2026, 8, 17)]?.count == 2)
+    }
+
+    @Test func afterMidnightSessionBelongsToPreviousWeek() {
+        let session = makeSession(
+            start: dateTime(2026, 8, 17, hour: 0, minute: 52),
+            minutes: 0,
+            events: 0
+        )
+        let previousWeekEnd = date(2026, 8, 16)
+        let currentWeekStart = date(2026, 8, 17)
+
+        let inPreviousWeek = SleepNight.completedSessions(
+            in: [session],
+            rangeStart: date(2026, 8, 10),
+            rangeEnd: previousWeekEnd,
+            calendar: calendar
+        )
+        let inCurrentWeek = SleepNight.completedSessions(
+            in: [session],
+            rangeStart: currentWeekStart,
+            rangeEnd: date(2026, 8, 19),
+            calendar: calendar
+        )
+
+        #expect(inPreviousWeek.count == 1)
+        #expect(inCurrentWeek.isEmpty)
+    }
+
+    @Test func canPageBackWhenOldestSessionIsAfterMidnightMonday() {
+        let now = dateTime(2026, 8, 19, hour: 12)
+        let oldestSession = dateTime(2026, 8, 17, hour: 0, minute: 52)
+        #expect(
+            AnalyticsViewModel.canPageBack(
+                range: .week,
+                offset: 0,
+                now: now,
+                oldestSession: oldestSession,
+                calendar: calendar
+            )
+        )
+    }
+
+    private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: day))!
+    }
+
+    private func dateTime(_ year: Int, _ month: Int, _ day: Int, hour: Int, minute: Int) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute))!
+    }
+
+    private func makeSession(start: Date, minutes: Double, events: Int) -> SnoreSession {
+        let session = SnoreSession(startDate: start)
+        session.endDate = start.addingTimeInterval(6 * 3600)
+        session.totalSnoreDuration = minutes * 60
+        session.eventCount = events
+        return session
+    }
+}

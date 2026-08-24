@@ -105,6 +105,7 @@
 		HBT0012EAA4B00C99A000A /* CustomHabit.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0009 /* CustomHabit.swift */; };
 		HBT0012EAA4B00C99A000C /* HabitDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A000B /* HabitDefinition.swift */; };
 		INS00012EAA4B00C99A0002 /* InsightsConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */; };
+		SLP00012EAA4B00C99A0004 /* SleepNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = SLP00012EAA4B00C99A0003 /* SleepNight.swift */; };
 		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
 		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
 		MFX0012EAA4B00C99A0002 /* MyofascialExercise.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */; };
@@ -240,6 +241,7 @@
 		HBT0012EAA4B00C99A0009 /* CustomHabit.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CustomHabit.swift; path = Models/CustomHabit.swift; sourceTree = "<group>"; };
 		HBT0012EAA4B00C99A000B /* HabitDefinition.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitDefinition.swift; path = Models/HabitDefinition.swift; sourceTree = "<group>"; };
 		INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InsightsConfiguration.swift; path = Utilities/InsightsConfiguration.swift; sourceTree = "<group>"; };
+		SLP00012EAA4B00C99A0003 /* SleepNight.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepNight.swift; path = Utilities/SleepNight.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0001 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
 		MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExercise.swift; path = Models/MyofascialExercise.swift; sourceTree = "<group>"; };
@@ -392,6 +394,7 @@
 				F8A2B3C4D5E60718293A4B5C /* SnoreRumbleGate.swift */,
 				E0D7E4820D5B40D5D01D18D1 /* Theme.swift */,
 				INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */,
+				SLP00012EAA4B00C99A0003 /* SleepNight.swift */,
 				A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */,
 				SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */,
 				E5F60009A1B2C3D4E5F6000A /* AppReviewPrompter.swift */,
@@ -673,6 +676,7 @@
 				F8A2B3C4D5E60718293A4B5D /* SnoreRumbleGate.swift in Sources */,
 				5AE41B3C3FD7C95969F2831C /* Theme.swift in Sources */,
 				INS00012EAA4B00C99A0002 /* InsightsConfiguration.swift in Sources */,
+				SLP00012EAA4B00C99A0004 /* SleepNight.swift in Sources */,
 				A1B2C3D4E5F60005A1B2C3D5 /* UserPreferences.swift in Sources */,
 				SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */,
 				E5F60007A1B2C3D4E5F60008 /* AppReviewPrompter.swift in Sources */,

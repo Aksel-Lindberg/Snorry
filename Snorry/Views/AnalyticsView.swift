@@ -128,8 +128,7 @@ private struct AnalyticsContent: View {
                     points: vm.habitCorrelationPoints,
                     range: vm.selectedRange,
                     onSelectMonth: {
-                        vm.selectedRange = .month
-                        vm.refresh()
+                        vm.setRange(.month)
                     }
                 )
                 if !vm.settingsChanges.isEmpty {
@@ -185,14 +184,69 @@ private struct AnalyticsContent: View {
     // MARK: Range picker
 
     private var rangePicker: some View {
-        Picker("Range", selection: $vm.selectedRange) {
-            ForEach(AnalyticsRange.allCases) { range in
-                Text(range.rawValue).tag(range)
+        VStack(spacing: 12) {
+            Picker("Range", selection: Binding(
+                get: { vm.selectedRange },
+                set: { vm.setRange($0) }
+            )) {
+                ForEach(AnalyticsRange.allCases) { range in
+                    Text(range.rawValue).tag(range)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            if vm.selectedRange.allowsPaging {
+                periodPager
             }
         }
-        .pickerStyle(.segmented)
         .padding(.top, 4)
-        .onChange(of: vm.selectedRange) { _, _ in vm.refresh() }
+    }
+
+    private var periodPager: some View {
+        HStack(spacing: 8) {
+            Button {
+                vm.goToPreviousPeriod()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.body.weight(.semibold))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .disabled(!vm.canGoBack)
+            .opacity(vm.canGoBack ? 1 : 0.35)
+            .accessibilityLabel("Previous \(vm.selectedRange.pagingUnitName)")
+
+            Spacer(minLength: 8)
+
+            VStack(spacing: 2) {
+                Text(vm.periodTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.labelPrimary)
+                    .multilineTextAlignment(.center)
+                if let subtitle = vm.periodSubtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                }
+            }
+            .accessibilityElement(children: .combine)
+
+            Spacer(minLength: 8)
+
+            Button {
+                vm.goToNextPeriod()
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.body.weight(.semibold))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .disabled(!vm.canGoForward)
+            .opacity(vm.canGoForward ? 1 : 0.35)
+            .accessibilityLabel("Next \(vm.selectedRange.pagingUnitName)")
+        }
+        .foregroundStyle(Theme.accent)
+        .buttonStyle(.plain)
     }
 
     // MARK: Summary metric cards
@@ -310,6 +364,7 @@ private struct AnalyticsContent: View {
                     trendLinePoints: vm.trendLinePoints,
                     exerciseLoggedDayStarts: vm.exerciseLoggedDayStarts,
                     cutoffDate: vm.cutoffDate,
+                    chartEndDate: vm.chartEndDate,
                     snoreMinutesYMax: vm.snoreMinutesYMax,
                     selectedRange: vm.selectedRange,
                     selectedDay: $selectedChartDay
@@ -324,6 +379,7 @@ private struct AnalyticsContent: View {
                 CollapsibleSnoreEventsChart(
                     dailyPoints: vm.dailyPoints,
                     cutoffDate: vm.cutoffDate,
+                    chartEndDate: vm.chartEndDate,
                     eventCountYMax: vm.eventCountYMax,
                     selectedRange: vm.selectedRange,
                     isExpanded: $areEventsExpanded
@@ -598,6 +654,7 @@ private struct SnoreDurationHeroChart: View {
     let trendLinePoints: [TrendLinePoint]?
     let exerciseLoggedDayStarts: Set<Date>
     let cutoffDate: Date
+    let chartEndDate: Date
     let snoreMinutesYMax: Double
     let selectedRange: AnalyticsRange
     @Binding var selectedDay: Date?
@@ -623,7 +680,7 @@ private struct SnoreDurationHeroChart: View {
             exerciseMarkers
             changeRules(yMax: snoreMinutesYMax)
         }
-        .chartXScale(domain: cutoffDate...Date())
+        .chartXScale(domain: cutoffDate...chartEndDate)
         .chartYScale(domain: 0...snoreMinutesYMax)
         .chartXAxis { xAxisContent }
         .chartYAxis { minuteYAxisContent() }
@@ -778,6 +835,7 @@ private struct CollapsibleSnoreEventsChart: View {
 
     let dailyPoints: [DailySnorePoint]
     let cutoffDate: Date
+    let chartEndDate: Date
     let eventCountYMax: Double
     let selectedRange: AnalyticsRange
     @Binding var isExpanded: Bool
@@ -824,7 +882,7 @@ private struct CollapsibleSnoreEventsChart: View {
                         }
                     }
                 }
-                .chartXScale(domain: cutoffDate...Date())
+                .chartXScale(domain: cutoffDate...chartEndDate)
                 .chartYScale(domain: 0...eventCountYMax)
                 .chartXAxis { xAxisContent }
                 .chartYAxis { intYAxisContent() }

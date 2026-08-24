@@ -495,7 +495,7 @@ private struct SleepAllyDiscoverPromoLabel: View {
                 Image(systemName: "moon.stars.fill")
                     .font(.title3)
                     .foregroundStyle(Theme.accentGradient)
-                    .symbolEffect(.bounce, options: .repeating.speed(0.45))
+                    .modifier(RepeatingBounceSymbolEffectIfAvailable())
                     .symbolEffect(.pulse.byLayer, options: .repeating.speed(0.55))
 
                 Image(systemName: "sparkles")
@@ -554,6 +554,17 @@ private struct SleepAllyDiscoverPromoLabel: View {
             .blendMode(.plusLighter)
         }
         .allowsHitTesting(false)
+    }
+}
+
+/// Repeating bounce is an indefinite symbol effect only on iOS 18+.
+private struct RepeatingBounceSymbolEffectIfAvailable: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.symbolEffect(.bounce, options: .repeating.speed(0.45))
+        } else {
+            content
+        }
     }
 }
 

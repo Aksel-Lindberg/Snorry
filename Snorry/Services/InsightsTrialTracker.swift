@@ -40,7 +40,9 @@ enum InsightsTrialTracker {
         )
         let sessions = (try? context.fetch(descriptor)) ?? []
         let calendar = Calendar.current
-        let nights = Set(sessions.map { calendar.startOfDay(for: $0.startDate) })
+        let nights = Set(
+            sessions.map { SleepNight.dayStart(for: $0.startDate, calendar: calendar) }
+        )
         return nights.count
     }
 }

@@ -229,7 +229,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chart.bar.fill",
                                 title: "Daily snore duration",
-                                detail: "The main chart shows minutes for every day in the range, a dashed trend line when you have enough data, green markers when you logged airway exercises that day, and numbered markers when alert settings were saved. Tap a day to open that night in Sleep History. Expand Snore events below the chart for event counts."
+                                detail: "The main chart shows minutes for every sleep night in the range, a dashed trend line when you have enough data, green markers when you logged airway exercises that day, and numbered markers when alert settings were saved. Tap a day to open that night in Sleep History. Recordings that start after midnight and before 6:00 count as the previous night; two recordings on the same sleep night are added together. Expand Snore events below the chart for event counts."
                             )
                             HelpBullet(
                                 icon: "mappin.and.ellipse",

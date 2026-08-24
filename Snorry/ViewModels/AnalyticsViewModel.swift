@@ -10,6 +10,7 @@ enum AnalyticsRange: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Rolling length used by the 3 Months window. Week and Month use calendar intervals.
     var days: Int {
         switch self {
         case .week:        return 7
@@ -21,14 +22,33 @@ enum AnalyticsRange: String, CaseIterable, Identifiable {
     /// Wording for period-over-period KPI subtitles.
     var previousPeriodLabel: String {
         switch self {
-        case .week:        return "last week"
-        case .month:       return "last month"
+        case .week:        return "prior week"
+        case .month:       return "prior month"
         case .threeMonths: return "prior 3 months"
         }
     }
 
     /// Habit comparisons need more than a week of nights.
     var showsHabitCorrelation: Bool { self != .week }
+
+    /// Calendar week/month can page; 3 Months stays a rolling 90-day window.
+    var allowsPaging: Bool { self != .threeMonths }
+
+    var pagingUnitName: String {
+        switch self {
+        case .week:        return "week"
+        case .month:       return "month"
+        case .threeMonths: return "period"
+        }
+    }
+}
+
+/// Inclusive start-of-day through exclusive end for one Insights window.
+struct AnalyticsVisibleBounds: Equatable {
+    let start: Date
+    let endExclusive: Date
+    /// Last start-of-day included in the dense daily series.
+    let lastDayStart: Date
 }
 
 // MARK: - Aggregated snore data for one calendar day
@@ -150,6 +170,9 @@ struct TrendLinePoint: Identifiable {
 final class AnalyticsViewModel {
 
     var selectedRange: AnalyticsRange = .week
+    /// 0 = the period containing today; negative values move backward.
+    var periodOffset: Int = 0
+    var visibleBounds: AnalyticsVisibleBounds?
     var currentPeriod = PeriodSnapshot(
         sessionCount: 0,
         averageDailySnoreMinutes: 0,
@@ -168,6 +191,7 @@ final class AnalyticsViewModel {
     var alertProfilePoints: [AlertProfilePoint] = []
     var habitCorrelationPoints: [HabitCorrelationPoint] = []
     var exerciseLoggedDayStarts: Set<Date> = []
+    private var oldestSessionStart: Date?
 
     private let context: ModelContext
 
@@ -221,37 +245,121 @@ final class AnalyticsViewModel {
         currentPeriod.nightsUnderThreshold - previousPeriod.nightsUnderThreshold
     }
 
+    var canGoForward: Bool { selectedRange.allowsPaging && periodOffset < 0 }
+
+    var canGoBack: Bool {
+        Self.canPageBack(
+            range: selectedRange,
+            offset: periodOffset,
+            now: Date(),
+            oldestSession: oldestSessionStart,
+            calendar: Calendar.current
+        )
+    }
+
+    var periodTitle: String {
+        guard let bounds = visibleBounds else { return selectedRange.rawValue }
+        switch selectedRange {
+        case .week:
+            return periodOffset == 0 ? "This week" : Self.weekRangeLabel(from: bounds.start, through: bounds.lastDayStart)
+        case .month:
+            return periodOffset == 0 ? "This month" : Self.monthLabel(bounds.start)
+        case .threeMonths:
+            return "Last 90 days"
+        }
+    }
+
+    var periodSubtitle: String? {
+        guard let bounds = visibleBounds else { return nil }
+        switch selectedRange {
+        case .week:
+            return periodOffset == 0
+                ? Self.weekRangeLabel(from: bounds.start, through: bounds.lastDayStart)
+                : nil
+        case .month:
+            return periodOffset == 0 ? Self.monthLabel(bounds.start) : nil
+        case .threeMonths:
+            return nil
+        }
+    }
+
+    func setRange(_ range: AnalyticsRange) {
+        selectedRange = range
+        periodOffset = 0
+        refresh()
+    }
+
+    func goToPreviousPeriod() {
+        guard canGoBack else { return }
+        periodOffset -= 1
+        refresh()
+    }
+
+    func goToNextPeriod() {
+        guard canGoForward else { return }
+        periodOffset += 1
+        refresh()
+    }
+
     // MARK: Data loading
 
     func refresh() {
         let cal = Calendar.current
         let now = Date()
-        guard let cutoff = cal.date(byAdding: .day, value: -selectedRange.days, to: now),
-              let previousCutoff = cal.date(byAdding: .day, value: -selectedRange.days, to: cutoff) else {
-            return
+        oldestSessionStart = fetchOldestSessionStart()
+
+        if !selectedRange.allowsPaging {
+            periodOffset = 0
         }
 
-        let rangeStart = cal.startOfDay(for: previousCutoff)
-        let currentCutoff = cutoff
+        guard let visible = Self.visibleBounds(
+            range: selectedRange,
+            offset: periodOffset,
+            now: now,
+            calendar: cal
+        ) else { return }
+        visibleBounds = visible
 
-        let sessions = fetchSessions(since: rangeStart)
+        guard let previous = Self.previousBounds(
+            before: visible.start,
+            range: selectedRange,
+            calendar: cal
+        ) else { return }
+
+        let fetchEnd = SleepNight.fetchEndExclusive(after: visible.endExclusive, calendar: cal)
+        let sessions = fetchSessions(from: previous.start, until: fetchEnd)
         currentPeriod = Self.buildPeriodSnapshot(
-            sessions: sessions.filter { $0.startDate >= currentCutoff },
-            rangeStart: cal.startOfDay(for: currentCutoff),
-            rangeEnd: cal.startOfDay(for: now),
+            sessions: SleepNight.completedSessions(
+                in: sessions,
+                rangeStart: visible.start,
+                rangeEnd: visible.lastDayStart,
+                calendar: cal
+            ),
+            rangeStart: visible.start,
+            rangeEnd: visible.lastDayStart,
             calendar: cal
         )
         previousPeriod = Self.buildPeriodSnapshot(
-            sessions: sessions.filter { $0.startDate >= rangeStart && $0.startDate < currentCutoff },
-            rangeStart: rangeStart,
-            rangeEnd: cal.startOfDay(for: currentCutoff),
+            sessions: SleepNight.completedSessions(
+                in: sessions,
+                rangeStart: previous.start,
+                rangeEnd: previous.lastDayStart,
+                calendar: cal
+            ),
+            rangeStart: previous.start,
+            rangeEnd: previous.lastDayStart,
             calendar: cal
         )
 
-        loadSettingsChanges(since: currentCutoff)
-        loadAlertCorrelation(since: currentCutoff)
-        loadExerciseDays(since: currentCutoff, calendar: cal)
-        loadHabitCorrelation(since: currentCutoff, calendar: cal)
+        loadSettingsChanges(from: visible.start, until: visible.endExclusive)
+        loadAlertCorrelation(
+            rangeStart: visible.start,
+            rangeEnd: visible.lastDayStart,
+            fetchEndExclusive: fetchEnd,
+            calendar: cal
+        )
+        loadExerciseDays(from: visible.start, until: visible.endExclusive, calendar: cal)
+        loadHabitCorrelation(from: visible.start, until: visible.endExclusive, calendar: cal)
     }
 
     func sessions(on dayStart: Date) -> [SnoreSession] {
@@ -284,7 +392,118 @@ final class AnalyticsViewModel {
     // MARK: Computed chart helpers
 
     var cutoffDate: Date {
-        Calendar.current.date(byAdding: .day, value: -selectedRange.days, to: Date()) ?? Date()
+        visibleBounds?.start ?? Date()
+    }
+
+    var chartEndDate: Date {
+        guard let bounds = visibleBounds else { return Date() }
+        if periodOffset == 0 { return Date() }
+        return bounds.endExclusive.addingTimeInterval(-1)
+    }
+
+    // MARK: Period bounds
+
+    static func visibleBounds(
+        range: AnalyticsRange,
+        offset: Int,
+        now: Date,
+        calendar: Calendar
+    ) -> AnalyticsVisibleBounds? {
+        let today = calendar.startOfDay(for: now)
+
+        switch range {
+        case .threeMonths:
+            guard offset == 0,
+                  let rawStart = calendar.date(byAdding: .day, value: -range.days, to: now) else {
+                return nil
+            }
+            let start = calendar.startOfDay(for: rawStart)
+            let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? now
+            return AnalyticsVisibleBounds(start: start, endExclusive: tomorrow, lastDayStart: today)
+
+        case .week, .month:
+            let component: Calendar.Component = range == .week ? .weekOfYear : .month
+            guard let dayInPeriod = calendar.date(byAdding: component, value: offset, to: now),
+                  let interval = calendar.dateInterval(of: component, for: dayInPeriod) else {
+                return nil
+            }
+            return cappedBounds(
+                start: interval.start,
+                endExclusive: interval.end,
+                today: today,
+                calendar: calendar
+            )
+        }
+    }
+
+    static func previousBounds(
+        before visibleStart: Date,
+        range: AnalyticsRange,
+        calendar: Calendar
+    ) -> AnalyticsVisibleBounds? {
+        switch range {
+        case .week, .month:
+            let component: Calendar.Component = range == .week ? .weekOfYear : .month
+            guard let dayBefore = calendar.date(byAdding: .day, value: -1, to: visibleStart),
+                  let interval = calendar.dateInterval(of: component, for: dayBefore) else {
+                return nil
+            }
+            let lastDay = calendar.date(byAdding: .day, value: -1, to: interval.end) ?? interval.start
+            return AnalyticsVisibleBounds(
+                start: interval.start,
+                endExclusive: interval.end,
+                lastDayStart: lastDay
+            )
+        case .threeMonths:
+            let end = calendar.startOfDay(for: visibleStart)
+            guard let start = calendar.date(byAdding: .day, value: -range.days, to: end) else { return nil }
+            let lastDay = calendar.date(byAdding: .day, value: -1, to: end) ?? start
+            return AnalyticsVisibleBounds(start: start, endExclusive: end, lastDayStart: lastDay)
+        }
+    }
+
+    static func canPageBack(
+        range: AnalyticsRange,
+        offset: Int,
+        now: Date,
+        oldestSession: Date?,
+        calendar: Calendar
+    ) -> Bool {
+        guard range.allowsPaging, let oldestSession else { return false }
+        let oldestSleepNight = SleepNight.dayStart(for: oldestSession, calendar: calendar)
+        guard let visible = visibleBounds(range: range, offset: offset, now: now, calendar: calendar),
+              let oldestPeriod = visibleBounds(range: range, offset: 0, now: oldestSleepNight, calendar: calendar) else {
+            return false
+        }
+        return visible.start > oldestPeriod.start
+    }
+
+    static func weekRangeLabel(from start: Date, through end: Date) -> String {
+        let startMonth = start.formatted(.dateTime.month(.abbreviated))
+        let endMonth = end.formatted(.dateTime.month(.abbreviated))
+        let startDay = start.formatted(.dateTime.day())
+        let endDay = end.formatted(.dateTime.day())
+        if startMonth == endMonth {
+            return "\(startDay)–\(endDay) \(endMonth)"
+        }
+        return "\(startDay) \(startMonth)–\(endDay) \(endMonth)"
+    }
+
+    static func monthLabel(_ date: Date) -> String {
+        date.formatted(.dateTime.month(.wide).year())
+    }
+
+    private static func cappedBounds(
+        start: Date,
+        endExclusive: Date,
+        today: Date,
+        calendar: Calendar
+    ) -> AnalyticsVisibleBounds? {
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? today
+        let cappedEnd = min(endExclusive, tomorrow)
+        guard cappedEnd > start else { return nil }
+        let lastDay = calendar.date(byAdding: .day, value: -1, to: cappedEnd) ?? start
+        return AnalyticsVisibleBounds(start: start, endExclusive: cappedEnd, lastDayStart: lastDay)
     }
 
     var snoreMinutesYMax: Double {
@@ -310,12 +529,21 @@ final class AnalyticsViewModel {
 
     // MARK: Private helpers
 
-    private func fetchSessions(since rangeStart: Date) -> [SnoreSession] {
+    private func fetchOldestSessionStart() -> Date? {
+        var descriptor = FetchDescriptor<SnoreSession>(
+            sortBy: [SortDescriptor(\.startDate, order: .forward)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first?.startDate
+    }
+
+    private func fetchSessions(from start: Date, until endExclusive: Date) -> [SnoreSession] {
         let descriptor = FetchDescriptor<SnoreSession>(
-            predicate: #Predicate { $0.startDate >= rangeStart },
+            predicate: #Predicate { $0.startDate >= start },
             sortBy: [SortDescriptor(\.startDate)]
         )
-        return (try? context.fetch(descriptor)) ?? []
+        let rows = (try? context.fetch(descriptor)) ?? []
+        return rows.filter { $0.startDate < endExclusive }
     }
 
     private static func buildPeriodSnapshot(
@@ -324,22 +552,11 @@ final class AnalyticsViewModel {
         rangeEnd: Date,
         calendar: Calendar
     ) -> PeriodSnapshot {
-        var durationByDay: [Date: Double] = [:]
-        var eventsByDay: [Date: Int] = [:]
-        var sessionsByDay: [Date: [SnoreSession]] = [:]
-        var totalSessions = 0
-
-        for session in sessions where session.endDate != nil {
-            let day = calendar.startOfDay(for: session.startDate)
-            durationByDay[day, default: 0] += session.totalSnoreDuration / 60.0
-            eventsByDay[day, default: 0] += session.displayEventCount
-            sessionsByDay[day, default: []].append(session)
-            totalSessions += 1
-        }
-
-        for key in sessionsByDay.keys {
-            sessionsByDay[key]?.sort { $0.startDate > $1.startDate }
-        }
+        let aggregated = SleepNight.aggregateByNight(sessions: sessions, calendar: calendar)
+        let durationByDay = aggregated.durationByDay
+        let eventsByDay = aggregated.eventsByDay
+        let sessionsByDay = aggregated.sessionsByDay
+        let totalSessions = sessions.count
 
         let threshold = InsightsConfiguration.goodNightSnoreMinutesThreshold
         var nightsUnder = 0
@@ -409,35 +626,38 @@ final class AnalyticsViewModel {
         return points
     }
 
-    private func loadSettingsChanges(since cutoff: Date) {
+    private func loadSettingsChanges(from start: Date, until endExclusive: Date) {
         let descriptor = FetchDescriptor<AlertSettingsChange>(
-            predicate: #Predicate { $0.timestamp >= cutoff },
+            predicate: #Predicate { $0.timestamp >= start },
             sortBy: [SortDescriptor(\.timestamp)]
         )
-        settingsChanges = (try? context.fetch(descriptor)) ?? []
+        let rows = (try? context.fetch(descriptor)) ?? []
+        settingsChanges = rows.filter { $0.timestamp < endExclusive }
     }
 
-    private func loadExerciseDays(since cutoff: Date, calendar: Calendar) {
+    private func loadExerciseDays(from start: Date, until endExclusive: Date, calendar: Calendar) {
         let descriptor = FetchDescriptor<MyofascialExerciseCompletion>(
-            predicate: #Predicate { $0.completedAt >= cutoff },
+            predicate: #Predicate { $0.completedAt >= start },
             sortBy: [SortDescriptor(\.completedAt)]
         )
         let rows = (try? context.fetch(descriptor)) ?? []
-        exerciseLoggedDayStarts = Set(rows.map { calendar.startOfDay(for: $0.completedAt) })
+        exerciseLoggedDayStarts = Set(
+            rows.filter { $0.completedAt < endExclusive }.map { calendar.startOfDay(for: $0.completedAt) }
+        )
     }
 
-    private func loadHabitCorrelation(since cutoff: Date, calendar: Calendar) {
+    private func loadHabitCorrelation(from start: Date, until endExclusive: Date, calendar: Calendar) {
         let habitDescriptor = FetchDescriptor<HabitLog>(
-            predicate: #Predicate { $0.dayStart >= cutoff },
+            predicate: #Predicate { $0.dayStart >= start },
             sortBy: [SortDescriptor(\.dayStart)]
         )
-        let habitLogs = (try? context.fetch(habitDescriptor)) ?? []
+        let habitLogs = ((try? context.fetch(habitDescriptor)) ?? []).filter { $0.dayStart < endExclusive }
 
         let exerciseDescriptor = FetchDescriptor<MyofascialExerciseCompletion>(
-            predicate: #Predicate { $0.completedAt >= cutoff },
+            predicate: #Predicate { $0.completedAt >= start },
             sortBy: [SortDescriptor(\.completedAt)]
         )
-        let exerciseRows = (try? context.fetch(exerciseDescriptor)) ?? []
+        let exerciseRows = ((try? context.fetch(exerciseDescriptor)) ?? []).filter { $0.completedAt < endExclusive }
         let exerciseDays = Set(exerciseRows.map { calendar.startOfDay(for: $0.completedAt) })
 
         let customDescriptor = FetchDescriptor<CustomHabit>(
@@ -537,15 +757,25 @@ final class AnalyticsViewModel {
         return points.sorted { abs($0.deltaMinutes) > abs($1.deltaMinutes) }
     }
 
-    private func loadAlertCorrelation(since cutoff: Date) {
+    private func loadAlertCorrelation(
+        rangeStart: Date,
+        rangeEnd: Date,
+        fetchEndExclusive: Date,
+        calendar: Calendar
+    ) {
         let descriptor = FetchDescriptor<SnoreSession>(
-            predicate: #Predicate { $0.startDate >= cutoff },
+            predicate: #Predicate { $0.startDate >= rangeStart },
             sortBy: [SortDescriptor(\.startDate)]
         )
-        let sessions = (try? context.fetch(descriptor)) ?? []
+        let fetched = ((try? context.fetch(descriptor)) ?? []).filter { $0.startDate < fetchEndExclusive }
+        let sessions = SleepNight.completedSessions(
+            in: fetched,
+            rangeStart: rangeStart,
+            rangeEnd: rangeEnd,
+            calendar: calendar
+        )
 
         let qualified = sessions.filter { s in
-            s.endDate != nil &&
             s.snapshotPushEnabled != nil &&
             s.snapshotSoundEnabled != nil &&
             s.snapshotAlarmStyleRaw != nil
