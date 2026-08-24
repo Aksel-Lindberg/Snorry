@@ -427,9 +427,7 @@ private struct AnalyticsContent: View {
                     .foregroundStyle(Theme.labelOnSurfaceSecondary)
             }
 
-            if showsChartLegend {
-                chartLegendRow
-            }
+            chartLegendRow
 
             if let best = vm.bestSnoreDay, let worst = vm.worstSnoreDay,
                vm.currentPeriod.sessionDays.count >= 2,
@@ -451,10 +449,6 @@ private struct AnalyticsContent: View {
         return "Minutes per night · \(vm.selectedRange.rawValue.lowercased())"
     }
 
-    private var showsChartLegend: Bool {
-        vm.trendLinePoints != nil || showsExerciseLegend
-    }
-
     private var chartLegendRow: some View {
         HStack(spacing: 12) {
             if vm.trendLinePoints != nil {
@@ -465,21 +459,23 @@ private struct AnalyticsContent: View {
                         .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 }
             }
-            if showsExerciseLegend {
-                HStack(spacing: 4) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(Theme.good.opacity(0.65))
-                        .frame(width: 18, height: 8)
-                    Text("Exercises")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                }
+            HStack(spacing: 4) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Theme.accent.opacity(0.85))
+                    .frame(width: 18, height: 8)
+                Text("No airway exercises")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            }
+            HStack(spacing: 4) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Theme.good.opacity(0.65))
+                    .frame(width: 18, height: 8)
+                Text("Exercises")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
             }
         }
-    }
-
-    private var showsExerciseLegend: Bool {
-        vm.dailyPoints.contains { vm.exerciseLoggedDayStarts.contains($0.date) }
     }
 
     private var trendLegendDash: some View {
