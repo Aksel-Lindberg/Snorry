@@ -897,7 +897,7 @@ final class AnalyticsViewModel {
         switch tone {
         case .trendingUp:
             let preferred = qualified.filter {
-                $0.deltaMinutes > 0 && $0.expectedEffect == .mayAddSnoring
+                $0.deltaMinutes > 0 && $0.expectedEffect.typicallyAddsSnoring
             }
             let positive = qualified.filter { $0.deltaMinutes > 0 }
             let pool = preferred.isEmpty ? positive : preferred

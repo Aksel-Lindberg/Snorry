@@ -118,30 +118,33 @@ struct HabitsView: View {
         }
     }
 
+    @ViewBuilder
     private func habitSection(_ effect: HabitExpectedEffect) -> some View {
         let habits = HabitDefinition.inSection(effect, customHabits: customHabits)
         let includeAddButton = effect == .unknown
 
-        return VStack(alignment: .leading, spacing: 10) {
-            Text(effect.sectionTitle)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(sectionTitleColor(effect))
-                .accessibilityAddTraits(.isHeader)
+        if !habits.isEmpty || includeAddButton {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(effect.sectionTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(sectionTitleColor(effect))
+                    .accessibilityAddTraits(.isHeader)
 
-            LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: 12),
-                    GridItem(.flexible(), spacing: 12)
-                ],
-                spacing: 12
-            ) {
-                ForEach(habits) { habit in
-                    habitToggle(habit)
-                }
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
+                    ],
+                    spacing: 12
+                ) {
+                    ForEach(habits) { habit in
+                        habitToggle(habit)
+                    }
 
-                if includeAddButton {
-                    AddCustomHabitButton(isEnabled: customHabits.count < CustomHabit.maxCount) {
-                        editorMode = .add
+                    if includeAddButton {
+                        AddCustomHabitButton(isEnabled: customHabits.count < CustomHabit.maxCount) {
+                            editorMode = .add
+                        }
                     }
                 }
             }
@@ -152,6 +155,7 @@ struct HabitsView: View {
         switch effect {
         case .mayAddSnoring: return Theme.snoring
         case .mayHelp:       return Theme.good
+        case .howYouFelt:    return Theme.warning
         case .unknown:       return Theme.labelSecondary
         }
     }
@@ -185,8 +189,9 @@ struct HabitsView: View {
     private var footerNote: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(
-                "Tap a habit for the night shown above. May add snoring and May help are typical, not a diagnosis. " +
-                "Logged habits appear in Insights alongside your snore duration. Correlation only — not medical advice."
+                "Tap an item for the night shown above. May reduce snoring and May add snoring are typical, not a diagnosis. " +
+                "How you felt logs conditions such as congestion. Logged items appear in Insights alongside your snore duration. " +
+                "Correlation only — not medical advice."
             )
 
             if customHabits.count >= CustomHabit.maxCount {
@@ -361,18 +366,22 @@ private struct AddCustomHabitButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Image(systemName: "plus.circle.fill")
-                    .font(.title2)
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(isEnabled ? Theme.accent : Theme.labelTertiary)
+                    .frame(width: 28, height: 28)
 
                 Text("Add custom habit")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(isEnabled ? Theme.labelPrimary : Theme.labelTertiary)
-                    .multilineTextAlignment(.center)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, minHeight: 108)
-            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .padding(12)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
             .overlay {
                 RoundedRectangle(cornerRadius: Theme.radiusCard)
@@ -399,44 +408,44 @@ private struct HabitToggleButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: systemImage)
-                        .font(.title3)
-                        .foregroundStyle(isOn ? .white : Theme.accent)
-                        .symbolRenderingMode(.hierarchical)
+            HStack(alignment: .center, spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(isOn ? .white : Theme.accent)
+                    .symbolRenderingMode(.hierarchical)
+                    .frame(width: 28, height: 28)
 
-                    Spacer(minLength: 0)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(isOn ? .white : Theme.labelPrimary)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
 
-                    if showsCustomBadge {
-                        Text("Custom")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(isOn ? Color.white.opacity(0.85) : Theme.labelOnSurfaceSecondary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                Capsule()
-                                    .fill(isOn ? Color.white.opacity(0.18) : Theme.surfaceSecondary)
-                            )
-                    }
+                    Text(subtitle)
+                        .font(.caption2)
+                        .foregroundStyle(isOn ? Color.white.opacity(0.82) : Theme.labelOnSurfaceSecondary)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(isOn ? .white : Theme.labelPrimary)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.85)
-
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(isOn ? Color.white.opacity(0.82) : Theme.labelOnSurfaceSecondary)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.85)
+                if showsCustomBadge {
+                    Text("Custom")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(isOn ? Color.white.opacity(0.85) : Theme.labelOnSurfaceSecondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(isOn ? Color.white.opacity(0.18) : Theme.surfaceSecondary)
+                        )
+                }
             }
-            .frame(maxWidth: .infinity, minHeight: 108, alignment: .leading)
-            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .padding(12)
             .background {
                 RoundedRectangle(cornerRadius: Theme.radiusCard)
                     .fill(isOn ? AnyShapeStyle(Theme.accentGradient) : AnyShapeStyle(Theme.surface))
@@ -451,6 +460,7 @@ private struct HabitToggleButton: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(title)
+        .accessibilityHint(subtitle)
         .accessibilityValue(isOn ? "Logged" : "Not logged")
         .accessibilityAddTraits(isOn ? .isSelected : [])
     }

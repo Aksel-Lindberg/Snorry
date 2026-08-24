@@ -202,7 +202,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 ### Features
 
 - **Night picker** — choose which calendar night habits apply to (defaults to last night before noon)  
-- **One-tap toggles** — grouped as **May add snoring** (Ate late, Drank alcohol, Had caffeine late, Congested, Slept on your back) and **May help** (Used nasal spray, Used nasal strip, Did airway exercises)  
+- **One-tap toggles** — grouped as **May reduce snoring** (Did airway exercises, Used nasal spray, Used nasal strip), **May add snoring** (Ate late, Drank alcohol, Had caffeine late, Slept on your back), and **How you felt** (Congested)  
 - **Custom habits** — **Yours** section; add your own buttons (editable and removable); long-press to edit or delete  
 - **Insights integration** — logged habits feed the **Habits vs Snore duration** card  
 - **Did airway exercises** — counts exercise completions from the Exercises tab as well; turning off here does not delete exercise history  
@@ -228,7 +228,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 - **Snore duration trend** — daily snore minutes and event counts; optional **numbered markers** when you saved Settings changes  
 - **Settings change legend** — expand to read what changed; delete individual markers without changing current Settings  
 - **Alert type vs snore duration** — average snore minutes per alert configuration profile (correlation only, not medical advice)  
-- **Habits vs snore duration** — Month and 3 Months show one card per logged habit (Logged vs Not logged; typical May add snoring / May help chip); Week prompts you to switch range (correlation only)  
+- **Habits vs snore duration** — Month and 3 Months show one card per logged habit (Logged vs Not logged; May add snoring / May reduce snoring / How you felt chip); Week prompts you to switch range (correlation only)  
 
 ### Typical use
 

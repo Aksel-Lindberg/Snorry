@@ -186,7 +186,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "hand.tap.fill",
                                 title: "Toggle habits",
-                                detail: "Habits are grouped as May add snoring (late meals, alcohol, caffeine, congestion, back sleeping) and May help (nasal spray, nasal strip, airway exercises). Tap a button to log or remove it for that night. The grouping is typical, not a diagnosis."
+                                detail: "Habits are grouped as May reduce snoring (airway exercises, nasal spray, nasal strip), May add snoring (late meals, alcohol, caffeine, back sleeping), and How you felt (congestion). Tap a button to log or remove it for that night. The grouping is typical, not a diagnosis."
                             )
                             HelpBullet(
                                 icon: "plus.circle.fill",
@@ -244,7 +244,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "checklist",
                                 title: "Habits vs snore duration",
-                                detail: "On Week, the card explains that a longer range is needed and offers View Month. Month and 3 Months show one card per logged habit with a Logged vs Not logged chart and a one-line delta, sorted by the largest difference. Built-in habits show a May add snoring or May help chip for typical direction; the bars and delta are your nights. Low night counts are flagged as an early signal. Log habits on the Habits tab to populate this section."
+                                detail: "On Week, the card explains that a longer range is needed and offers View Month. Month and 3 Months show one card per logged habit with a Logged vs Not logged chart and a one-line delta, sorted by the largest difference. Built-in items show a May add snoring, May reduce snoring, or How you felt chip; the bars and delta are your nights. Low night counts are flagged as an early signal. Log habits on the Habits tab to populate this section."
                             )
                         }
 

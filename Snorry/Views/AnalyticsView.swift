@@ -1285,7 +1285,7 @@ private struct HabitCorrelationCard: View {
 
     private var footnotes: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("May add snoring / May help is typical, not a diagnosis. Bars are your nights.")
+            Text("May add snoring / May reduce snoring is typical, not a diagnosis. Bars are your nights.")
             Text("Shorter is better. Correlation only — not a causal measure.")
         }
         .font(.caption2)
@@ -1360,6 +1360,7 @@ private struct HabitCorrelationHabitCard: View {
         switch point.expectedEffect {
         case .mayAddSnoring: return Theme.snoring
         case .mayHelp:       return Theme.good
+        case .howYouFelt:    return Theme.warning
         case .unknown:       return Theme.labelSecondary
         }
     }

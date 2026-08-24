@@ -4,6 +4,7 @@ import Foundation
 enum HabitExpectedEffect: String, CaseIterable, Identifiable {
     case mayAddSnoring
     case mayHelp
+    case howYouFelt
     case unknown
 
     var id: String { rawValue }
@@ -12,7 +13,8 @@ enum HabitExpectedEffect: String, CaseIterable, Identifiable {
     var sectionTitle: String {
         switch self {
         case .mayAddSnoring: return "May add snoring"
-        case .mayHelp:       return "May help"
+        case .mayHelp:       return "May reduce snoring"
+        case .howYouFelt:    return "How you felt"
         case .unknown:       return "Yours"
         }
     }
@@ -20,27 +22,35 @@ enum HabitExpectedEffect: String, CaseIterable, Identifiable {
     /// Insights chip; custom habits have no expected direction.
     var chipTitle: String? {
         switch self {
-        case .mayAddSnoring, .mayHelp: return sectionTitle
-        case .unknown:                 return nil
+        case .mayAddSnoring, .mayHelp, .howYouFelt: return sectionTitle
+        case .unknown:                              return nil
         }
     }
 
-    /// Built-in sections first; custom last.
+    /// Conditions such as congestion typically track with more snoring.
+    var typicallyAddsSnoring: Bool {
+        switch self {
+        case .mayAddSnoring, .howYouFelt: return true
+        case .mayHelp, .unknown:          return false
+        }
+    }
+
+    /// Built-in sections first; custom last. Positive interventions lead.
     static var habitsTabSections: [HabitExpectedEffect] {
-        [.mayAddSnoring, .mayHelp, .unknown]
+        [.mayHelp, .mayAddSnoring, .howYouFelt, .unknown]
     }
 }
 
 // MARK: - Fixed snore-relevant habits (built-in set)
 enum HabitKind: String, CaseIterable, Identifiable {
+    case myofascialExercise
+    case nasalSpray
+    case nasalClip
     case ateLate
     case drankAlcohol
     case caffeineLate
-    case nasalSpray
-    case nasalClip
-    case myofascialExercise
-    case congested
     case sleptOnBack
+    case congested
 
     var id: String { rawValue }
 
@@ -86,10 +96,12 @@ enum HabitKind: String, CaseIterable, Identifiable {
     /// Typical association used for grouping — not a claim about the user’s nights.
     var expectedEffect: HabitExpectedEffect {
         switch self {
-        case .ateLate, .drankAlcohol, .caffeineLate, .congested, .sleptOnBack:
+        case .ateLate, .drankAlcohol, .caffeineLate, .sleptOnBack:
             return .mayAddSnoring
         case .nasalSpray, .nasalClip, .myofascialExercise:
             return .mayHelp
+        case .congested:
+            return .howYouFelt
         }
     }
 

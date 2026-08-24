@@ -2,6 +2,40 @@ import Foundation
 import Testing
 @testable import Snorry
 
+// MARK: - Habits tab grouping
+struct HabitGroupingTests {
+
+    @Test func habitsTabLeadsWithMayReduceSnoring() {
+        #expect(
+            HabitExpectedEffect.habitsTabSections == [
+                .mayHelp, .mayAddSnoring, .howYouFelt, .unknown
+            ]
+        )
+        #expect(HabitExpectedEffect.mayHelp.sectionTitle == "May reduce snoring")
+        #expect(HabitExpectedEffect.howYouFelt.chipTitle == "How you felt")
+    }
+
+    @Test func mayHelpLeadsWithAirwayExercises() {
+        let habits = HabitDefinition.inSection(.mayHelp, customHabits: [])
+        #expect(habits.compactMap(\.builtInKind) == [
+            .myofascialExercise, .nasalSpray, .nasalClip
+        ])
+    }
+
+    @Test func congestedLivesInHowYouFeltNotMayAdd() {
+        #expect(HabitKind.congested.expectedEffect == .howYouFelt)
+        #expect(HabitKind.congested.expectedEffect.typicallyAddsSnoring)
+
+        let mayAdd = HabitDefinition.inSection(.mayAddSnoring, customHabits: [])
+        #expect(mayAdd.compactMap(\.builtInKind) == [
+            .ateLate, .drankAlcohol, .caffeineLate, .sleptOnBack
+        ])
+
+        let felt = HabitDefinition.inSection(.howYouFelt, customHabits: [])
+        #expect(felt.compactMap(\.builtInKind) == [.congested])
+    }
+}
+
 // MARK: - Habit vs snore duration correlation
 struct HabitCorrelationTests {
 
@@ -81,6 +115,8 @@ struct HabitCorrelationTests {
         let congested = points.first { $0.id == HabitKind.congested.id }
         #expect(congested?.isLowConfidenceWith == true)
         #expect(congested?.isLowConfidenceWithout == true)
+        #expect(congested?.expectedEffect == .howYouFelt)
+        #expect(congested?.expectedEffect.chipTitle == "How you felt")
     }
 
     @Test func includesCustomHabitCorrelation() {
