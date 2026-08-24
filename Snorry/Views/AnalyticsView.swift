@@ -232,10 +232,8 @@ private struct AnalyticsContent: View {
     }
 
     private var avgSnoreLabel: String {
-        let m = vm.averageDailySnoreMinutes
-        guard m > 0 else { return "—" }
-        if m < 1 { return "<1m" }
-        return "\(Int(m.rounded()))m"
+        guard vm.hasSessionDataInPeriod else { return "—" }
+        return minuteLabel(vm.averageDailySnoreMinutes)
     }
 
     private var priorLabel: String { vm.selectedRange.previousPeriodLabel }
@@ -316,6 +314,12 @@ private struct AnalyticsContent: View {
                     selectedRange: vm.selectedRange,
                     selectedDay: $selectedChartDay
                 )
+
+                if let hint = sessionPresenceHint {
+                    Text(hint)
+                        .font(.caption2)
+                        .foregroundStyle(Theme.labelTertiary)
+                }
 
                 CollapsibleSnoreEventsChart(
                     dailyPoints: vm.dailyPoints,
@@ -399,7 +403,29 @@ private struct AnalyticsContent: View {
         return "\(day) \(minuteLabel(point.snoreMinutes))"
     }
 
+    /// Explains 0-snore recorded nights vs days with no session on the chart.
+    private var sessionPresenceHint: String? {
+        guard vm.hasSessionDataInPeriod else { return nil }
+        let hasQuiet = vm.dailyPoints.contains { $0.hadSession && $0.snoreMinutes <= 0 }
+        let hasGap = vm.dailyPoints.contains { !$0.hadSession }
+        switch (hasQuiet, hasGap) {
+        case (true, true):
+            return "0m is a recorded quiet night. Empty days were not recorded."
+        case (true, false):
+            return "0m is a recorded quiet night."
+        case (false, true):
+            return "Empty days were not recorded."
+        case (false, false):
+            return nil
+        }
+    }
+
     private func minuteLabel(_ minutes: Double) -> String {
+        Self.minuteLabel(minutes)
+    }
+
+    static func minuteLabel(_ minutes: Double) -> String {
+        guard minutes > 0 else { return "0m" }
         if minutes < 1 { return "<1m" }
         return "\(Int(minutes.rounded()))m"
     }
@@ -453,6 +479,32 @@ private struct SessionDetailRoute: Identifiable, Hashable {
 private struct ChartDayPicker: Identifiable {
     let dayStart: Date
     var id: TimeInterval { dayStart.timeIntervalSinceReferenceDate }
+}
+
+/// Shared Insights x-axis: recorded days stay full-contrast, unrecorded days are dimmed.
+@AxisContentBuilder
+private func snoreChartXAxis(
+    points: [DailySnorePoint],
+    markCount: Int,
+    format: Date.FormatStyle
+) -> some AxisContent {
+    AxisMarks(values: .automatic(desiredCount: markCount)) { value in
+        AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
+        AxisValueLabel {
+            if let date = value.as(Date.self) {
+                Text(date, format: format)
+                    .font(.caption2)
+                    .foregroundStyle(snoreChartXAxisLabelColor(for: date, in: points))
+            }
+        }
+    }
+}
+
+private func snoreChartXAxisLabelColor(for date: Date, in points: [DailySnorePoint]) -> Color {
+    let recorded = points.contains {
+        Calendar.current.isDate($0.date, inSameDayAs: date) && $0.hadSession
+    }
+    return recorded ? Theme.labelSecondary : Theme.labelTertiary
 }
 
 // MARK: - Insight narrative banner
@@ -583,21 +635,44 @@ private struct SnoreDurationHeroChart: View {
 
     @ChartContentBuilder
     private var durationBars: some ChartContent {
-        ForEach(dailyPoints) { point in
+        ForEach(dailyPoints.filter(\.hadSession)) { point in
             BarMark(
                 x: .value("Date", point.date, unit: .day),
                 y: .value("Snore min", point.snoreMinutes)
             )
             .foregroundStyle(Theme.accent.opacity(0.85))
             .cornerRadius(4)
+            .accessibilityLabel(durationAccessibilityLabel(for: point))
             .annotation(position: .top, spacing: 2) {
-                if point.snoreMinutes > 0 {
-                    Text(minuteLabel(point.snoreMinutes))
-                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Theme.labelSecondary)
-                }
+                durationAnnotation(for: point)
             }
         }
+    }
+
+    @ViewBuilder
+    private func durationAnnotation(for point: DailySnorePoint) -> some View {
+        if point.snoreMinutes > 0 {
+            Text(minuteLabel(point.snoreMinutes))
+                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                .foregroundStyle(Theme.labelSecondary)
+        } else {
+            VStack(spacing: 3) {
+                Text("0m")
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Theme.labelSecondary)
+                Capsule()
+                    .fill(Theme.accent.opacity(0.85))
+                    .frame(width: 14, height: 4)
+            }
+        }
+    }
+
+    private func durationAccessibilityLabel(for point: DailySnorePoint) -> String {
+        let day = point.date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+        if point.snoreMinutes <= 0 {
+            return "\(day), quiet night, 0 minutes"
+        }
+        return "\(day), \(minuteLabel(point.snoreMinutes))"
     }
 
     @ChartContentBuilder
@@ -643,12 +718,7 @@ private struct SnoreDurationHeroChart: View {
 
     @AxisContentBuilder
     private var xAxisContent: some AxisContent {
-        AxisMarks(values: .automatic(desiredCount: xAxisMarkCount)) { _ in
-            AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
-            AxisValueLabel(format: xAxisFormat)
-                .foregroundStyle(Theme.labelSecondary)
-                .font(.caption2)
-        }
+        snoreChartXAxis(points: dailyPoints, markCount: xAxisMarkCount, format: xAxisFormat)
     }
 
     @AxisContentBuilder
@@ -687,8 +757,7 @@ private struct SnoreDurationHeroChart: View {
     }
 
     private func minuteLabel(_ minutes: Double) -> String {
-        if minutes < 1 { return "<1m" }
-        return "\(Int(minutes.rounded()))m"
+        AnalyticsContent.minuteLabel(minutes)
     }
 
     private func markerBadge(number: Int) -> some View {
@@ -742,19 +811,16 @@ private struct CollapsibleSnoreEventsChart: View {
 
             if isExpanded {
                 Chart {
-                    ForEach(dailyPoints) { point in
+                    ForEach(dailyPoints.filter(\.hadSession)) { point in
                         BarMark(
                             x: .value("Date", point.date, unit: .day),
                             y: .value("Events", point.eventCount)
                         )
                         .foregroundStyle(Theme.snoring.opacity(0.85))
                         .cornerRadius(4)
+                        .accessibilityLabel(eventsAccessibilityLabel(for: point))
                         .annotation(position: .top, spacing: 2) {
-                            if point.eventCount > 0 {
-                                Text("\(point.eventCount)")
-                                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                                    .foregroundStyle(Theme.labelSecondary)
-                            }
+                            eventsAnnotation(for: point)
                         }
                     }
                 }
@@ -767,14 +833,36 @@ private struct CollapsibleSnoreEventsChart: View {
         }
     }
 
+    @ViewBuilder
+    private func eventsAnnotation(for point: DailySnorePoint) -> some View {
+        if point.eventCount > 0 {
+            Text("\(point.eventCount)")
+                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                .foregroundStyle(Theme.labelSecondary)
+        } else {
+            VStack(spacing: 3) {
+                Text("0")
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Theme.labelSecondary)
+                Capsule()
+                    .fill(Theme.snoring.opacity(0.85))
+                    .frame(width: 14, height: 4)
+            }
+        }
+    }
+
+    private func eventsAccessibilityLabel(for point: DailySnorePoint) -> String {
+        let day = point.date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+        if point.eventCount == 0 {
+            return "\(day), quiet night, 0 snore events"
+        }
+        let noun = point.eventCount == 1 ? "snore event" : "snore events"
+        return "\(day), \(point.eventCount) \(noun)"
+    }
+
     @AxisContentBuilder
     private var xAxisContent: some AxisContent {
-        AxisMarks(values: .automatic(desiredCount: xAxisMarkCount)) { _ in
-            AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
-            AxisValueLabel(format: xAxisFormat)
-                .foregroundStyle(Theme.labelSecondary)
-                .font(.caption2)
-        }
+        snoreChartXAxis(points: dailyPoints, markCount: xAxisMarkCount, format: xAxisFormat)
     }
 
     @AxisContentBuilder

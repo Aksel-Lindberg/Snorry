@@ -40,8 +40,16 @@ struct DailySnorePoint: Identifiable {
     let snoreMinutes: Double
     /// Total snore event count across all completed sessions that day.
     let eventCount: Int
+    /// True when at least one completed recording exists for this calendar day.
+    /// Independent of snore minutes so a quiet night is not treated as missing.
+    let hadSession: Bool
 
-    var hadSession: Bool { eventCount > 0 || snoreMinutes > 0 }
+    init(date: Date, snoreMinutes: Double, eventCount: Int, hadSession: Bool = true) {
+        self.date = date
+        self.snoreMinutes = snoreMinutes
+        self.eventCount = eventCount
+        self.hadSession = hadSession
+    }
 }
 
 // MARK: - One alert-profile bucket for the correlation chart
@@ -82,7 +90,7 @@ struct HabitCorrelationPoint: Identifiable {
 
     /// One-line finding for the selected habit.
     var deltaSummary: String {
-        if abs(deltaMinutes) < 1 {
+        if abs(deltaMinutes) < InsightsConfiguration.minimumHabitDeltaMinutesForInsight {
             return "About the same \(insightClause)"
         }
         let sign = deltaMinutes > 0 ? "+" : "−"
@@ -177,7 +185,11 @@ final class AnalyticsViewModel {
     var averageDailySnoreMinutes: Double { currentPeriod.averageDailySnoreMinutes }
 
     var insightMessage: InsightMessage {
-        Self.makeInsight(from: currentPeriod.dailyPoints)
+        Self.makeInsight(
+            from: currentPeriod.dailyPoints,
+            habits: habitCorrelationPoints,
+            range: selectedRange
+        )
     }
 
     var trendLinePoints: [TrendLinePoint]? {
@@ -337,11 +349,13 @@ final class AnalyticsViewModel {
             }
         }
 
-        let sessionDayPoints = durationByDay.keys.map { day in
+        let recordedDays = Set(sessionsByDay.keys)
+        let sessionDayPoints = recordedDays.map { day in
             DailySnorePoint(
                 date: day,
                 snoreMinutes: durationByDay[day] ?? 0,
-                eventCount: eventsByDay[day] ?? 0
+                eventCount: eventsByDay[day] ?? 0,
+                hadSession: true
             )
         }
         let avgMinutes: Double = {
@@ -355,6 +369,7 @@ final class AnalyticsViewModel {
             through: rangeEnd,
             durationByDay: durationByDay,
             eventsByDay: eventsByDay,
+            recordedDays: recordedDays,
             calendar: calendar
         )
 
@@ -372,6 +387,7 @@ final class AnalyticsViewModel {
         through rangeEnd: Date,
         durationByDay: [Date: Double],
         eventsByDay: [Date: Int],
+        recordedDays: Set<Date>,
         calendar: Calendar
     ) -> [DailySnorePoint] {
         var points: [DailySnorePoint] = []
@@ -383,7 +399,8 @@ final class AnalyticsViewModel {
                 DailySnorePoint(
                     date: cursor,
                     snoreMinutes: durationByDay[cursor] ?? 0,
-                    eventCount: eventsByDay[cursor] ?? 0
+                    eventCount: eventsByDay[cursor] ?? 0,
+                    hadSession: recordedDays.contains(cursor)
                 )
             )
             guard let next = calendar.date(byAdding: .day, value: 1, to: cursor) else { break }
@@ -595,7 +612,11 @@ final class AnalyticsViewModel {
         ]
     }
 
-    static func makeInsight(from dailyPoints: [DailySnorePoint]) -> InsightMessage {
+    static func makeInsight(
+        from dailyPoints: [DailySnorePoint],
+        habits: [HabitCorrelationPoint] = [],
+        range: AnalyticsRange = .week
+    ) -> InsightMessage {
         let sessionDays = dailyPoints.filter(\.hadSession)
         guard !sessionDays.isEmpty else {
             return InsightMessage(
@@ -617,26 +638,89 @@ final class AnalyticsViewModel {
             Double(max(dailyPoints.count - 1, 1))
         let flat = abs(slopePerDay) < InsightsConfiguration.flatTrendSlopePerDayMinutes
 
+        let tone: InsightTone
         if flat {
-            return InsightMessage(
-                tone: .flat,
-                text: "Your snoring looks about the same this period. Keep tracking to spot changes."
-            )
+            tone = .flat
+        } else if slopePerDay < 0 {
+            tone = .trendingDown
+        } else {
+            tone = .trendingUp
         }
-        if slopePerDay < 0 {
-            return InsightMessage(
-                tone: .trendingDown,
-                text: "Your snoring is trending down. Great progress—keep it up."
-            )
+
+        let habit = range.showsHabitCorrelation
+            ? supportingHabit(for: tone, in: habits)
+            : nil
+        return InsightMessage(tone: tone, text: insightText(tone: tone, habit: habit, range: range))
+    }
+
+    /// Strongest high-confidence habit that matches the trend direction.
+    static func supportingHabit(
+        for tone: InsightTone,
+        in habits: [HabitCorrelationPoint]
+    ) -> HabitCorrelationPoint? {
+        let qualified = habits.filter {
+            !$0.isLowConfidence &&
+            abs($0.deltaMinutes) >= InsightsConfiguration.minimumHabitDeltaMinutesForInsight
         }
-        return InsightMessage(
-            tone: .trendingUp,
-            text: "Your snoring is trending up this period. Review History or try adjusting alerts."
-        )
+        guard !qualified.isEmpty else { return nil }
+
+        switch tone {
+        case .trendingUp:
+            let preferred = qualified.filter {
+                $0.deltaMinutes > 0 && $0.expectedEffect == .mayAddSnoring
+            }
+            let positive = qualified.filter { $0.deltaMinutes > 0 }
+            let pool = preferred.isEmpty ? positive : preferred
+            return pool.max(by: { $0.deltaMinutes < $1.deltaMinutes })
+        case .trendingDown:
+            let preferred = qualified.filter {
+                $0.deltaMinutes < 0 && $0.expectedEffect == .mayHelp
+            }
+            let negative = qualified.filter { $0.deltaMinutes < 0 }
+            let pool = preferred.isEmpty ? negative : preferred
+            return pool.min(by: { $0.deltaMinutes < $1.deltaMinutes })
+        case .flat:
+            return qualified.max(by: { abs($0.deltaMinutes) < abs($1.deltaMinutes) })
+        case .insufficientData:
+            return nil
+        }
+    }
+
+    /// Trend sentence plus optional habit finding. Week never quotes a delta.
+    static func insightText(
+        tone: InsightTone,
+        habit: HabitCorrelationPoint?,
+        range: AnalyticsRange
+    ) -> String {
+        switch tone {
+        case .trendingUp:
+            if let habit {
+                return "Your snoring is trending up this period. Snoring ran \(habit.deltaSummary)."
+            }
+            if !range.showsHabitCorrelation {
+                return "Your snoring is trending up this period. Review Habits or try adjusting alerts."
+            }
+            return "Your snoring is trending up this period. Review History or try adjusting alerts."
+        case .trendingDown:
+            if let habit {
+                return "Your snoring is trending down. \(habit.deltaSummary). Keep it up."
+            }
+            return "Your snoring is trending down. Great progress—keep it up."
+        case .flat:
+            if let habit {
+                return "Your snoring looks about the same this period. Individual nights still differ — \(habit.deltaSummary)."
+            }
+            if !range.showsHabitCorrelation {
+                return "Your snoring looks about the same this period. Log habits to see what tracks with your nights."
+            }
+            return "Your snoring looks about the same this period. Keep tracking to spot changes."
+        case .insufficientData:
+            return "Log a few more nights to see whether your snoring is trending up or down."
+        }
     }
 
     static func extremeSnoreDay(in days: [DailySnorePoint], preferMinimum: Bool) -> DailySnorePoint? {
-        let withData = days.filter { $0.snoreMinutes > 0 || $0.hadSession }
+        let withData = days.filter(\.hadSession)
         guard !withData.isEmpty else { return nil }
         return withData.min(by: { a, b in
             if a.snoreMinutes == b.snoreMinutes { return preferMinimum ? a.date < b.date : a.date > b.date }

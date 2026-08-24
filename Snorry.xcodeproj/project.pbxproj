@@ -98,6 +98,12 @@
 		FBAA00012EAA4B00C99A0006 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = FBAA00012EAA4B00C99A0008 /* FirebaseCore */; };
 		FBF5D5B5DD8B447E0C510FBE /* Raindrop.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = CF77EDFF4212DBC00A78C568 /* Raindrop.mp3 */; };
 		FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AA62568AD509DB2EF3C867 /* LegalLinks.swift */; };
+		HBT0012EAA4B00C99A0002 /* HabitKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0001 /* HabitKind.swift */; };
+		HBT0012EAA4B00C99A0004 /* HabitLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0003 /* HabitLog.swift */; };
+		HBT0012EAA4B00C99A0006 /* HabitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0005 /* HabitsView.swift */; };
+		HBT0012EAA4B00C99A0008 /* HabitCorrelationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */; };
+		HBT0012EAA4B00C99A000A /* CustomHabit.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0009 /* CustomHabit.swift */; };
+		HBT0012EAA4B00C99A000C /* HabitDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A000B /* HabitDefinition.swift */; };
 		INS00012EAA4B00C99A0002 /* InsightsConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */; };
 		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
 		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
@@ -107,14 +113,6 @@
 		MFX0012EAA4B00C99A0008 /* MyofascialExerciseCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */; };
 		MFX0012EAA4B00C99A000A /* MyofascialExerciseImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0009 /* MyofascialExerciseImageViewer.swift */; };
 		MFX0012EAA4B00C99A000C /* ZoomableImageScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */; };
-		HBT0012EAA4B00C99A0002 /* HabitKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0001 /* HabitKind.swift */; };
-		HBT0012EAA4B00C99A0004 /* HabitLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0003 /* HabitLog.swift */; };
-		HBT0012EAA4B00C99A0006 /* HabitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0005 /* HabitsView.swift */; };
-		HBT0012EAA4B00C99A0008 /* HabitCorrelationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */; };
-		HBT0012EAA4B00C99A000A /* CustomHabit.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0009 /* CustomHabit.swift */; };
-		HBT0012EAA4B00C99A000C /* HabitDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A000B /* HabitDefinition.swift */; };
-		TRI00012EAA4B00C99A0002 /* InsightsTrialTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRI00012EAA4B00C99A0001 /* InsightsTrialTracker.swift */; };
-		TRI00012EAA4B00C99A0004 /* InsightsTrialTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */; };
 		SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */; };
 		SAV0A0012EAA4B00C99A0004 /* SoundAlertVolumeEscalationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */; };
 		SLP00012EAA4B00C99A0001 /* SleepAllyPromoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */; };
@@ -122,6 +120,8 @@
 		SUB00012EAA4B00C99A0004 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0003 /* SubscriptionManager.swift */; };
 		SUB00012EAA4B00C99A0006 /* SubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */; };
 		TRC0A0012EAA4B00C99A0001 /* TrackingAuthorizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */; };
+		TRI00012EAA4B00C99A0002 /* InsightsTrialTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRI00012EAA4B00C99A0001 /* InsightsTrialTracker.swift */; };
+		TRI00012EAA4B00C99A0004 /* InsightsTrialTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -233,6 +233,12 @@
 		FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FBAA00012EAA4B00C99A0004 /* AppAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppAnalytics.swift; path = Services/AppAnalytics.swift; sourceTree = "<group>"; };
 		FC95D7F62086A6BC1C9C15F7 /* Clock.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Clock.mp3; path = Resources/Clock.mp3; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0001 /* HabitKind.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitKind.swift; path = Models/HabitKind.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0003 /* HabitLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitLog.swift; path = Models/HabitLog.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0005 /* HabitsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitsView.swift; path = Views/HabitsView.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HabitCorrelationTests.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A0009 /* CustomHabit.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CustomHabit.swift; path = Models/CustomHabit.swift; sourceTree = "<group>"; };
+		HBT0012EAA4B00C99A000B /* HabitDefinition.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitDefinition.swift; path = Models/HabitDefinition.swift; sourceTree = "<group>"; };
 		INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InsightsConfiguration.swift; path = Utilities/InsightsConfiguration.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0001 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
@@ -242,14 +248,6 @@
 		MFX0012EAA4B00C99A0007 /* MyofascialExerciseCardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExerciseCardView.swift; path = Views/MyofascialExerciseCardView.swift; sourceTree = "<group>"; };
 		MFX0012EAA4B00C99A0009 /* MyofascialExerciseImageViewer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExerciseImageViewer.swift; path = Views/MyofascialExerciseImageViewer.swift; sourceTree = "<group>"; };
 		MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ZoomableImageScrollView.swift; path = Views/ZoomableImageScrollView.swift; sourceTree = "<group>"; };
-		HBT0012EAA4B00C99A0001 /* HabitKind.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitKind.swift; path = Models/HabitKind.swift; sourceTree = "<group>"; };
-		HBT0012EAA4B00C99A0003 /* HabitLog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitLog.swift; path = Models/HabitLog.swift; sourceTree = "<group>"; };
-		HBT0012EAA4B00C99A0005 /* HabitsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitsView.swift; path = Views/HabitsView.swift; sourceTree = "<group>"; };
-		HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HabitCorrelationTests.swift; sourceTree = "<group>"; };
-		HBT0012EAA4B00C99A0009 /* CustomHabit.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CustomHabit.swift; path = Models/CustomHabit.swift; sourceTree = "<group>"; };
-		HBT0012EAA4B00C99A000B /* HabitDefinition.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitDefinition.swift; path = Models/HabitDefinition.swift; sourceTree = "<group>"; };
-		TRI00012EAA4B00C99A0001 /* InsightsTrialTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InsightsTrialTracker.swift; path = Services/InsightsTrialTracker.swift; sourceTree = "<group>"; };
-		TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsTrialTrackerTests.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SoundAlertVolumeEscalation.swift; path = Utilities/SoundAlertVolumeEscalation.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundAlertVolumeEscalationTests.swift; sourceTree = "<group>"; };
 		SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepAllyPromoView.swift; path = Views/SleepAllyPromoView.swift; sourceTree = "<group>"; };
@@ -258,6 +256,8 @@
 		SUB00012EAA4B00C99A0005 /* SubscriptionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionView.swift; path = Views/SubscriptionView.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0007 /* Snorry.storekit */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Snorry.storekit; path = Configuration/Snorry.storekit; sourceTree = "<group>"; };
 		TRC0A0012EAA4B00C99A0002 /* TrackingAuthorizationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TrackingAuthorizationManager.swift; path = Services/TrackingAuthorizationManager.swift; sourceTree = "<group>"; };
+		TRI00012EAA4B00C99A0001 /* InsightsTrialTracker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InsightsTrialTracker.swift; path = Services/InsightsTrialTracker.swift; sourceTree = "<group>"; };
+		TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InsightsTrialTrackerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -952,7 +952,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -967,12 +967,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.11;
+				MARKETING_VERSION = 1.12;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -998,7 +998,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = L675KNV756;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1013,12 +1013,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.11;
+				MARKETING_VERSION = 1.12;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
