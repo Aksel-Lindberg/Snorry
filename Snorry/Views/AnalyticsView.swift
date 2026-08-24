@@ -111,6 +111,7 @@ private struct AnalyticsContent: View {
     @State private var areSettingsChangesExpanded = true
     @State private var areEventsExpanded = false
     @State private var selectedChartDay: Date?
+    @State private var highlightedChartDay: Date?
     @State private var sessionDetailRoute: SessionDetailRoute?
     @State private var multiSessionPicker: ChartDayPicker?
 
@@ -161,17 +162,33 @@ private struct AnalyticsContent: View {
             }
         }
         .onChange(of: selectedChartDay) { _, newValue in
-            handleChartDaySelection(newValue)
+            handleChartDayHighlight(newValue)
+        }
+        .onChange(of: vm.selectedRange) { _, _ in
+            highlightedChartDay = nil
+        }
+        .onChange(of: vm.periodOffset) { _, _ in
+            highlightedChartDay = nil
         }
     }
 
-    private func handleChartDaySelection(_ date: Date?) {
+    /// Shows a callout for the tapped night; navigation happens when the user opens the callout.
+    private func handleChartDayHighlight(_ date: Date?) {
         guard let date else { return }
         let calendar = Calendar.current
         let dayStart = calendar.startOfDay(for: date)
+        let hadSession = vm.dailyPoints.contains {
+            calendar.isDate($0.date, inSameDayAs: dayStart) && $0.hadSession
+        }
+        highlightedChartDay = hadSession ? dayStart : nil
+        selectedChartDay = nil
+    }
+
+    private func openHighlightedChartDay() {
+        guard let dayStart = highlightedChartDay else { return }
         let sessions = vm.sessions(on: dayStart)
         guard !sessions.isEmpty else {
-            selectedChartDay = nil
+            highlightedChartDay = nil
             return
         }
         if sessions.count == 1, let session = sessions.first {
@@ -179,7 +196,12 @@ private struct AnalyticsContent: View {
         } else {
             multiSessionPicker = ChartDayPicker(dayStart: dayStart)
         }
-        selectedChartDay = nil
+        highlightedChartDay = nil
+    }
+
+    private func dailyPoint(for dayStart: Date) -> DailySnorePoint? {
+        let calendar = Calendar.current
+        return vm.dailyPoints.first { calendar.isDate($0.date, inSameDayAs: dayStart) }
     }
 
     // MARK: Range picker
@@ -368,8 +390,13 @@ private struct AnalyticsContent: View {
                     chartEndDate: vm.chartEndDate,
                     snoreMinutesYMax: vm.snoreMinutesYMax,
                     selectedRange: vm.selectedRange,
+                    highlightedDay: highlightedChartDay,
                     selectedDay: $selectedChartDay
                 )
+
+                if let dayStart = highlightedChartDay, let point = dailyPoint(for: dayStart) {
+                    ChartNightCallout(point: point, onOpen: openHighlightedChartDay)
+                }
 
                 if let hint = sessionPresenceHint {
                     Text(hint)
@@ -393,36 +420,17 @@ private struct AnalyticsContent: View {
 
     private var cardHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Daily snore duration")
-                        .font(.headline)
-                        .foregroundStyle(Theme.labelPrimary)
-                    Text("Minutes per night · \(vm.selectedRange.rawValue.lowercased())")
-                        .font(.caption)
-                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                }
-                Spacer()
-                HStack(spacing: 10) {
-                    if vm.trendLinePoints != nil {
-                        HStack(spacing: 4) {
-                            trendLegendDash
-                            Text("Trend")
-                                .font(.caption2)
-                                .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                        }
-                    }
-                    if showsExerciseLegend {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(Theme.good)
-                                .frame(width: 8, height: 8)
-                            Text("Exercises completed")
-                                .font(.caption2)
-                                .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                        }
-                    }
-                }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Daily snore duration")
+                    .font(.headline)
+                    .foregroundStyle(Theme.labelPrimary)
+                Text(chartSubtitle)
+                    .font(.caption)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            }
+
+            if showsChartLegend {
+                chartLegendRow
             }
 
             if let best = vm.bestSnoreDay, let worst = vm.worstSnoreDay,
@@ -432,11 +440,49 @@ private struct AnalyticsContent: View {
                     .font(.caption)
                     .foregroundStyle(Theme.labelOnSurfaceSecondary)
             }
+        }
+    }
 
+    private var chartSubtitle: String {
+        let recorded = vm.currentPeriod.sessionDays.count
+        let hasGap = vm.dailyPoints.contains { !$0.hadSession }
+        if hasGap {
+            let nightsLabel = recorded == 1 ? "night" : "nights"
+            return "Last \(vm.selectedRange.days) days · \(recorded) \(nightsLabel) recorded"
+        }
+        return "Minutes per night · \(vm.selectedRange.rawValue.lowercased())"
+    }
+
+    private var showsChartLegend: Bool {
+        vm.trendLinePoints != nil || showsExerciseLegend || !vm.settingsChanges.isEmpty
+    }
+
+    private var chartLegendRow: some View {
+        HStack(spacing: 12) {
+            if vm.trendLinePoints != nil {
+                HStack(spacing: 4) {
+                    trendLegendDash
+                    Text("Trend")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                }
+            }
+            if showsExerciseLegend {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(Theme.good)
+                        .frame(width: 8, height: 8)
+                    Text("Exercises")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                }
+            }
             if !vm.settingsChanges.isEmpty {
                 HStack(spacing: 4) {
-                    Circle().fill(Theme.warning).frame(width: 8, height: 8)
-                    Text("Settings changes")
+                    Circle()
+                        .fill(Theme.warning)
+                        .frame(width: 8, height: 8)
+                    Text("Settings")
                         .font(.caption2)
                         .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 }
@@ -647,6 +693,45 @@ private struct InsightsDaySessionsSheet: View {
     }
 }
 
+// MARK: - Selected-night callout under the duration chart
+private struct ChartNightCallout: View {
+
+    let point: DailySnorePoint
+    let onOpen: () -> Void
+
+    var body: some View {
+        Button(action: onOpen) {
+            HStack(spacing: 8) {
+                Text(calloutText)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Theme.labelPrimary)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Theme.surfaceSecondary, in: RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(calloutAccessibilityLabel)
+        .accessibilityHint("Opens that night's sleep session")
+    }
+
+    private var calloutText: String {
+        let date = point.date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+        let events = point.eventCount == 1 ? "1 event" : "\(point.eventCount) events"
+        return "\(date) · \(AnalyticsContent.minuteLabel(point.snoreMinutes)) · \(events)"
+    }
+
+    private var calloutAccessibilityLabel: String {
+        let date = point.date.formatted(.dateTime.weekday(.wide).month(.wide).day())
+        let events = point.eventCount == 1 ? "1 snore event" : "\(point.eventCount) snore events"
+        return "\(date), \(AnalyticsContent.minuteLabel(point.snoreMinutes)), \(events)"
+    }
+}
+
 // MARK: - Hero duration chart (bars, trend, markers, selection)
 private struct SnoreDurationHeroChart: View {
 
@@ -658,6 +743,7 @@ private struct SnoreDurationHeroChart: View {
     let chartEndDate: Date
     let snoreMinutesYMax: Double
     let selectedRange: AnalyticsRange
+    let highlightedDay: Date?
     @Binding var selectedDay: Date?
 
     private enum Layout {
@@ -679,16 +765,24 @@ private struct SnoreDurationHeroChart: View {
                 }
             }
             exerciseMarkers
-            changeRules(yMax: snoreMinutesYMax)
+            changeMarkers
         }
         .chartXScale(domain: cutoffDate...chartEndDate)
         .chartYScale(domain: 0...snoreMinutesYMax)
         .chartXAxis { xAxisContent }
         .chartYAxis { minuteYAxisContent() }
         .chartXSelection(value: $selectedDay)
-        .frame(height: 172)
+        .frame(height: chartHeight)
         .accessibilityLabel("Daily snore duration chart")
-        .accessibilityHint("Select a day to open that night's sleep session")
+        .accessibilityHint("Select a day to see that night's details")
+    }
+
+    private var chartHeight: CGFloat {
+        switch selectedRange {
+        case .week:        return 172
+        case .month:       return 200
+        case .threeMonths: return 228
+        }
     }
 
     @ChartContentBuilder
@@ -698,7 +792,7 @@ private struct SnoreDurationHeroChart: View {
                 x: .value("Date", point.date, unit: .day),
                 y: .value("Snore min", point.snoreMinutes)
             )
-            .foregroundStyle(Theme.accent.opacity(0.85))
+            .foregroundStyle(Theme.accent.opacity(isDayHighlighted(point) ? 1 : 0.85))
             .cornerRadius(4)
             .accessibilityLabel(durationAccessibilityLabel(for: point))
             .annotation(position: .top, spacing: 2) {
@@ -707,12 +801,19 @@ private struct SnoreDurationHeroChart: View {
         }
     }
 
+    private func isDayHighlighted(_ point: DailySnorePoint) -> Bool {
+        guard let highlightedDay else { return false }
+        return Calendar.current.isDate(point.date, inSameDayAs: highlightedDay)
+    }
+
     @ViewBuilder
     private func durationAnnotation(for point: DailySnorePoint) -> some View {
         if point.snoreMinutes > 0 {
-            Text(minuteLabel(point.snoreMinutes))
-                .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                .foregroundStyle(Theme.labelSecondary)
+            if selectedRange == .week {
+                Text(minuteLabel(point.snoreMinutes))
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Theme.labelSecondary)
+            }
         } else {
             VStack(spacing: 3) {
                 Text("0m")
@@ -757,19 +858,22 @@ private struct SnoreDurationHeroChart: View {
     }
 
     @ChartContentBuilder
-    private func changeRules(yMax: Double) -> some ChartContent {
+    private var changeMarkers: some ChartContent {
         ForEach(Array(settingsChanges.enumerated()), id: \.offset) { index, change in
-            RuleMark(
+            PointMark(
                 x: .value(
                     "Settings changed",
                     Calendar.current.startOfDay(for: change.timestamp),
                     unit: .day
-                )
+                ),
+                y: .value("Settings", 0)
             )
-            .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
-            .foregroundStyle(Theme.warning.opacity(0.80))
-            .annotation(position: .top, alignment: .center, spacing: 6) {
-                markerBadge(number: index + 1)
+            .symbolSize(42)
+            .foregroundStyle(Theme.warning.opacity(0.92))
+            .annotation(position: .bottom, spacing: 2) {
+                Text("\(index + 1)")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.warning)
             }
         }
     }
@@ -816,18 +920,6 @@ private struct SnoreDurationHeroChart: View {
 
     private func minuteLabel(_ minutes: Double) -> String {
         AnalyticsContent.minuteLabel(minutes)
-    }
-
-    private func markerBadge(number: Int) -> some View {
-        Text("\(number)")
-            .font(.system(size: 10, weight: .bold, design: .rounded))
-            .foregroundStyle(Theme.warning)
-            .frame(width: 20, height: 20)
-            .background(
-                Circle()
-                    .fill(Theme.background)
-                    .overlay(Circle().strokeBorder(Theme.warning, lineWidth: 1.5))
-            )
     }
 }
 
@@ -895,9 +987,11 @@ private struct CollapsibleSnoreEventsChart: View {
     @ViewBuilder
     private func eventsAnnotation(for point: DailySnorePoint) -> some View {
         if point.eventCount > 0 {
-            Text("\(point.eventCount)")
-                .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                .foregroundStyle(Theme.labelSecondary)
+            if selectedRange == .week {
+                Text("\(point.eventCount)")
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Theme.labelSecondary)
+            }
         } else {
             VStack(spacing: 3) {
                 Text("0")
@@ -1001,7 +1095,7 @@ private struct SettingsChangeLegend: View {
 
             if isExpanded {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Numbered markers on the chart correspond to rows below.")
+                    Text("Numbered dots on the chart correspond to rows below.")
                         .font(.caption)
                         .foregroundStyle(Theme.labelOnSurfaceSecondary)
                     VStack(spacing: 10) {
