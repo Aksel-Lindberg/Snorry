@@ -126,6 +126,7 @@ private struct AnalyticsContent: View {
                 AlertCorrelationCard(points: vm.alertProfilePoints, xMax: vm.alertChartXMax)
                 HabitCorrelationCard(
                     points: vm.habitCorrelationPoints,
+                    xMax: vm.habitChartXMax,
                     range: vm.selectedRange,
                     onSelectMonth: {
                         vm.setRange(.month)
@@ -466,11 +467,11 @@ private struct AnalyticsContent: View {
         let hasGap = vm.dailyPoints.contains { !$0.hadSession }
         switch (hasQuiet, hasGap) {
         case (true, true):
-            return "0m is a recorded quiet night. Empty days were not recorded."
+            return "0m is a recorded quiet night. Empty days were not recorded. Trend uses recorded nights only."
         case (true, false):
             return "0m is a recorded quiet night."
         case (false, true):
-            return "Empty days were not recorded."
+            return "Empty days were not recorded. Trend uses recorded nights only."
         case (false, false):
             return nil
         }
@@ -1063,6 +1064,25 @@ private struct SettingsChangeLegend: View {
     }
 }
 
+// MARK: - Shared minute-axis helpers for correlation bar charts
+private enum CorrelationMinuteChartStyle {
+
+    static func minuteLabel(_ minutes: Double) -> String {
+        if minutes < 1 { return "<1m" }
+        let total = Int(minutes.rounded())
+        let hours = total / 60
+        let remainder = total % 60
+        if hours > 0 {
+            return remainder > 0 ? "\(hours)h \(remainder)m" : "\(hours)h"
+        }
+        return "\(remainder)m"
+    }
+
+    static func xTicks(upTo xMax: Double) -> [Double] {
+        stride(from: 0, through: xMax, by: max(1, xMax / 4).rounded()).map { $0 }
+    }
+}
+
 // MARK: - Alert configuration vs snore duration card
 private struct AlertCorrelationCard: View {
 
@@ -1136,14 +1156,6 @@ private struct AlertCorrelationChart: View {
         )
     }
 
-    private func minuteLabel(_ minutes: Double) -> String {
-        if minutes < 1 { return "<1m" }
-        let total = Int(minutes.rounded())
-        let h = total / 60
-        let m = total % 60
-        return h > 0 ? (m > 0 ? "\(h)h \(m)m" : "\(h)h") : "\(m)m"
-    }
-
     var body: some View {
         Chart(points) { point in
             BarMark(
@@ -1154,7 +1166,7 @@ private struct AlertCorrelationChart: View {
             .cornerRadius(6)
             .annotation(position: .trailing, alignment: .leading, spacing: 6) {
                 HStack(spacing: 4) {
-                    Text(minuteLabel(point.avgSnoreMinutes))
+                    Text(CorrelationMinuteChartStyle.minuteLabel(point.avgSnoreMinutes))
                         .font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundStyle(Theme.labelPrimary)
                     Text("n=\(point.sessionCount)")
@@ -1165,7 +1177,7 @@ private struct AlertCorrelationChart: View {
         }
         .chartXScale(domain: 0...xMax)
         .chartXAxis {
-            AxisMarks(values: xTicks) { value in
+            AxisMarks(values: CorrelationMinuteChartStyle.xTicks(upTo: xMax)) { value in
                 AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
                 AxisValueLabel {
                     if let v = value.as(Double.self) {
@@ -1185,16 +1197,13 @@ private struct AlertCorrelationChart: View {
         }
         .frame(height: max(56, CGFloat(points.count) * 52))
     }
-
-    private var xTicks: [Double] {
-        stride(from: 0, through: xMax, by: max(1, xMax / 4).rounded()).map { $0 }
-    }
 }
 
 // MARK: - Habit vs snore duration section
 private struct HabitCorrelationCard: View {
 
     let points: [HabitCorrelationPoint]
+    let xMax: Double
     let range: AnalyticsRange
     let onSelectMonth: () -> Void
 
@@ -1208,7 +1217,7 @@ private struct HabitCorrelationCard: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(points) { point in
-                        HabitCorrelationHabitCard(point: point)
+                        HabitCorrelationHabitCard(point: point, xMax: xMax)
                     }
                 }
                 footnotes
@@ -1298,6 +1307,7 @@ private struct HabitCorrelationCard: View {
 private struct HabitCorrelationHabitCard: View {
 
     let point: HabitCorrelationPoint
+    let xMax: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -1326,7 +1336,7 @@ private struct HabitCorrelationHabitCard: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(headerAccessibilityLabel)
 
-            HabitCorrelationChart(point: point)
+            HabitCorrelationChart(point: point, xMax: xMax)
             deltaBadge
 
             if point.isLowConfidence {
@@ -1377,6 +1387,7 @@ private struct HabitCorrelationHabitCard: View {
 private struct HabitCorrelationChart: View {
 
     let point: HabitCorrelationPoint
+    let xMax: Double
 
     private var bars: [HabitBarDatum] {
         [
@@ -1399,22 +1410,18 @@ private struct HabitCorrelationChart: View {
         ]
     }
 
-    private var yMax: Double {
-        max(point.avgWithHabitMinutes, point.avgWithoutHabitMinutes, 1) * 1.35
-    }
-
     var body: some View {
         Chart(bars) { bar in
             BarMark(
-                x: .value("Group", bar.label),
-                y: .value("Minutes", bar.minutes)
+                x: .value("Minutes", bar.minutes),
+                y: .value("Group", bar.label)
             )
             .foregroundStyle(bar.color.opacity(point.isLowConfidence ? 0.55 : 0.92))
-            .cornerRadius(8)
-            .annotation(position: .top, spacing: 4) {
-                VStack(spacing: 1) {
-                    Text(HabitCorrelationPoint.minuteLabel(bar.minutes))
-                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+            .cornerRadius(6)
+            .annotation(position: .trailing, alignment: .leading, spacing: 6) {
+                HStack(spacing: 4) {
+                    Text(CorrelationMinuteChartStyle.minuteLabel(bar.minutes))
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundStyle(Theme.labelPrimary)
                     Text("n=\(bar.nights)")
                         .font(.system(size: 10, weight: .regular, design: .monospaced))
@@ -1422,16 +1429,27 @@ private struct HabitCorrelationChart: View {
                 }
             }
         }
-        .chartYScale(domain: 0...yMax)
-        .chartYAxis(.hidden)
+        .chartXScale(domain: 0...xMax)
         .chartXAxis {
+            AxisMarks(values: CorrelationMinuteChartStyle.xTicks(upTo: xMax)) { value in
+                AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
+                AxisValueLabel {
+                    if let v = value.as(Double.self) {
+                        Text("\(Int(v))m")
+                            .font(.caption2)
+                            .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                    }
+                }
+            }
+        }
+        .chartYAxis {
             AxisMarks { _ in
                 AxisValueLabel()
                     .font(.caption2)
-                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                    .foregroundStyle(Theme.labelSecondary)
             }
         }
-        .frame(height: 140)
+        .frame(height: max(56, CGFloat(bars.count) * 52))
         .opacity(point.isLowConfidence ? 0.92 : 1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(

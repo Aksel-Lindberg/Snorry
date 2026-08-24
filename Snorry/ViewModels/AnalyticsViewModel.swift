@@ -521,7 +521,18 @@ final class AnalyticsViewModel {
     }
 
     var alertChartXMax: Double {
-        let peak = alertProfilePoints.map(\.avgSnoreMinutes).max() ?? 0
+        Self.snoreMinutesChartMax(from: alertProfilePoints.map(\.avgSnoreMinutes))
+    }
+
+    var habitChartXMax: Double {
+        let values = habitCorrelationPoints.flatMap {
+            [$0.avgWithHabitMinutes, $0.avgWithoutHabitMinutes]
+        }
+        return Self.snoreMinutesChartMax(from: values)
+    }
+
+    static func snoreMinutesChartMax(from values: [Double]) -> Double {
+        let peak = values.max() ?? 0
         guard peak > 0 else { return 10 }
         let step: Double = peak < 15 ? 5 : peak < 60 ? 10 : 30
         return ceil((peak + step * 0.2) / step) * step
@@ -815,11 +826,12 @@ final class AnalyticsViewModel {
     // MARK: Trend & insight
 
     static func linearTrendLine(from dailyPoints: [DailySnorePoint]) -> [TrendLinePoint]? {
-        let indexed: [(x: Double, y: Double, date: Date)] = dailyPoints.enumerated().compactMap { index, point in
-            guard point.hadSession else { return nil }
-            return (Double(index), point.snoreMinutes, point.date)
+        let recorded = dailyPoints.filter(\.hadSession)
+        guard recorded.count >= InsightsConfiguration.minimumNightsForTrend else { return nil }
+
+        let indexed: [(x: Double, y: Double, date: Date)] = recorded.enumerated().map { index, point in
+            (Double(index), point.snoreMinutes, point.date)
         }
-        guard indexed.count >= InsightsConfiguration.minimumNightsForTrend else { return nil }
 
         let n = Double(indexed.count)
         let sumX = indexed.map(\.x).reduce(0, +)
@@ -832,13 +844,12 @@ final class AnalyticsViewModel {
         let slope = (n * sumXY - sumX * sumY) / denominator
         let intercept = (sumY - slope * sumX) / n
 
-        guard let first = dailyPoints.first, let last = dailyPoints.last else { return nil }
-        let firstIndex = 0.0
-        let lastIndex = Double(max(dailyPoints.count - 1, 0))
+        guard let firstRecorded = recorded.first, let lastRecorded = recorded.last else { return nil }
+        let lastX = Double(recorded.count - 1)
 
         return [
-            TrendLinePoint(date: first.date, predictedMinutes: max(0, intercept + slope * firstIndex)),
-            TrendLinePoint(date: last.date, predictedMinutes: max(0, intercept + slope * lastIndex))
+            TrendLinePoint(date: firstRecorded.date, predictedMinutes: max(0, intercept)),
+            TrendLinePoint(date: lastRecorded.date, predictedMinutes: max(0, intercept + slope * lastX))
         ]
     }
 
@@ -864,14 +875,14 @@ final class AnalyticsViewModel {
             )
         }
 
-        let slopePerDay = (trend[1].predictedMinutes - trend[0].predictedMinutes) /
-            Double(max(dailyPoints.count - 1, 1))
-        let flat = abs(slopePerDay) < InsightsConfiguration.flatTrendSlopePerDayMinutes
+        let slopePerRecordedNight = (trend[1].predictedMinutes - trend[0].predictedMinutes) /
+            Double(max(sessionDays.count - 1, 1))
+        let flat = abs(slopePerRecordedNight) < InsightsConfiguration.flatTrendSlopePerDayMinutes
 
         let tone: InsightTone
         if flat {
             tone = .flat
-        } else if slopePerDay < 0 {
+        } else if slopePerRecordedNight < 0 {
             tone = .trendingDown
         } else {
             tone = .trendingUp

@@ -227,6 +227,46 @@ struct DailySnoreSessionPresenceTests {
         #expect(insight.tone == .insufficientData)
     }
 
+    @Test func trendLineSpansRecordedNightsOnly() {
+        let points = [
+            DailySnorePoint(date: day(-10), snoreMinutes: 0, eventCount: 0, hadSession: false),
+            DailySnorePoint(date: day(-9), snoreMinutes: 0, eventCount: 0, hadSession: false),
+            DailySnorePoint(date: day(-2), snoreMinutes: 20, eventCount: 4, hadSession: true),
+            DailySnorePoint(date: day(-1), snoreMinutes: 15, eventCount: 3, hadSession: true),
+            DailySnorePoint(date: day(0), snoreMinutes: 10, eventCount: 2, hadSession: true)
+        ]
+
+        let trend = AnalyticsViewModel.linearTrendLine(from: points)
+        #expect(trend?.count == 2)
+        #expect(trend?.first?.date == day(-2))
+        #expect(trend?.last?.date == day(0))
+        #expect(trend!.first!.predictedMinutes > trend!.last!.predictedMinutes)
+    }
+
+    @Test func leadingGapsDoNotAffectTrendDirection() {
+        let dense = [
+            DailySnorePoint(date: day(-2), snoreMinutes: 20, eventCount: 4, hadSession: true),
+            DailySnorePoint(date: day(-1), snoreMinutes: 15, eventCount: 3, hadSession: true),
+            DailySnorePoint(date: day(0), snoreMinutes: 10, eventCount: 2, hadSession: true)
+        ]
+        let withGaps = [
+            DailySnorePoint(date: day(-30), snoreMinutes: 0, eventCount: 0, hadSession: false),
+            DailySnorePoint(date: day(-29), snoreMinutes: 0, eventCount: 0, hadSession: false),
+            DailySnorePoint(date: day(-2), snoreMinutes: 20, eventCount: 4, hadSession: true),
+            DailySnorePoint(date: day(-1), snoreMinutes: 15, eventCount: 3, hadSession: true),
+            DailySnorePoint(date: day(0), snoreMinutes: 10, eventCount: 2, hadSession: true)
+        ]
+
+        let denseTrend = AnalyticsViewModel.linearTrendLine(from: dense)
+        let gapTrend = AnalyticsViewModel.linearTrendLine(from: withGaps)
+        #expect(denseTrend?.first?.predictedMinutes == gapTrend?.first?.predictedMinutes)
+        #expect(denseTrend?.last?.predictedMinutes == gapTrend?.last?.predictedMinutes)
+
+        let denseInsight = AnalyticsViewModel.makeInsight(from: dense)
+        let gapInsight = AnalyticsViewModel.makeInsight(from: withGaps)
+        #expect(denseInsight.tone == gapInsight.tone)
+    }
+
     @Test func quietLoggedNightCanBeBestDay() {
         let days = [
             DailySnorePoint(date: day(0), snoreMinutes: 0, eventCount: 0, hadSession: true),
