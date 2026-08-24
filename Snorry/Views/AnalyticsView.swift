@@ -108,7 +108,6 @@ private struct AnalyticsContent: View {
 
     @Bindable var vm: AnalyticsViewModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @State private var areSettingsChangesExpanded = true
     @State private var areEventsExpanded = false
     @State private var selectedChartDay: Date?
     @State private var highlightedChartDay: Date?
@@ -124,7 +123,6 @@ private struct AnalyticsContent: View {
                     InsightBanner(message: vm.insightMessage)
                 }
                 snoreTrendCard
-                AlertCorrelationCard(points: vm.alertProfilePoints, xMax: vm.alertChartXMax)
                 HabitCorrelationCard(
                     points: vm.habitCorrelationPoints,
                     xMax: vm.habitChartXMax,
@@ -133,16 +131,6 @@ private struct AnalyticsContent: View {
                         vm.setRange(.month)
                     }
                 )
-                if !vm.settingsChanges.isEmpty {
-                    SettingsChangeLegend(
-                        changes: vm.settingsChanges,
-                        isExpanded: $areSettingsChangesExpanded,
-                        onDelete: { change in
-                            vm.deleteSettingsChange(change)
-                        }
-                    )
-                }
-                if vm.settingsChanges.isEmpty { markerInfoNote }
             }
             .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
             .padding(.bottom, horizontalSizeClass == .regular ? 16 : 24)
@@ -202,16 +190,6 @@ private struct AnalyticsContent: View {
     private func dailyPoint(for dayStart: Date) -> DailySnorePoint? {
         let calendar = Calendar.current
         return vm.dailyPoints.first { calendar.isDate($0.date, inSameDayAs: dayStart) }
-    }
-
-    private func settingsChangeCount(on dayStart: Date) -> Int {
-        let calendar = Calendar.current
-        let key = calendar.startOfDay(for: dayStart)
-        return vm.settingsChanges.reduce(into: 0) { count, change in
-            if calendar.isDate(change.timestamp, inSameDayAs: key) {
-                count += 1
-            }
-        }
     }
 
     // MARK: Range picker
@@ -399,8 +377,7 @@ private struct AnalyticsContent: View {
                 emptyChartState
             } else {
                 SnoreDurationHeroChart(
-                    dailyPoints: vm.dailyPoints,
-                    settingsChanges: vm.settingsChanges,
+                    dailyPoints: vm.chartDailyPoints,
                     trendLinePoints: vm.trendLinePoints,
                     exerciseLoggedDayStarts: vm.exerciseLoggedDayStarts,
                     cutoffDate: vm.cutoffDate,
@@ -415,7 +392,6 @@ private struct AnalyticsContent: View {
                     ChartNightCallout(
                         point: point,
                         hadExercise: vm.exerciseLoggedDayStarts.contains(dayStart),
-                        settingsChangeCount: settingsChangeCount(on: dayStart),
                         onOpen: openHighlightedChartDay
                     )
                 }
@@ -476,7 +452,7 @@ private struct AnalyticsContent: View {
     }
 
     private var showsChartLegend: Bool {
-        vm.trendLinePoints != nil || showsExerciseLegend || !vm.settingsChanges.isEmpty
+        vm.trendLinePoints != nil || showsExerciseLegend
     }
 
     private var chartLegendRow: some View {
@@ -491,20 +467,10 @@ private struct AnalyticsContent: View {
             }
             if showsExerciseLegend {
                 HStack(spacing: 4) {
-                    Image(systemName: "figure.mind.and.body")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(Theme.good)
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Theme.good.opacity(0.65))
+                        .frame(width: 18, height: 8)
                     Text("Exercises")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                }
-            }
-            if !vm.settingsChanges.isEmpty {
-                HStack(spacing: 4) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(Theme.warning)
-                    Text("Settings changed")
                         .font(.caption2)
                         .foregroundStyle(Theme.labelOnSurfaceSecondary)
                 }
@@ -589,27 +555,6 @@ private struct AnalyticsContent: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
     }
-
-    // MARK: Info note (shown when no markers exist yet)
-
-    private var markerInfoNote: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "info.circle")
-                .foregroundStyle(Theme.accent.opacity(0.7))
-                .font(.subheadline)
-                .padding(.top, 1)
-            Text(
-                "Settings change markers will appear on the chart once you save changes in " +
-                "Settings. This lets you track which push notification or alarm settings " +
-                "affected your snore duration and event count."
-            )
-            .font(.caption)
-            .foregroundStyle(Theme.labelOnSurfaceSecondary)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(14)
-        .background(Theme.surface.opacity(0.6), in: RoundedRectangle(cornerRadius: 14))
-    }
 }
 
 // MARK: - Navigation route for session detail from chart
@@ -628,15 +573,29 @@ private struct ChartDayPicker: Identifiable {
 private func snoreChartXAxis(
     points: [DailySnorePoint],
     markCount: Int,
-    format: Date.FormatStyle
+    format: Date.FormatStyle,
+    explicitDates: [Date]? = nil
 ) -> some AxisContent {
-    AxisMarks(values: .automatic(desiredCount: markCount)) { value in
-        AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
-        AxisValueLabel {
-            if let date = value.as(Date.self) {
-                Text(date, format: format)
-                    .font(.caption2)
-                    .foregroundStyle(snoreChartXAxisLabelColor(for: date, in: points))
+    if let explicitDates, !explicitDates.isEmpty {
+        AxisMarks(values: explicitDates) { value in
+            AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
+            AxisValueLabel {
+                if let date = value.as(Date.self) {
+                    Text(date, format: format)
+                        .font(.caption2)
+                        .foregroundStyle(snoreChartXAxisLabelColor(for: date, in: points))
+                }
+            }
+        }
+    } else {
+        AxisMarks(values: .automatic(desiredCount: markCount)) { value in
+            AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
+            AxisValueLabel {
+                if let date = value.as(Date.self) {
+                    Text(date, format: format)
+                        .font(.caption2)
+                        .foregroundStyle(snoreChartXAxisLabelColor(for: date, in: points))
+                }
             }
         }
     }
@@ -737,7 +696,6 @@ private struct ChartNightCallout: View {
 
     let point: DailySnorePoint
     let hadExercise: Bool
-    let settingsChangeCount: Int
     let onOpen: () -> Void
 
     var body: some View {
@@ -782,14 +740,11 @@ private struct ChartNightCallout: View {
     }
 
     private var eventTags: [String] {
-        var tags: [String] = []
-        if hadExercise { tags.append("Exercises") }
-        if settingsChangeCount > 0 { tags.append("Settings changed") }
-        return tags
+        hadExercise ? ["Exercises"] : []
     }
 
     private func tagColor(for tag: String) -> Color {
-        tag == "Exercises" ? Theme.good : Theme.warning
+        Theme.good
     }
 
     private var calloutAccessibilityLabel: String {
@@ -797,11 +752,6 @@ private struct ChartNightCallout: View {
         let events = point.eventCount == 1 ? "1 snore event" : "\(point.eventCount) snore events"
         var label = "\(date), \(AnalyticsContent.minuteLabel(point.snoreMinutes)), \(events)"
         if hadExercise { label += ", airway exercises logged" }
-        if settingsChangeCount == 1 {
-            label += ", settings changed"
-        } else if settingsChangeCount > 1 {
-            label += ", \(settingsChangeCount) settings changes"
-        }
         return label
     }
 }
@@ -810,7 +760,6 @@ private struct ChartNightCallout: View {
 private struct SnoreDurationHeroChart: View {
 
     let dailyPoints: [DailySnorePoint]
-    let settingsChanges: [AlertSettingsChange]
     let trendLinePoints: [TrendLinePoint]?
     let exerciseLoggedDayStarts: Set<Date>
     let cutoffDate: Date
@@ -838,7 +787,6 @@ private struct SnoreDurationHeroChart: View {
                     .interpolationMethod(.linear)
                 }
             }
-            gapDayEventMarkers
         }
         .chartXScale(domain: cutoffDate...chartEndDate)
         .chartYScale(domain: 0...snoreMinutesYMax)
@@ -865,16 +813,21 @@ private struct SnoreDurationHeroChart: View {
                 x: .value("Date", point.date, unit: .day),
                 y: .value("Snore min", point.snoreMinutes)
             )
-            .foregroundStyle(Theme.accent.opacity(isDayHighlighted(point) ? 1 : 0.85))
+            .foregroundStyle(barFill(for: point))
             .cornerRadius(4)
             .accessibilityLabel(durationAccessibilityLabel(for: point))
             .annotation(position: .top, spacing: 2) {
                 durationAnnotation(for: point)
             }
-            .annotation(position: .bottom, spacing: 4) {
-                barEventMarkers(for: point)
-            }
         }
+    }
+
+    private func barFill(for point: DailySnorePoint) -> Color {
+        let highlighted = isDayHighlighted(point)
+        if hasExercise(on: point.date) {
+            return Theme.good.opacity(highlighted ? 0.85 : 0.65)
+        }
+        return Theme.accent.opacity(highlighted ? 1 : 0.85)
     }
 
     private func isDayHighlighted(_ point: DailySnorePoint) -> Bool {
@@ -890,14 +843,26 @@ private struct SnoreDurationHeroChart: View {
                     .font(.system(size: 9, weight: .semibold, design: .monospaced))
                     .foregroundStyle(Theme.labelSecondary)
             }
-        } else {
-            VStack(spacing: 3) {
-                Text(selectedRange == .week ? "0m" : "0")
-                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Theme.labelSecondary)
-                Capsule()
-                    .fill(Theme.accent.opacity(0.85))
-                    .frame(width: 14, height: 4)
+        } else if point.hadSession {
+            let barTint = hasExercise(on: point.date) ? Theme.good.opacity(0.85) : Theme.accent.opacity(0.85)
+            if selectedRange == .week {
+                VStack(spacing: 3) {
+                    Text("0m")
+                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Theme.labelSecondary)
+                    Capsule()
+                        .fill(barTint)
+                        .frame(width: 14, height: 4)
+                }
+            } else if selectedRange == .month {
+                VStack(spacing: 3) {
+                    Text("0")
+                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Theme.labelSecondary)
+                    Capsule()
+                        .fill(barTint)
+                        .frame(width: 14, height: 4)
+                }
             }
         }
     }
@@ -913,42 +878,7 @@ private struct SnoreDurationHeroChart: View {
         if hasExercise(on: point.date) {
             label += ", airway exercises logged"
         }
-        let settingsCount = settingsChangeCount(on: point.date)
-        if settingsCount == 1 {
-            label += ", settings changed"
-        } else if settingsCount > 1 {
-            label += ", \(settingsCount) settings changes"
-        }
         return label
-    }
-
-    /// Markers sit on the bar base for recorded nights — not on the x-axis.
-    @ViewBuilder
-    private func barEventMarkers(for point: DailySnorePoint) -> some View {
-        dayEventMarkerStack(for: point.date, style: .onBar)
-    }
-
-    /// Gap nights with exercise or settings get a single marker below the axis.
-    @ChartContentBuilder
-    private var gapDayEventMarkers: some ChartContent {
-        ForEach(gapEventDays, id: \.self) { day in
-            PointMark(
-                x: .value("Date", day, unit: .day),
-                y: .value("Event", 0)
-            )
-            .symbolSize(1)
-            .opacity(0.001)
-            .annotation(position: .bottom, spacing: 4) {
-                dayEventMarkerStack(for: day, style: .belowAxis)
-            }
-        }
-    }
-
-    private var gapEventDays: [Date] {
-        dailyPoints
-            .filter { !$0.hadSession }
-            .map(\.date)
-            .filter { hasExercise(on: $0) || settingsChangeCount(on: $0) > 0 }
     }
 
     private func dayStart(_ date: Date) -> Date {
@@ -959,63 +889,15 @@ private struct SnoreDurationHeroChart: View {
         exerciseLoggedDayStarts.contains(dayStart(date))
     }
 
-    private func settingsChangeCount(on date: Date) -> Int {
-        settingsChangesByDay[dayStart(date)] ?? 0
-    }
-
-    private var settingsChangesByDay: [Date: Int] {
-        settingsChanges.reduce(into: [:]) { counts, change in
-            let day = dayStart(change.timestamp)
-            counts[day, default: 0] += 1
-        }
-    }
-
-    private enum DayEventMarkerStyle {
-        case onBar
-        case belowAxis
-    }
-
-    @ViewBuilder
-    private func dayEventMarkerStack(for date: Date, style: DayEventMarkerStyle) -> some View {
-        let day = dayStart(date)
-        let exercised = hasExercise(on: day)
-        let settingsCount = settingsChangeCount(on: day)
-        if exercised || settingsCount > 0 {
-            let iconSize: CGFloat = style == .onBar ? 8 : 10
-
-            HStack(spacing: 4) {
-                if exercised {
-                    eventMarkerPill(
-                        systemImage: "figure.mind.and.body",
-                        color: Theme.good,
-                        iconSize: iconSize
-                    )
-                }
-                if settingsCount > 0 {
-                    eventMarkerPill(
-                        systemImage: "gearshape.fill",
-                        color: Theme.warning,
-                        iconSize: iconSize
-                    )
-                }
-            }
-        }
-    }
-
-    private func eventMarkerPill(systemImage: String, color: Color, iconSize: CGFloat) -> some View {
-        Image(systemName: systemImage)
-            .font(.system(size: iconSize, weight: .bold))
-            .foregroundStyle(color)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 3)
-            .background(Theme.background.opacity(0.9), in: Capsule())
-            .overlay(Capsule().strokeBorder(color.opacity(0.7), lineWidth: 1))
-            .shadow(color: Theme.background.opacity(0.35), radius: 1, y: 1)
-    }
-
     @AxisContentBuilder
     private var xAxisContent: some AxisContent {
-        snoreChartXAxis(points: dailyPoints, markCount: xAxisMarkCount, format: xAxisFormat)
+        let explicitWeekDates = selectedRange == .week ? dailyPoints.map(\.date) : nil
+        snoreChartXAxis(
+            points: dailyPoints,
+            markCount: xAxisMarkCount,
+            format: xAxisFormat,
+            explicitDates: explicitWeekDates
+        )
     }
 
     @AxisContentBuilder
@@ -1195,104 +1077,6 @@ private struct CollapsibleSnoreEventsChart: View {
     }
 }
 
-// MARK: - Legacy dual chart removed; settings legend unchanged below
-
-// MARK: - Settings change legend card
-private struct SettingsChangeLegend: View {
-
-    let changes: [AlertSettingsChange]
-    @Binding var isExpanded: Bool
-    let onDelete: (AlertSettingsChange) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.22)) {
-                    isExpanded.toggle()
-                }
-            } label: {
-                HStack(alignment: .top, spacing: 8) {
-                    header
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.down")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Theme.accent)
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                        .padding(.top, 2)
-                        .accessibilityHidden(true)
-                }
-            }
-            .buttonStyle(.plain)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel("Settings changes")
-            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-            .accessibilityHint(isExpanded ? "Collapse settings changes" : "Expand settings changes")
-
-            if isExpanded {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Icons on the chart mark exercise and settings changed. See rows below for settings details.")
-                        .font(.caption)
-                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                    VStack(spacing: 10) {
-                        ForEach(Array(changes.enumerated()), id: \.offset) { index, change in
-                            changeRow(index: index, change: change)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        onDelete(change)
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                }
-                        }
-                    }
-                }
-                .padding(.top, 14)
-            }
-        }
-        .padding(16)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
-    }
-
-    private var header: some View {
-        HStack(spacing: 8) {
-            Circle().fill(Theme.warning).frame(width: 8, height: 8)
-            Text("Settings changes")
-                .font(.headline)
-                .foregroundStyle(Theme.labelPrimary)
-        }
-    }
-
-    private func changeRow(index: Int, change: AlertSettingsChange) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            badge(number: index + 1).padding(.top, 1)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(change.timestamp.formatted(date: .abbreviated, time: .shortened))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.labelPrimary)
-                Text(change.summaryLabel)
-                    .font(.caption)
-                    .foregroundStyle(Theme.labelSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(12)
-        .background(Theme.surfaceSecondary, in: RoundedRectangle(cornerRadius: 12))
-    }
-
-    private func badge(number: Int) -> some View {
-        Text("\(number)")
-            .font(.system(size: 11, weight: .bold, design: .rounded))
-            .foregroundStyle(Theme.warning)
-            .frame(width: 24, height: 24)
-            .background(
-                Circle()
-                    .fill(Theme.background)
-                    .overlay(Circle().strokeBorder(Theme.warning, lineWidth: 1.5))
-            )
-    }
-}
-
 // MARK: - Shared minute-axis helpers for correlation bar charts
 private enum CorrelationMinuteChartStyle {
 
@@ -1309,122 +1093,6 @@ private enum CorrelationMinuteChartStyle {
 
     static func xTicks(upTo xMax: Double) -> [Double] {
         stride(from: 0, through: xMax, by: max(1, xMax / 4).rounded()).map { $0 }
-    }
-}
-
-// MARK: - Alert configuration vs snore duration card
-private struct AlertCorrelationCard: View {
-
-    let points: [AlertProfilePoint]
-    let xMax: Double
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            cardHeader
-            if points.isEmpty {
-                emptyState
-            } else {
-                AlertCorrelationChart(points: points, xMax: xMax)
-                disclaimer
-            }
-        }
-        .padding(16)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
-    }
-
-    private var cardHeader: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Alert Type vs Snore duration")
-                .font(.headline)
-                .foregroundStyle(Theme.labelPrimary)
-            Text("Average per alert configuration · sessions in this period")
-                .font(.caption)
-                .foregroundStyle(Theme.labelOnSurfaceSecondary)
-        }
-    }
-
-    private var emptyState: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "bell.slash")
-                .font(.system(size: 38, weight: .thin))
-                .foregroundStyle(Theme.labelTertiary)
-            Text("No data yet")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(Theme.labelSecondary)
-            Text("Complete a recording session to see how your alert settings correlate with snore duration.")
-                .font(.caption)
-                .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
-    }
-
-    private var disclaimer: some View {
-        Text("Shorter is better. Correlation only — not a causal measure.")
-            .font(.caption2)
-            .foregroundStyle(Theme.labelOnSurfaceSecondary)
-            .padding(.top, 2)
-    }
-}
-
-// MARK: - Horizontal bar chart (snore duration per alert profile)
-private struct AlertCorrelationChart: View {
-
-    let points: [AlertProfilePoint]
-    let xMax: Double
-
-    /// Colour gradient: green at 0, red at xMax.
-    private func barColor(for minutes: Double) -> Color {
-        let t = min(max(xMax > 0 ? minutes / xMax : 0, 0), 1)
-        return Color(
-            red:   0.25 + 0.55 * t,
-            green: 0.75 - 0.45 * t,
-            blue:  0.35 - 0.15 * t
-        )
-    }
-
-    var body: some View {
-        Chart(points) { point in
-            BarMark(
-                x: .value("Avg snore (min)", point.avgSnoreMinutes),
-                y: .value("Profile", point.label)
-            )
-            .foregroundStyle(barColor(for: point.avgSnoreMinutes))
-            .cornerRadius(6)
-            .annotation(position: .trailing, alignment: .leading, spacing: 6) {
-                HStack(spacing: 4) {
-                    Text(CorrelationMinuteChartStyle.minuteLabel(point.avgSnoreMinutes))
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundStyle(Theme.labelPrimary)
-                    Text("n=\(point.sessionCount)")
-                        .font(.system(size: 10, weight: .regular, design: .monospaced))
-                        .foregroundStyle(point.isLowConfidence ? Theme.warning : Theme.labelOnSurfaceSecondary)
-                }
-            }
-        }
-        .chartXScale(domain: 0...xMax)
-        .chartXAxis {
-            AxisMarks(values: CorrelationMinuteChartStyle.xTicks(upTo: xMax)) { value in
-                AxisGridLine().foregroundStyle(Theme.surfaceSecondary)
-                AxisValueLabel {
-                    if let v = value.as(Double.self) {
-                        Text("\(Int(v))m")
-                            .font(.caption2)
-                            .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                    }
-                }
-            }
-        }
-        .chartYAxis {
-            AxisMarks { _ in
-                AxisValueLabel()
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelSecondary)
-            }
-        }
-        .frame(height: max(56, CGFloat(points.count) * 52))
     }
 }
 
@@ -1626,7 +1294,7 @@ private struct HabitCorrelationChart: View {
                 minutes: point.avgWithHabitMinutes,
                 nights: point.nightsWithHabit,
                 isLowConfidence: point.isLowConfidenceWith,
-                color: Theme.snoring
+                color: Theme.accent
             ),
             HabitBarDatum(
                 id: "without",
@@ -1634,7 +1302,7 @@ private struct HabitCorrelationChart: View {
                 minutes: point.avgWithoutHabitMinutes,
                 nights: point.nightsWithoutHabit,
                 isLowConfidence: point.isLowConfidenceWithout,
-                color: Theme.accent
+                color: Theme.waveformBar
             )
         ]
 
@@ -1699,7 +1367,7 @@ private struct HabitCorrelationChart: View {
         if let customAnnotation = bar.customAnnotation {
             Text(customAnnotation)
                 .font(.system(size: 11, weight: .bold, design: .monospaced))
-                .foregroundStyle(Theme.labelPrimary)
+                .foregroundStyle(bar.color)
         } else {
             HStack(spacing: 4) {
                 Text(CorrelationMinuteChartStyle.minuteLabel(bar.minutes))

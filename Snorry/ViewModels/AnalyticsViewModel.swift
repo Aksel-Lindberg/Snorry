@@ -72,19 +72,6 @@ struct DailySnorePoint: Identifiable {
     }
 }
 
-// MARK: - One alert-profile bucket for the correlation chart
-struct AlertProfilePoint: Identifiable {
-    let id = UUID()
-    /// Short, human-readable label for this profile (e.g. "Push · Classic").
-    let label: String
-    /// Average snore duration per session with this profile, in minutes.
-    let avgSnoreMinutes: Double
-    /// Number of sessions in this bucket.
-    let sessionCount: Int
-    /// True when sessionCount is small enough that the average may not be representative.
-    var isLowConfidence: Bool { sessionCount < 3 }
-}
-
 // MARK: - One habit bucket for the correlation chart
 struct HabitCorrelationPoint: Identifiable {
     let id: String
@@ -195,8 +182,6 @@ final class AnalyticsViewModel {
         dailyPoints: [],
         sessionsByDay: [:]
     )
-    var settingsChanges: [AlertSettingsChange] = []
-    var alertProfilePoints: [AlertProfilePoint] = []
     var habitCorrelationPoints: [HabitCorrelationPoint] = []
     var exerciseLoggedDayStarts: Set<Date> = []
     private var oldestSessionStart: Date?
@@ -291,7 +276,7 @@ final class AnalyticsViewModel {
         switch selectedRange {
         case .week:
             return periodOffset == 0
-                ? Self.weekRangeLabel(from: bounds.start, through: bounds.lastDayStart)
+                ? Self.weekRangeLabel(from: bounds.start, through: chartEndDate)
                 : nil
         case .month:
             return periodOffset == 0 ? Self.monthLabel(bounds.start) : nil
@@ -368,13 +353,6 @@ final class AnalyticsViewModel {
             calendar: cal
         )
 
-        loadSettingsChanges(from: visible.start, until: visible.endExclusive)
-        loadAlertCorrelation(
-            rangeStart: visible.start,
-            rangeEnd: visible.lastDayStart,
-            fetchEndExclusive: fetchEnd,
-            calendar: cal
-        )
         loadExerciseDays(from: visible.start, until: visible.endExclusive, calendar: cal)
         loadHabitCorrelation(from: visible.start, until: visible.endExclusive, calendar: cal)
     }
@@ -394,18 +372,6 @@ final class AnalyticsViewModel {
         return nil
     }
 
-    /// Deletes one saved settings-change marker and refreshes analytics state.
-    func deleteSettingsChange(_ change: AlertSettingsChange) {
-        context.delete(change)
-        do {
-            try context.save()
-        } catch {
-            context.rollback()
-            return
-        }
-        refresh()
-    }
-
     // MARK: Computed chart helpers
 
     var cutoffDate: Date {
@@ -414,8 +380,31 @@ final class AnalyticsViewModel {
 
     var chartEndDate: Date {
         guard let bounds = visibleBounds else { return Date() }
-        if periodOffset == 0 { return Date() }
-        return bounds.endExclusive.addingTimeInterval(-1)
+        let calendar = Calendar.current
+        switch selectedRange {
+        case .week:
+            return Self.lastDayStartInWeek(containing: bounds.start, calendar: calendar)
+        case .month, .threeMonths:
+            return bounds.lastDayStart
+        }
+    }
+
+    /// Dense daily series for the chart x-axis (extends current week through Sunday).
+    var chartDailyPoints: [DailySnorePoint] {
+        guard selectedRange == .week,
+              periodOffset == 0,
+              let bounds = visibleBounds else {
+            return dailyPoints
+        }
+        let calendar = Calendar.current
+        let weekEnd = Self.lastDayStartInWeek(containing: bounds.start, calendar: calendar)
+        guard weekEnd > bounds.lastDayStart else { return dailyPoints }
+        return Self.extendedDailySeries(
+            dailyPoints,
+            after: bounds.lastDayStart,
+            through: weekEnd,
+            calendar: calendar
+        )
     }
 
     // MARK: Period bounds
@@ -506,6 +495,38 @@ final class AnalyticsViewModel {
         return "\(startDay) \(startMonth)–\(endDay) \(endMonth)"
     }
 
+    /// Last start-of-day in the calendar week that contains `date`.
+    static func lastDayStartInWeek(containing date: Date, calendar: Calendar) -> Date {
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: date) else {
+            return calendar.startOfDay(for: date)
+        }
+        let lastDay = calendar.date(byAdding: .day, value: -1, to: interval.end) ?? date
+        return calendar.startOfDay(for: lastDay)
+    }
+
+    /// Appends empty future days after the last included day through `end`.
+    static func extendedDailySeries(
+        _ points: [DailySnorePoint],
+        after lastIncluded: Date,
+        through end: Date,
+        calendar: Calendar
+    ) -> [DailySnorePoint] {
+        var result = points
+        var cursor = calendar.startOfDay(for: lastIncluded)
+        guard let next = calendar.date(byAdding: .day, value: 1, to: cursor) else { return result }
+        cursor = next
+        let endDay = calendar.startOfDay(for: end)
+
+        while cursor <= endDay {
+            result.append(
+                DailySnorePoint(date: cursor, snoreMinutes: 0, eventCount: 0, hadSession: false)
+            )
+            guard let advanced = calendar.date(byAdding: .day, value: 1, to: cursor) else { break }
+            cursor = advanced
+        }
+        return result
+    }
+
     static func monthLabel(_ date: Date) -> String {
         date.formatted(.dateTime.month(.wide).year())
     }
@@ -535,10 +556,6 @@ final class AnalyticsViewModel {
         guard peak > 0 else { return 5 }
         let step: Double = peak < 10 ? 2 : peak < 30 ? 5 : 10
         return ceil((peak + step * 0.2) / step) * step
-    }
-
-    var alertChartXMax: Double {
-        Self.snoreMinutesChartMax(from: alertProfilePoints.map(\.avgSnoreMinutes))
     }
 
     var habitChartXMax: Double {
@@ -654,24 +671,49 @@ final class AnalyticsViewModel {
         return points
     }
 
-    private func loadSettingsChanges(from start: Date, until endExclusive: Date) {
-        let descriptor = FetchDescriptor<AlertSettingsChange>(
-            predicate: #Predicate { $0.timestamp >= start },
-            sortBy: [SortDescriptor(\.timestamp)]
-        )
-        let rows = (try? context.fetch(descriptor)) ?? []
-        settingsChanges = rows.filter { $0.timestamp < endExclusive }
-    }
-
     private func loadExerciseDays(from start: Date, until endExclusive: Date, calendar: Calendar) {
-        let descriptor = FetchDescriptor<MyofascialExerciseCompletion>(
+        let exerciseDescriptor = FetchDescriptor<MyofascialExerciseCompletion>(
             predicate: #Predicate { $0.completedAt >= start },
             sortBy: [SortDescriptor(\.completedAt)]
         )
-        let rows = (try? context.fetch(descriptor)) ?? []
-        exerciseLoggedDayStarts = Set(
-            rows.filter { $0.completedAt < endExclusive }.map { calendar.startOfDay(for: $0.completedAt) }
+        let exerciseRows = (try? context.fetch(exerciseDescriptor)) ?? []
+
+        let airwayHabitID = HabitKind.myofascialExercise.id
+        let habitDescriptor = FetchDescriptor<HabitLog>(
+            predicate: #Predicate { $0.dayStart >= start && $0.habitID == airwayHabitID },
+            sortBy: [SortDescriptor(\.dayStart)]
         )
+        let habitRows = (try? context.fetch(habitDescriptor)) ?? []
+
+        exerciseLoggedDayStarts = Self.airwayExerciseDayStarts(
+            exerciseCompletions: exerciseRows,
+            habitLogs: habitRows,
+            rangeStart: start,
+            rangeEndExclusive: endExclusive,
+            calendar: calendar
+        )
+    }
+
+    /// Days with an exercise completion and/or the built-in airway-exercises habit logged.
+    static func airwayExerciseDayStarts(
+        exerciseCompletions: [MyofascialExerciseCompletion],
+        habitLogs: [HabitLog],
+        rangeStart: Date,
+        rangeEndExclusive: Date,
+        calendar: Calendar
+    ) -> Set<Date> {
+        let completionDays = Set(
+            exerciseCompletions
+                .filter { $0.completedAt >= rangeStart && $0.completedAt < rangeEndExclusive }
+                .map { calendar.startOfDay(for: $0.completedAt) }
+        )
+        let habitDays = HabitLog.loggedDayStarts(
+            for: .myofascialExercise,
+            in: habitLogs.filter { $0.dayStart < rangeEndExclusive },
+            since: rangeStart,
+            calendar: calendar
+        )
+        return completionDays.union(habitDays)
     }
 
     private func loadHabitCorrelation(from start: Date, until endExclusive: Date, calendar: Calendar) {
@@ -783,61 +825,6 @@ final class AnalyticsViewModel {
         }
 
         return points.sorted { abs($0.deltaMinutes) > abs($1.deltaMinutes) }
-    }
-
-    private func loadAlertCorrelation(
-        rangeStart: Date,
-        rangeEnd: Date,
-        fetchEndExclusive: Date,
-        calendar: Calendar
-    ) {
-        let descriptor = FetchDescriptor<SnoreSession>(
-            predicate: #Predicate { $0.startDate >= rangeStart },
-            sortBy: [SortDescriptor(\.startDate)]
-        )
-        let fetched = ((try? context.fetch(descriptor)) ?? []).filter { $0.startDate < fetchEndExclusive }
-        let sessions = SleepNight.completedSessions(
-            in: fetched,
-            rangeStart: rangeStart,
-            rangeEnd: rangeEnd,
-            calendar: calendar
-        )
-
-        let qualified = sessions.filter { s in
-            s.snapshotPushEnabled != nil &&
-            s.snapshotSoundEnabled != nil &&
-            s.snapshotAlarmStyleRaw != nil
-        }
-
-        var buckets: [String: [Double]] = [:]
-        for s in qualified {
-            let label = Self.profileLabel(
-                push: s.snapshotPushEnabled!,
-                sound: s.snapshotSoundEnabled!,
-                styleRaw: s.snapshotAlarmStyleRaw!
-            )
-            buckets[label, default: []].append(s.totalSnoreDuration / 60.0)
-        }
-
-        alertProfilePoints = buckets
-            .map { label, values in
-                AlertProfilePoint(
-                    label: label,
-                    avgSnoreMinutes: values.reduce(0, +) / Double(values.count),
-                    sessionCount: values.count
-                )
-            }
-            .sorted { $0.avgSnoreMinutes < $1.avgSnoreMinutes }
-    }
-
-    private static func profileLabel(push: Bool, sound: Bool, styleRaw: Int) -> String {
-        let styleName = AlarmStyle(rawValue: styleRaw)?.displayName ?? "Sound"
-        switch (push, sound) {
-        case (true,  true):  return "Push · \(styleName)"
-        case (true,  false): return "Push only"
-        case (false, true):  return styleName
-        case (false, false): return "No alerts"
-        }
     }
 
     // MARK: Trend & insight

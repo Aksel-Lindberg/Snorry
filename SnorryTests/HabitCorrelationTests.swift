@@ -204,6 +204,64 @@ struct HabitCorrelationTests {
         #expect(flat.signedDeltaLabel == nil)
     }
 
+    @Test func airwayExerciseDayStartsUnionCompletionAndHabitLog() {
+        let dayA = day(-2)
+        let dayB = day(-1)
+        let rangeStart = day(-10)
+        let rangeEnd = day(1)
+
+        let completions = [
+            MyofascialExerciseCompletion(exerciseID: MyofascialExercise.tongueHasAHome.id, completedAt: dayA)
+        ]
+        let habitLogs = [
+            HabitLog(habitID: HabitKind.myofascialExercise.id, dayStart: dayB)
+        ]
+
+        let days = AnalyticsViewModel.airwayExerciseDayStarts(
+            exerciseCompletions: completions,
+            habitLogs: habitLogs,
+            rangeStart: rangeStart,
+            rangeEndExclusive: rangeEnd,
+            calendar: calendar
+        )
+
+        #expect(days.contains(dayA))
+        #expect(days.contains(dayB))
+    }
+
+    @Test func lastDayStartInWeekReturnsEndOfCalendarWeek() {
+        let midWeek = day(-3)
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: midWeek) else {
+            Issue.record("Expected week interval")
+            return
+        }
+        let expectedLast = calendar.startOfDay(
+            for: calendar.date(byAdding: .day, value: -1, to: interval.end)!
+        )
+
+        let last = AnalyticsViewModel.lastDayStartInWeek(containing: midWeek, calendar: calendar)
+        #expect(last == expectedLast)
+    }
+
+    @Test func extendedDailySeriesAppendsEmptyFutureDays() {
+        let monday = day(-2)
+        let wednesday = day(0)
+        let points = [
+            DailySnorePoint(date: monday, snoreMinutes: 5, eventCount: 1, hadSession: true),
+            DailySnorePoint(date: wednesday, snoreMinutes: 3, eventCount: 1, hadSession: true)
+        ]
+
+        let extended = AnalyticsViewModel.extendedDailySeries(
+            points,
+            after: wednesday,
+            through: day(2),
+            calendar: calendar
+        )
+
+        #expect(extended.count == points.count + 2)
+        #expect(extended.suffix(2).allSatisfy { !$0.hadSession && $0.snoreMinutes == 0 })
+    }
+
     private func day(_ offset: Int) -> Date {
         let today = calendar.startOfDay(for: Date())
         return calendar.date(byAdding: .day, value: offset, to: today)!
