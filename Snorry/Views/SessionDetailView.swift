@@ -160,6 +160,7 @@ struct SessionDetailView: View {
 private struct SnoreWatchFace: View {
 
     let events: [SnoreEvent]
+    @Environment(\.colorScheme) private var colorScheme
 
     /// Seconds represented by one full revolution of the 12-hour dial.
     private static let dialSeconds: Double = 12 * 3600
@@ -179,7 +180,19 @@ private struct SnoreWatchFace: View {
             return (startDeg, duration)
         }
 
-        let snoringColor = Theme.snoring   // capture before entering @Sendable closure
+        // Capture chrome colours before the @Sendable Canvas closure.
+        // White-on-dark opacities vanish on light cards; ink follows labelPrimary.
+        let isDark = colorScheme == .dark
+        let ink = Theme.labelPrimary
+        let bezelColor = ink.opacity(isDark ? 0.22 : 0.32)
+        let trackColor = ink.opacity(isDark ? 0.06 : 0.12)
+        let faceFillColor: Color = isDark ? Color.white.opacity(0.04) : Theme.surfaceSecondary
+        let faceStrokeColor = ink.opacity(isDark ? 0.15 : 0.28)
+        let majorTickColor = ink.opacity(isDark ? 0.55 : 0.58)
+        let minorTickColor = ink.opacity(isDark ? 0.18 : 0.28)
+        let hourLabelColor = ink.opacity(isDark ? 0.45 : 0.62)
+        let centerDotColor = ink.opacity(isDark ? 0.40 : 0.50)
+        let arcColor = Theme.snoring.opacity(isDark ? 0.88 : 1.0)
 
         Canvas { ctx, size in
             let dim    = min(size.width, size.height)
@@ -196,20 +209,20 @@ private struct SnoreWatchFace: View {
             var bezel = Path()
             bezel.addEllipse(in: CGRect(x: cx - outerR, y: cy - outerR,
                                         width: outerR * 2, height: outerR * 2))
-            ctx.stroke(bezel, with: .color(.white.opacity(0.22)), lineWidth: 2)
+            ctx.stroke(bezel, with: .color(bezelColor), lineWidth: 2)
 
             // — Subtle arc-track guide (thin ring where arcs will appear) —
             var track = Path()
             track.addEllipse(in: CGRect(x: cx - arcR, y: cy - arcR,
                                         width: arcR * 2, height: arcR * 2))
-            ctx.stroke(track, with: .color(.white.opacity(0.06)), lineWidth: arcW)
+            ctx.stroke(track, with: .color(trackColor), lineWidth: arcW)
 
             // — Watch face background —
             var face = Path()
             face.addEllipse(in: CGRect(x: cx - faceR, y: cy - faceR,
                                        width: faceR * 2, height: faceR * 2))
-            ctx.fill(face, with: .color(.white.opacity(0.04)))
-            ctx.stroke(face, with: .color(.white.opacity(0.15)), lineWidth: 1.5)
+            ctx.fill(face, with: .color(faceFillColor))
+            ctx.stroke(face, with: .color(faceStrokeColor), lineWidth: 1.5)
 
             // — Tick marks: 12 major (hourly) + 48 minor (every 5 min) —
             for tick in 0..<60 {
@@ -222,7 +235,7 @@ private struct SnoreWatchFace: View {
                 t.addLine(to: CGPoint(x: cx + cos(rad) * innerR,
                                       y: cy + sin(rad) * innerR))
                 ctx.stroke(t,
-                           with: .color(.white.opacity(isMajor ? 0.55 : 0.18)),
+                           with: .color(isMajor ? majorTickColor : minorTickColor),
                            lineWidth: isMajor ? 1.5 : 0.8)
             }
 
@@ -236,7 +249,7 @@ private struct SnoreWatchFace: View {
                 ctx.draw(
                     Text(entry.label)
                         .font(.system(size: dim * 0.055, weight: .medium, design: .rounded))
-                        .foregroundStyle(Color.white.opacity(0.45)),
+                        .foregroundStyle(hourLabelColor),
                     at: CGPoint(x: cx + cos(rad) * labelR,
                                 y: cy + sin(rad) * labelR)
                 )
@@ -245,7 +258,7 @@ private struct SnoreWatchFace: View {
             // — Centre dot —
             var dot = Path()
             dot.addEllipse(in: CGRect(x: cx - 3, y: cy - 3, width: 6, height: 6))
-            ctx.fill(dot, with: .color(.white.opacity(0.40)))
+            ctx.fill(dot, with: .color(centerDotColor))
 
             // — Snore event arcs —
             // Sweep angle is strictly proportional to duration / 12h (no minimum sweep:
@@ -261,7 +274,7 @@ private struct SnoreWatchFace: View {
                          endAngle:   .degrees(arc.startDeg - 90.0 + sweepDeg),
                          clockwise: false)
                 ctx.stroke(p,
-                           with: .color(snoringColor.opacity(0.88)),
+                           with: .color(arcColor),
                            style: StrokeStyle(lineWidth: arcW, lineCap: .butt))
             }
         }
