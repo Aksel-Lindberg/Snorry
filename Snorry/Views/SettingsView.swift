@@ -15,6 +15,8 @@ struct SettingsView: View {
     @State private var vm: SettingsViewModel?
     @State private var confirmDeleteAllLogs = false
     @State private var showSubscription = false
+    /// Alarm Style starts collapsed so the long tone list does not dominate Settings.
+    @State private var isAlarmStyleExpanded = false
     @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
     @AppStorage(UserPreferences.appUIThemeKey) private var appUIThemeRaw = AppUITheme.defaultTheme.rawValue
 
@@ -73,8 +75,8 @@ struct SettingsView: View {
             actionsSection(vm: vm)
             subscriptionSection()
             supportSection()
-            discoverSection
             appSection
+            discoverSection
             legalSection()
         }
         .scrollContentBackground(.hidden)
@@ -225,53 +227,101 @@ struct SettingsView: View {
 
     private func alarmStyleSection(vm: SettingsViewModel) -> some View {
         Section {
-            ForEach(AlarmStyle.allCases, id: \.rawValue) { style in
-                HStack(spacing: 12) {
-                    Button {
-                        vm.alarmStyle = style
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: vm.alarmStyle == style
-                                  ? "checkmark.circle.fill" : "circle")
-                                .font(.body)
-                                .foregroundStyle(vm.alarmStyle == style
-                                                 ? Theme.accent : Theme.labelTertiary)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(style.displayName)
-                                    .font(.subheadline)
-                                    .foregroundStyle(Theme.labelPrimary)
-                                Text(style.subtitle)
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.labelSecondary)
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    Spacer()
-                    Button(vm.isPreviewing(style: style) ? "Stop" : "Play") {
-                        vm.toggleAlarmStylePreview(for: style)
-                    }
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(vm.isPreviewing(style: style)
-                                  ? Theme.snoring.opacity(0.18)
-                                  : Theme.accent.opacity(0.18))
-                    )
-                    .foregroundStyle(vm.isPreviewing(style: style) ? Theme.snoring : Theme.accent)
+            if isAlarmStyleExpanded {
+                ForEach(AlarmStyle.allCases, id: \.rawValue) { style in
+                    alarmStyleRow(vm: vm, style: style, showsDisclosureChevron: false)
                 }
-                .padding(.vertical, 2)
+            } else {
+                alarmStyleRow(vm: vm, style: vm.alarmStyle, showsDisclosureChevron: true)
             }
         } header: {
-            Text("Alarm Style")
-                .foregroundStyle(Theme.labelSecondary)
+            Button {
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    isAlarmStyleExpanded.toggle()
+                    if !isAlarmStyleExpanded {
+                        vm.stopAlarmStylePreview()
+                    }
+                }
+            } label: {
+                HStack {
+                    Text("Alarm Style")
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .rotationEffect(.degrees(isAlarmStyleExpanded ? 180 : 0))
+                        .accessibilityHidden(true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Theme.labelSecondary)
+            .accessibilityLabel("Alarm Style")
+            .accessibilityValue(isAlarmStyleExpanded ? "Expanded" : "Collapsed")
+            .accessibilityHint(isAlarmStyleExpanded ? "Collapse alarm styles" : "Expand alarm styles")
         }
         .opacity(vm.soundAlarmEnabled ? 1 : 0.45)
         .disabled(!vm.soundAlarmEnabled)
         .listRowBackground(Theme.surface)
+    }
+
+    private func alarmStyleRow(
+        vm: SettingsViewModel,
+        style: AlarmStyle,
+        showsDisclosureChevron: Bool
+    ) -> some View {
+        HStack(spacing: 12) {
+            Button {
+                if isAlarmStyleExpanded {
+                    vm.alarmStyle = style
+                } else {
+                    withAnimation(.easeInOut(duration: 0.22)) {
+                        isAlarmStyleExpanded = true
+                    }
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: vm.alarmStyle == style
+                          ? "checkmark.circle.fill" : "circle")
+                        .font(.body)
+                        .foregroundStyle(vm.alarmStyle == style
+                                         ? Theme.accent : Theme.labelTertiary)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(style.displayName)
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.labelPrimary)
+                        Text(style.subtitle)
+                            .font(.caption)
+                            .foregroundStyle(Theme.labelSecondary)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            Spacer()
+            Button(vm.isPreviewing(style: style) ? "Stop" : "Play") {
+                vm.toggleAlarmStylePreview(for: style)
+            }
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(vm.isPreviewing(style: style)
+                          ? Theme.snoring.opacity(0.18)
+                          : Theme.accent.opacity(0.18))
+            )
+            .foregroundStyle(vm.isPreviewing(style: style) ? Theme.snoring : Theme.accent)
+
+            if showsDisclosureChevron {
+                Image(systemName: "chevron.down")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(.vertical, 2)
     }
 
     private func actionsSection(vm: SettingsViewModel) -> some View {
