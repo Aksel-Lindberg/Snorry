@@ -30,7 +30,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "hand.wave.fill",
                                 title: "Welcome flow",
-                                detail: "First launch is a two-page onboarding flow: a short name intro (optional), then Before you start (microphone + notifications explained, legal links, charger tip). Tap Continue to request iOS permissions and reach the main tabs. See How Snorry works below for what the app does."
+                                detail: "First launch is a two-page onboarding flow: a short name intro (optional), then Before you start (microphone + notifications explained, legal links, charger tip). Tap Continue to request iOS permissions and reach the main tabs. You can change your name later in Settings → Profile. See How Snorry works below for what the app does."
                             )
                             HelpBullet(
                                 icon: "mic.fill",
@@ -65,18 +65,23 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .monitorHome,
                             title: "Tonight tab (home)",
-                            subtitle: "Start control, alert summary, last session",
+                            subtitle: "Greeting, start control, alert summary, last session",
                             systemImage: "moon.stars.fill"
                         ) {
                             HelpBullet(
+                                icon: "hand.wave.fill",
+                                title: "Greeting",
+                                detail: "The handwritten line is Welcome on your first visit to Tonight, then Good morning, Good afternoon, or Good night by time of day. If you saved a name in onboarding or Settings → Profile, it uses your first name."
+                            )
+                            HelpBullet(
                                 icon: "play.circle.fill",
                                 title: "Start recording",
-                                detail: "Tap the large sleep animation (moon and waves) to begin. If the microphone is not yet allowed, a permissions sheet appears first; if iOS access was denied, the same tap opens the system Settings app so you can enable the mic."
+                                detail: "Tap the large sleep animation (moon and waves) to begin. If the microphone is not yet allowed, a permissions sheet appears first; if iOS access was denied, the same tap opens the system Settings app so you can enable the mic. If a session is already running, this control returns you to Recording."
                             )
                             HelpBullet(
                                 icon: "questionmark.circle",
                                 title: "Help & Settings (toolbar)",
-                                detail: "Top right on Tonight: the question mark opens this Help & How-To guide; the gear opens app Settings (alerts, alarm style, Premium, support, and data controls) in a sheet."
+                                detail: "Top right on Tonight: the question mark opens this Help & How-To guide; the gear opens Settings (profile, alerts, appearance, SleepAlly, Premium, support, and data controls)."
                             )
                             HelpBullet(
                                 icon: "slider.horizontal.3",
@@ -115,7 +120,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chart.xyaxis.line",
                                 title: "Live power spectrum",
-                                detail: "Log-scaled band energy from 45 Hz up to the Nyquist frequency. Bars brighten when snoring is confirmed."
+                                detail: "Log-scaled band energy from 45 Hz up to the Nyquist frequency. Bars brighten when snoring is confirmed. Tap the info button on the spectrum card for a short technical sheet."
                             )
                             HelpBullet(
                                 icon: "speaker.wave.2.fill",
@@ -136,6 +141,11 @@ struct HelpCenterView: View {
                                 icon: "stop.circle.fill",
                                 title: "Stop recording",
                                 detail: "Tears down audio, saves the session to Sleep History, and dismisses this screen. A short overlay can appear while clips finish encoding; if the night included locked or background recording, you may briefly see a “classifying sounds” step before returning home."
+                            )
+                            HelpBullet(
+                                icon: "arrow.uturn.left.circle.fill",
+                                title: "Recording in progress",
+                                detail: "If you leave Recording without stopping, a Recording in progress banner stays above the tab bar with elapsed time—tap Return to reopen the session. Don’t force-quit Snorry until you stop."
                             )
                         }
 
@@ -279,9 +289,14 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .settings,
                             title: "Settings",
-                            subtitle: "Open from the gear on Tonight — alerts, alarm style, support, data & legal",
+                            subtitle: "Open from the gear on Tonight — profile, alerts, appearance, SleepAlly, Premium, support & legal",
                             systemImage: "gearshape.fill"
                         ) {
+                            HelpBullet(
+                                icon: "person.fill",
+                                title: "Profile",
+                                detail: "Optional name used for a personal greeting on Tonight and the Good night line when you start recording. You can set it during onboarding or change it here anytime."
+                            )
                             HelpBullet(
                                 icon: "bell.badge.fill",
                                 title: "Alert channels",
@@ -295,22 +310,32 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "speaker.wave.3.fill",
                                 title: "Alarm style",
-                                detail: "Pick the alarm character you notice best and use Play / Stop to preview the selected style. Built-in tones and short clips play as bursts with a 3 s pause during live alerts; song tracks loop continuously with volume stepping every 3 s. Burst length for tones and short clips also paces repeated push alerts when snoring continues."
+                                detail: "The list starts collapsed on your current style. Tap the Alarm Style header or chevron to expand every tone, then Play / Stop to preview. Built-in tones and short clips play as bursts with a 3 s pause during live alerts; song tracks loop continuously with volume stepping every 3 s. Burst length for tones and short clips also paces repeated push alerts when snoring continues."
+                            )
+                            HelpBullet(
+                                icon: "circle.lefthalf.filled",
+                                title: "App UI Theme",
+                                detail: "Choose Light, Dark, or System (matches your iPhone appearance). App version is listed in the same card."
+                            )
+                            HelpBullet(
+                                icon: "moon.stars.fill",
+                                title: "SleepAlly",
+                                detail: "A separate app from the makers of Snorry, with fall-asleep audio, wake-up alarms, habits, and advanced Snore Stop. Open the card for details and the App Store listing."
                             )
                             HelpBullet(
                                 icon: "star.circle.fill",
                                 title: "Snorry Premium",
-                                detail: "Shows Free or Premium status. Free includes unlimited recording, full History, Habits, and Insights for your first \(InsightsTrialTracker.freeNightLimit) recorded nights; Premium keeps Insights after that. Manage billing through your Apple ID subscriptions."
+                                detail: "Shows Free or Premium status. Free includes unlimited recording, full History, Habits, and Insights for your first \(InsightsTrialTracker.freeNightLimit) recorded nights; Premium keeps Insights after that. Restore Purchases re-applies an existing Apple ID subscription. Manage billing through your Apple ID subscriptions."
                             )
                             HelpBullet(
                                 icon: "lifepreserver.fill",
                                 title: "Support",
-                                detail: "Open Support for contact options and common troubleshooting topics."
+                                detail: "Opens Snorry support in Safari, plus a mail link to \(LegalLinks.supportEmail) for setup, permissions, alerts, logs, and troubleshooting."
                             )
                             HelpBullet(
                                 icon: "arrow.counterclockwise",
                                 title: "Reset & delete logs",
-                                detail: "Reset to Defaults restores push/sound toggles and alarm style. Delete All Sleep & Settings Logs removes every sleep session, snore clip, waveform, habit log, and Insights settings-change marker—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
+                                detail: "Reset to Defaults restores push/sound toggles and alarm style. Delete All Sleep & Settings Logs removes every sleep session, snore clip, waveform, habit log, custom habit, and Insights settings-change marker—you must stop recording first or Snorry will show an error. Your current on-screen Settings values are not reverted by delete."
                             )
                             HelpBullet(
                                 icon: "doc.text.fill",

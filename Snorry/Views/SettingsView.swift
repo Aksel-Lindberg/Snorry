@@ -72,11 +72,11 @@ struct SettingsView: View {
             profileSection
             alertChannelsSection(vm: vm)
             alarmStyleSection(vm: vm)
-            actionsSection(vm: vm)
-            subscriptionSection()
-            supportSection()
             appSection
             discoverSection
+            subscriptionSection()
+            supportSection()
+            actionsSection(vm: vm)
             legalSection()
         }
         .scrollContentBackground(.hidden)
