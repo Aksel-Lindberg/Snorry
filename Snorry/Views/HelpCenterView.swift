@@ -219,7 +219,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "star.circle.fill",
                                 title: "Premium after 7 nights",
-                                detail: "Insights is free for your first \(InsightsTrialTracker.freeNightLimit) recorded nights. After that, Snorry Premium unlocks trend charts, summary pills, habit correlations, and alert-comparison views described below."
+                                detail: "Insights is free for your first \(InsightsTrialTracker.freeNightLimit) recorded nights. After that, Snorry Premium unlocks trend charts, summary pills, habit correlations, and settings-change markers described below."
                             )
                             HelpBullet(
                                 icon: "calendar",
@@ -245,11 +245,6 @@ struct HelpCenterView: View {
                                 icon: "mappin.and.ellipse",
                                 title: "Settings change markers",
                                 detail: "Expand the legend under the chart to read each saved change (push on/off, sound on/off, or alarm style). You can also remove individual markers from Insights without touching your current Settings values."
-                            )
-                            HelpBullet(
-                                icon: "chart.bar.xaxis",
-                                title: "Alert type vs snore duration",
-                                detail: "The Alert Type vs Snore duration card averages snore minutes per alert configuration profile in the period—the footer reminds you this is correlation, not causation or medical advice."
                             )
                             HelpBullet(
                                 icon: "checklist",

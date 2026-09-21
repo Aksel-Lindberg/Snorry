@@ -4,6 +4,7 @@ import Testing
 @testable import Snorry
 
 // MARK: - Insights trial (7 completed recording nights)
+@MainActor
 struct InsightsTrialTrackerTests {
 
     private let maxNightCountKey = "insightsTrialMaxCompletedNights"

@@ -150,7 +150,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 | Subtle nudge | Push on, sound off; optional Watch mirroring |
 | Harder to ignore | Sound alarm on with shorter sound delay; pick a noticeable alarm style |
 | Avoid waking partner | Push-only; longer repeat interval |
-| Test what works | Change Settings → Save → run several nights → compare in **Insights** (alert profile vs snore duration) |
+| Test what works | Change Settings → Save → run several nights → compare in **Insights** using settings-change markers on the chart |
 
 ---
 
@@ -227,7 +227,6 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 - **Summary pills** — average snore minutes per day, session count, days with data  
 - **Snore duration trend** — daily snore minutes and event counts; optional **numbered markers** when you saved Settings changes  
 - **Settings change legend** — expand to read what changed; delete individual markers without changing current Settings  
-- **Alert type vs snore duration** — average snore minutes per alert configuration profile (correlation only, not medical advice)  
 - **Habits vs snore duration** — Month and 3 Months show one card per logged habit (Logged vs Not logged; May add snoring / May reduce snoring / How you felt chip); Week prompts you to switch range (correlation only)  
 
 ### Typical use
@@ -235,8 +234,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 | Scenario | How to use |
 |----------|------------|
 | “Am I improving?” | Month view → trend line of daily snore minutes |
-| Test a settings experiment | Save new push/sound setup → marker appears on chart → compare weeks before/after |
-| See which alert profile correlates with less snoring | Review Alert Type vs Snore duration card (interpret cautiously) |
+| Test a settings experiment | Save new push/sound setup → numbered marker appears on the Daily snore duration chart → compare weeks before/after |
 | See which habits correlate with more or less snoring | Month or 3 Months → Habits vs Snore duration cards |
 | Clean chart markers | Remove obsolete settings-change markers from legend |
 
@@ -349,7 +347,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 1. Note current Insights trend (week view).  
 2. Change one setting (e.g. enable repeat push) → **Save**.  
 3. Use app for 7–14 nights.  
-4. Insights → check new **settings marker** on chart and **Alert type vs snore duration** card.  
+4. Insights → check the new numbered **settings marker** on the Daily snore duration chart.  
 5. Interpret as personal correlation, not proven causation.
 
 ---

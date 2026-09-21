@@ -345,10 +345,10 @@ struct EventPlaybackRow: View {
     private var hasVolume: Bool { event.avgDB > -160 }
 
     private var durationFill: CGFloat {
-        EventMetricScale.durationFill(
+        CGFloat(EventMetricScale.durationFill(
             duration: event.duration ?? 0,
             maxDuration: maxEventDuration
-        )
+        ))
     }
 
     var body: some View {
@@ -441,12 +441,12 @@ struct EventPlaybackRow: View {
 // MARK: - Event metric scale
 
 /// Shared fill math for event-row bars. Kept free of SwiftUI so unit tests can cover it.
-enum EventMetricScale {
+nonisolated enum EventMetricScale {
     /// Linear fill against the longest bout in the current session list.
     /// A 10-minute absolute range made typical 10–50 s snores look empty next to volume.
-    static func durationFill(duration: TimeInterval, maxDuration: TimeInterval) -> CGFloat {
+    static func durationFill(duration: TimeInterval, maxDuration: TimeInterval) -> Double {
         guard duration > 0, maxDuration > 0 else { return 0 }
-        return min(1, CGFloat(duration / maxDuration))
+        return min(1, duration / maxDuration)
     }
 }
 

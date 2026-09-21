@@ -3,6 +3,7 @@ import Testing
 @testable import Snorry
 
 // MARK: - Habits tab grouping
+@MainActor
 struct HabitGroupingTests {
 
     @Test func habitsTabLeadsWithMayReduceSnoring() {
@@ -44,6 +45,7 @@ struct HabitGroupingTests {
 }
 
 // MARK: - Habit vs snore duration correlation
+@MainActor
 struct HabitCorrelationTests {
 
     private let calendar = Calendar.current
@@ -199,18 +201,6 @@ struct HabitCorrelationTests {
         #expect(ateLate?.deltaSummary == "About the same on nights you ate late")
     }
 
-    @Test func signedDeltaLabelShowsSignedMinutes() {
-        let caffeine = habit(.caffeineLate, withMinutes: 17, withoutMinutes: 7)
-        #expect(caffeine.signedDeltaLabel == "+10m")
-        #expect(caffeine.deltaSummary == "+10m on nights you had caffeine late")
-
-        let exercise = habit(.myofascialExercise, withMinutes: 4, withoutMinutes: 10)
-        #expect(exercise.signedDeltaLabel == "−6m")
-
-        let flat = habit(.ateLate, withMinutes: 8, withoutMinutes: 8.5)
-        #expect(flat.signedDeltaLabel == nil)
-    }
-
     @Test func airwayExerciseDayStartsUnionCompletionAndHabitLog() {
         let dayA = day(-2)
         let dayB = day(-1)
@@ -276,6 +266,7 @@ struct HabitCorrelationTests {
 }
 
 // MARK: - Quiet recorded nights vs missing nights
+@MainActor
 struct DailySnoreSessionPresenceTests {
 
     private let calendar = Calendar.current
@@ -395,9 +386,22 @@ struct DailySnoreSessionPresenceTests {
 }
 
 // MARK: - Trend banner habit copy
+@MainActor
 struct InsightHabitCopyTests {
 
     private let calendar = Calendar.current
+
+    @Test func signedDeltaLabelShowsSignedMinutes() {
+        let caffeine = habit(.caffeineLate, withMinutes: 17, withoutMinutes: 7)
+        #expect(caffeine.signedDeltaLabel == "+10m")
+        #expect(caffeine.deltaSummary == "+10m on nights you had caffeine late")
+
+        let exercise = habit(.myofascialExercise, withMinutes: 4, withoutMinutes: 10)
+        #expect(exercise.signedDeltaLabel == "−6m")
+
+        let flat = habit(.ateLate, withMinutes: 8, withoutMinutes: 8.5)
+        #expect(flat.signedDeltaLabel == nil)
+    }
 
     @Test func weekTrendingUpPointsToHabitsWithoutDelta() {
         let alcohol = habit(.drankAlcohol, withMinutes: 20, withoutMinutes: 7)
@@ -542,6 +546,7 @@ struct InsightHabitCopyTests {
 }
 
 // MARK: - Calendar week / month paging
+@MainActor
 struct AnalyticsPeriodBoundsTests {
 
     private var calendar: Calendar {
@@ -691,6 +696,7 @@ struct AnalyticsPeriodBoundsTests {
 }
 
 // MARK: - Sleep night bucketing
+@MainActor
 struct SleepNightTests {
 
     private var calendar: Calendar {
@@ -801,7 +807,7 @@ struct SleepNightTests {
         calendar.date(from: DateComponents(year: year, month: month, day: day))!
     }
 
-    private func dateTime(_ year: Int, _ month: Int, _ day: Int, hour: Int, minute: Int) -> Date {
+    private func dateTime(_ year: Int, _ month: Int, _ day: Int, hour: Int, minute: Int = 0) -> Date {
         calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute))!
     }
 

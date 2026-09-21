@@ -5,6 +5,7 @@
 //  Created by Aksel Lindberg on 02/05/2026.
 //
 
+import Foundation
 import Testing
 @testable import Snorry
 
