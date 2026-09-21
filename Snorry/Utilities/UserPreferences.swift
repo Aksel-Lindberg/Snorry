@@ -55,6 +55,8 @@ enum UserPreferences {
     /// Set after the user's first visit to the Tonight tab so later visits use a time-of-day greeting.
     static let hasSeenTonightWelcomeKey = "hasSeenTonightWelcome"
     static let appUIThemeKey = "appUITheme"
+    /// DEBUG-only: unlock Insights without Premium. Ignored in Release.
+    static let developerUnlockInsightsKey = "insightsDeveloperUnlockEnabled"
 
     /// Recording-screen greeting — uses first name only when a multi-word name is entered.
     static func goodNightGreeting(displayName: String) -> String {

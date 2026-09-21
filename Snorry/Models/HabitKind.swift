@@ -44,6 +44,7 @@ enum HabitExpectedEffect: String, CaseIterable, Identifiable {
 // MARK: - Fixed snore-relevant habits (built-in set)
 enum HabitKind: String, CaseIterable, Identifiable {
     case myofascialExercise
+    case breathAndHum
     case nasalSpray
     case nasalClip
     case ateLate
@@ -62,6 +63,7 @@ enum HabitKind: String, CaseIterable, Identifiable {
         case .nasalSpray:          return "Used nasal spray"
         case .nasalClip:           return "Used nasal strip"
         case .myofascialExercise:  return "Did airway exercises"
+        case .breathAndHum:        return "Breath practice"
         case .congested:           return "Congested"
         case .sleptOnBack:         return "Slept on your back"
         }
@@ -75,6 +77,7 @@ enum HabitKind: String, CaseIterable, Identifiable {
         case .nasalSpray:          return "Decongestant or saline"
         case .nasalClip:           return "External strip or clip"
         case .myofascialExercise:  return "Tongue or throat exercises"
+        case .breathAndHum:        return "Long exhale, or hum it out"
         case .congested:           return "Blocked or stuffy nose"
         case .sleptOnBack:         return "Most of the night"
         }
@@ -88,6 +91,7 @@ enum HabitKind: String, CaseIterable, Identifiable {
         case .nasalSpray:          return "drop.fill"
         case .nasalClip:           return "nose.fill"
         case .myofascialExercise:  return "figure.mind.and.body"
+        case .breathAndHum:        return "wind"
         case .congested:           return "allergens"
         case .sleptOnBack:         return "bed.double.fill"
         }
@@ -98,7 +102,7 @@ enum HabitKind: String, CaseIterable, Identifiable {
         switch self {
         case .ateLate, .drankAlcohol, .caffeineLate, .sleptOnBack:
             return .mayAddSnoring
-        case .nasalSpray, .nasalClip, .myofascialExercise:
+        case .nasalSpray, .nasalClip, .myofascialExercise, .breathAndHum:
             return .mayHelp
         case .congested:
             return .howYouFelt
@@ -114,6 +118,7 @@ enum HabitKind: String, CaseIterable, Identifiable {
         case .nasalSpray:          return "on nights you used nasal spray"
         case .nasalClip:           return "on nights you used a nasal strip"
         case .myofascialExercise:  return "on nights you did airway exercises"
+        case .breathAndHum:        return "on nights you did breath practice"
         case .congested:           return "on nights you were congested"
         case .sleptOnBack:         return "on nights you slept on your back"
         }

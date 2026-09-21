@@ -181,7 +181,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 - **Summary stats** — sleep duration, snore events, snore duration, average BRPM when available  
 - **Snore Clock** — visual timeline of snoring bouts only  
-- **Sound events list** — each snore bout as a row  
+- **Sound events list** — each bout as a row; duration bar scaled to the longest bout that night (same relative rule as Sleep History); average volume shown as a reading  
 - **Clip playback** — tap events with audio to hear the saved **AAC clip** (when recorded)  
 - **Sound labels** (after background/locked nights) — events may show **Snoring**, **Sleep talking**, or **Environment**  
 - **Alert setup snapshot** — shows current Settings preferences for context  
@@ -202,7 +202,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 ### Features
 
 - **Night picker** — choose which calendar night habits apply to (defaults to last night before noon)  
-- **One-tap toggles** — grouped as **May reduce snoring** (Did airway exercises, Used nasal spray, Used nasal strip), **May add snoring** (Ate late, Drank alcohol, Had caffeine late, Slept on your back), and **How you felt** (Congested)  
+- **One-tap toggles** — grouped as **May reduce snoring** (Did airway exercises, Breath practice, Used nasal spray, Used nasal strip), **May add snoring** (Ate late, Drank alcohol, Had caffeine late, Slept on your back), and **How you felt** (Congested)  
 - **Custom habits** — **Yours** section; add your own buttons (editable and removable); long-press to edit or delete  
 - **Insights integration** — logged habits feed the **Habits vs Snore duration** card  
 - **Did airway exercises** — counts exercise completions from the Exercises tab as well; turning off here does not delete exercise history  

@@ -130,9 +130,12 @@ struct SessionDetailView: View {
                     .foregroundStyle(Theme.labelOnSurfaceSecondary)
                     .padding(.vertical, 8)
             } else {
+                // Same relative scale as Sleep History: longest bout in this list = full bar.
+                let maxEventDuration = vm.allCompletedEvents.compactMap(\.duration).max() ?? 0
                 ForEach(vm.allCompletedEvents) { event in
                     EventPlaybackRow(
                         event: event,
+                        maxEventDuration: maxEventDuration,
                         isPlaying: vm.playingEventID == event.id,
                         canReplay: event.playbackURL != nil,
                         onTap: { vm.togglePlayback(of: event) },
@@ -322,6 +325,8 @@ private struct StatCard: View {
 struct EventPlaybackRow: View {
 
     let event: SnoreEvent
+    /// Longest bout in this session list — duration bars are relative to this, like Sleep History.
+    let maxEventDuration: TimeInterval
     let isPlaying: Bool
     /// False when no file exists — avoids a tappable UI that silently does nothing.
     let canReplay: Bool
@@ -337,12 +342,13 @@ struct EventPlaybackRow: View {
         return String(format: "%.0fs", d)
     }
 
-    /// Duration normalised to a 5 s ... 10 min range for card bar visualisation.
-    private var durationFill: Double? {
-        guard let duration = event.duration else { return nil }
-        let minSeconds = 5.0
-        let maxSeconds = 600.0
-        return (duration - minSeconds) / (maxSeconds - minSeconds)
+    private var hasVolume: Bool { event.avgDB > -160 }
+
+    private var durationFill: CGFloat {
+        EventMetricScale.durationFill(
+            duration: event.duration ?? 0,
+            maxDuration: maxEventDuration
+        )
     }
 
     var body: some View {
@@ -376,34 +382,71 @@ struct EventPlaybackRow: View {
                 }
             }
 
-            // Metric bars — shown when duration and/or other measurements were captured for this event.
-            if durationFill != nil || event.avgDB > -160 {
-                VStack(spacing: 7) {
-                    // Snore duration: mapped from 5 s (0%) to 10 min (100%).
-                    if let durationFill {
-                        EventMetricBar(
-                            label: "Duration",
-                            value: durationString,
-                            fill: durationFill,
-                            color: Theme.labelSecondary,
-                            systemImage: "clock.badge"
-                        )
+            if event.duration != nil || hasVolume {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        if event.duration != nil {
+                            Label("Duration", systemImage: "clock.badge")
+                                .font(.caption)
+                                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+
+                            Text(durationString)
+                                .font(Theme.monoDigit(size: 12, weight: .medium))
+                                .foregroundStyle(Theme.labelPrimary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        if hasVolume {
+                            Label {
+                                Text(String(format: "%.0f dB", event.avgDB))
+                                    .font(Theme.monoDigit(size: 12, weight: .medium))
+                            } icon: {
+                                Image(systemName: "speaker.wave.2")
+                            }
+                            .font(.caption)
+                            .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                            .labelStyle(.titleAndIcon)
+                            .accessibilityLabel("Average volume \(Int(event.avgDB.rounded())) decibels")
+                        }
                     }
 
-                    // Average snore volume: −80 dBFS → 0%, −55 dBFS → 50%, −30 dBFS → 100%.
-                    if event.avgDB > -160 {
-                        EventMetricBar(
-                            label: "Avg Vol",
-                            value: String(format: "%.0f dB", event.avgDB),
-                            fill: Double((event.avgDB + 80) / 50),
-                            color: Theme.good,
-                            systemImage: "speaker.wave.2"
-                        )
+                    if event.duration != nil {
+                        durationBar
+                            .accessibilityLabel("Event duration relative to the longest bout this night")
                     }
                 }
             }
         }
         .padding(.vertical, 6)
+    }
+
+    /// Same visual language as Sleep History session rows: coral bar vs the longest item in view.
+    private var durationBar: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Theme.surfaceSecondary)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Theme.snoringGradient)
+                    .frame(width: max(geo.size.width * durationFill, durationFill > 0 ? 8 : 0))
+            }
+        }
+        .frame(height: 8)
+    }
+}
+
+// MARK: - Event metric scale
+
+/// Shared fill math for event-row bars. Kept free of SwiftUI so unit tests can cover it.
+enum EventMetricScale {
+    /// Linear fill against the longest bout in the current session list.
+    /// A 10-minute absolute range made typical 10–50 s snores look empty next to volume.
+    static func durationFill(duration: TimeInterval, maxDuration: TimeInterval) -> CGFloat {
+        guard duration > 0, maxDuration > 0 else { return 0 }
+        return min(1, CGFloat(duration / maxDuration))
     }
 }
 
@@ -433,95 +476,6 @@ private struct SoundKindBadge: View {
         case .snoring:      return Theme.snoring
         case .sleepTalking: return Theme.accent
         case .environment:  return Theme.labelTertiary
-        }
-    }
-}
-
-// MARK: - Metric bar indicator
-
-private struct EventMetricBar: View {
-    let label: String
-    let value: String
-    let fill: Double
-    let color: Color
-    var systemImage: String? = nil
-
-    private let barHeight: CGFloat = 11
-
-    private var clampedFill: CGFloat {
-        CGFloat(max(0, min(1, fill)))
-    }
-
-    /// Soft track + a slightly richer fill (readability on dark UI).
-    private var trackFill: some View {
-        Capsule()
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Theme.surfaceSecondary.opacity(0.35),
-                        Theme.surfaceSecondary.opacity(0.22)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .overlay {
-                Capsule()
-                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
-            }
-    }
-
-    private var fillGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                color.opacity(0.42),
-                color.opacity(0.72),
-                color.opacity(0.92)
-            ],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                if let systemImage {
-                    Label(label, systemImage: systemImage)
-                        .font(.caption)
-                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                } else {
-                    Text(label)
-                        .font(.caption)
-                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                }
-
-                Spacer(minLength: 0)
-
-                Text(value)
-                    .font(Theme.monoDigit(size: 12, weight: .medium))
-                    .foregroundStyle(Theme.labelPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-            }
-
-            GeometryReader { geo in
-                let fillWidth = geo.size.width * clampedFill
-
-                ZStack(alignment: .leading) {
-                    trackFill
-
-                    Capsule()
-                        .fill(fillGradient)
-                        .frame(width: fillWidth, height: barHeight)
-                        .overlay {
-                            Capsule()
-                                .strokeBorder(color.opacity(0.22), lineWidth: 0.5)
-                        }
-                }
-            }
-            .frame(height: barHeight)
-            .clipShape(Capsule())
         }
     }
 }

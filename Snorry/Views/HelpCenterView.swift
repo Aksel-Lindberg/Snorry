@@ -168,7 +168,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chevron.right.circle.fill",
                                 title: "Session detail",
-                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, and a Sound Events list. Each event is labeled Snoring, Sleep Talking, or Environment; background nights classify non-snore sounds more often."
+                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, and a Sound Events list. Each event row has a duration bar scaled to the longest bout that night, plus average volume as a reading. Events are labeled Snoring, Sleep Talking, or Environment; background nights classify non-snore sounds more often."
                             )
                             HelpBullet(
                                 icon: "play.circle.fill",
@@ -196,7 +196,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "hand.tap.fill",
                                 title: "Toggle habits",
-                                detail: "Habits are grouped as May reduce snoring (airway exercises, nasal spray, nasal strip), May add snoring (late meals, alcohol, caffeine, back sleeping), and How you felt (congestion). Tap a button to log or remove it for that night. The grouping is typical, not a diagnosis."
+                                detail: "Habits are grouped as May reduce snoring (airway exercises, breath practice, nasal spray, nasal strip), May add snoring (late meals, alcohol, caffeine, back sleeping), and How you felt (congestion). Tap a button to log or remove it for that night. The grouping is typical, not a diagnosis."
                             )
                             HelpBullet(
                                 icon: "plus.circle.fill",

@@ -9,6 +9,9 @@ struct AnalyticsView: View {
     @Environment(AppEnvironment.self) private var appEnv
     @State private var vm: AnalyticsViewModel?
     @State private var showSubscription = false
+    #if DEBUG
+    @AppStorage(UserPreferences.developerUnlockInsightsKey) private var developerUnlockInsights = true
+    #endif
 
     private var hasPremiumAccess: Bool { appEnv.subscription.hasPremiumAccess }
 
@@ -47,18 +50,28 @@ struct AnalyticsView: View {
                 vm?.refresh()
             }
             .onChange(of: hasPremiumAccess) { _, _ in
-                InsightsTrialTracker.updateMaxCompletedNights(from: context)
-                guard canAccessInsights else {
-                    vm = nil
-                    return
-                }
-                if vm == nil { vm = AnalyticsViewModel(context: context) }
-                vm?.refresh()
+                reloadInsightsAccess()
             }
+            #if DEBUG
+            .onChange(of: developerUnlockInsights) { _, _ in
+                reloadInsightsAccess()
+            }
+            #endif
             .sheet(isPresented: $showSubscription) {
                 SubscriptionView(paywallSource: "insights_tab")
             }
         }
+    }
+
+    private func reloadInsightsAccess() {
+        InsightsTrialTracker.updateMaxCompletedNights(from: context)
+        guard canAccessInsights else {
+            vm = nil
+            showSubscription = false
+            return
+        }
+        if vm == nil { vm = AnalyticsViewModel(context: context) }
+        vm?.refresh()
     }
 }
 

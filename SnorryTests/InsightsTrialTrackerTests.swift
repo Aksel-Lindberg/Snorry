@@ -11,7 +11,7 @@ struct InsightsTrialTrackerTests {
     @Test func accessAllowedBeforeSevenNights() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        UserDefaults.standard.removeObject(forKey: maxNightCountKey)
+        resetTrialDefaults()
 
         insertCompletedSession(on: day(0), in: context)
         insertCompletedSession(on: day(-1), in: context)
@@ -24,7 +24,7 @@ struct InsightsTrialTrackerTests {
     @Test func accessBlockedAfterSevenNights() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        UserDefaults.standard.removeObject(forKey: maxNightCountKey)
+        resetTrialDefaults()
 
         for offset in 0..<7 {
             insertCompletedSession(on: day(-offset), in: context)
@@ -38,7 +38,7 @@ struct InsightsTrialTrackerTests {
     @Test func persistedMaxSurvivesSessionDeletion() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        UserDefaults.standard.removeObject(forKey: maxNightCountKey)
+        resetTrialDefaults()
 
         for offset in 0..<7 {
             insertCompletedSession(on: day(-offset), in: context)
@@ -58,7 +58,7 @@ struct InsightsTrialTrackerTests {
     @Test func premiumAlwaysHasAccess() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        UserDefaults.standard.removeObject(forKey: maxNightCountKey)
+        resetTrialDefaults()
 
         for offset in 0..<10 {
             insertCompletedSession(on: day(-offset), in: context)
@@ -71,7 +71,7 @@ struct InsightsTrialTrackerTests {
     @Test func twoSessionsSameSleepNightCountAsOne() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        UserDefaults.standard.removeObject(forKey: maxNightCountKey)
+        resetTrialDefaults()
 
         insertCompletedSession(on: dayWithTime(offsetDays: 0, hour: 22), in: context)
         insertCompletedSession(on: dayWithTime(offsetDays: 0, hour: 23), in: context)
@@ -83,7 +83,7 @@ struct InsightsTrialTrackerTests {
     @Test func afterMidnightAndEveningSameCalendarDateCountAsTwoNights() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        UserDefaults.standard.removeObject(forKey: maxNightCountKey)
+        resetTrialDefaults()
 
         insertCompletedSession(on: dayWithTime(offsetDays: 0, hour: 0, minute: 52), in: context)
         insertCompletedSession(on: dayWithTime(offsetDays: 0, hour: 23, minute: 11), in: context)
@@ -92,7 +92,44 @@ struct InsightsTrialTrackerTests {
         #expect(InsightsTrialTracker.uniqueCompletedNightCount(in: context) == 2)
     }
 
+    @Test func developerUnlockGrantsAccessWithoutPremium() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        resetTrialDefaults()
+
+        for offset in 0..<7 {
+            insertCompletedSession(on: day(-offset), in: context)
+        }
+        try context.save()
+
+        #expect(!InsightsTrialTracker.canAccessInsights(hasPremium: false, context: context))
+
+        UserDefaults.standard.set(true, forKey: UserPreferences.developerUnlockInsightsKey)
+        #if DEBUG
+        #expect(InsightsTrialTracker.canAccessInsights(hasPremium: false, context: context))
+        #expect(InsightsTrialTracker.isDeveloperUnlockEnabled)
+        #else
+        #expect(!InsightsTrialTracker.canAccessInsights(hasPremium: false, context: context))
+        #expect(!InsightsTrialTracker.isDeveloperUnlockEnabled)
+        #endif
+    }
+
+    @Test func developerUnlockDefaultsOnWhenUnset() {
+        UserDefaults.standard.removeObject(forKey: UserPreferences.developerUnlockInsightsKey)
+        #if DEBUG
+        #expect(InsightsTrialTracker.isDeveloperUnlockEnabled)
+        #else
+        #expect(!InsightsTrialTracker.isDeveloperUnlockEnabled)
+        #endif
+    }
+
     // MARK: - Helpers
+
+    private func resetTrialDefaults() {
+        UserDefaults.standard.removeObject(forKey: maxNightCountKey)
+        // Explicit false so DEBUG's default-on unlock does not skip trial assertions.
+        UserDefaults.standard.set(false, forKey: UserPreferences.developerUnlockInsightsKey)
+    }
 
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([SnoreSession.self, SnoreEvent.self])

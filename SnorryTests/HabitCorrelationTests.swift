@@ -18,8 +18,15 @@ struct HabitGroupingTests {
     @Test func mayHelpLeadsWithAirwayExercises() {
         let habits = HabitDefinition.inSection(.mayHelp, customHabits: [])
         #expect(habits.compactMap(\.builtInKind) == [
-            .myofascialExercise, .nasalSpray, .nasalClip
+            .myofascialExercise, .breathAndHum, .nasalSpray, .nasalClip
         ])
+    }
+
+    @Test func breathAndHumIsAMayHelpPractice() {
+        #expect(HabitKind.breathAndHum.title == "Breath practice")
+        #expect(HabitKind.breathAndHum.subtitle == "Long exhale, or hum it out")
+        #expect(HabitKind.breathAndHum.expectedEffect == .mayHelp)
+        #expect(HabitKind.breathAndHum.insightClause == "on nights you did breath practice")
     }
 
     @Test func congestedLivesInHowYouFeltNotMayAdd() {
@@ -400,7 +407,7 @@ struct InsightHabitCopyTests {
             range: .week
         )
         #expect(insight.tone == .trendingUp)
-        #expect(insight.text == "Your snoring is trending up this period. Review Habits or try adjusting alerts.")
+        #expect(insight.text == "Your snoring is trending up this period. Review your habits to see what tracks with your nights.")
         #expect(!insight.text.contains("+13m"))
     }
 
@@ -422,7 +429,7 @@ struct InsightHabitCopyTests {
             range: .month
         )
         #expect(insight.tone == .trendingUp)
-        #expect(insight.text == "Your snoring is trending up this period. Snoring ran +13m on nights you drank alcohol.")
+        #expect(insight.text == "Your snoring is trending up this period. +13m on nights you drank alcohol.")
     }
 
     @Test func monthTrendingDownQuotesMayHelpHabit() {
@@ -433,7 +440,7 @@ struct InsightHabitCopyTests {
             range: .month
         )
         #expect(insight.tone == .trendingDown)
-        #expect(insight.text == "Your snoring is trending down. −8m on nights you did airway exercises. Keep it up.")
+        #expect(insight.text == "Your snoring is trending down this period. −8m on nights you did airway exercises.")
     }
 
     @Test func monthFlatQuotesLargestHabitDelta() {
@@ -444,7 +451,7 @@ struct InsightHabitCopyTests {
             range: .month
         )
         #expect(insight.tone == .flat)
-        #expect(insight.text == "Your snoring looks about the same this period. Individual nights still differ — +13m on nights you drank alcohol.")
+        #expect(insight.text == "Your snoring looks about the same this period. +13m on nights you drank alcohol.")
     }
 
     @Test func monthSkipsLowConfidenceHabit() {
@@ -455,7 +462,27 @@ struct InsightHabitCopyTests {
             range: .month
         )
         #expect(insight.tone == .trendingUp)
-        #expect(insight.text == "Your snoring is trending up this period. Review History or try adjusting alerts.")
+        #expect(insight.text == "Your snoring is trending up this period. Review your habits to see what tracks with your nights.")
+    }
+
+    @Test func monthTrendingDownWithoutHabitKeepsEncouragement() {
+        let insight = AnalyticsViewModel.makeInsight(
+            from: nights([16, 8, 2]),
+            habits: [],
+            range: .month
+        )
+        #expect(insight.tone == .trendingDown)
+        #expect(insight.text == "Your snoring is trending down this period. Keep it up.")
+    }
+
+    @Test func monthFlatWithoutQualifyingHabitPointsToHabits() {
+        let insight = AnalyticsViewModel.makeInsight(
+            from: nights([8, 8, 8]),
+            habits: [],
+            range: .month
+        )
+        #expect(insight.tone == .flat)
+        #expect(insight.text == "Your snoring looks about the same this period. Review your habits to see what tracks with your nights.")
     }
 
     @Test func trendingUpPrefersMayAddOverLargerMayHelpDelta() {

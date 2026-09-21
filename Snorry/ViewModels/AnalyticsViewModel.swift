@@ -940,25 +940,22 @@ final class AnalyticsViewModel {
         switch tone {
         case .trendingUp:
             if let habit {
-                return "Your snoring is trending up this period. Snoring ran \(habit.deltaSummary)."
+                return "Your snoring is trending up this period. \(habit.deltaSummary)."
             }
-            if !range.showsHabitCorrelation {
-                return "Your snoring is trending up this period. Review Habits or try adjusting alerts."
-            }
-            return "Your snoring is trending up this period. Review History or try adjusting alerts."
+            return "Your snoring is trending up this period. Review your habits to see what tracks with your nights."
         case .trendingDown:
             if let habit {
-                return "Your snoring is trending down. \(habit.deltaSummary). Keep it up."
+                return "Your snoring is trending down this period. \(habit.deltaSummary)."
             }
-            return "Your snoring is trending down. Great progress—keep it up."
+            return "Your snoring is trending down this period. Keep it up."
         case .flat:
             if let habit {
-                return "Your snoring looks about the same this period. Individual nights still differ — \(habit.deltaSummary)."
+                return "Your snoring looks about the same this period. \(habit.deltaSummary)."
             }
             if !range.showsHabitCorrelation {
                 return "Your snoring looks about the same this period. Log habits to see what tracks with your nights."
             }
-            return "Your snoring looks about the same this period. Keep tracking to spot changes."
+            return "Your snoring looks about the same this period. Review your habits to see what tracks with your nights."
         case .insufficientData:
             return "Log a few more nights to see whether your snoring is trending up or down."
         }

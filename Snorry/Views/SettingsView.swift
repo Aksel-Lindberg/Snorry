@@ -19,6 +19,9 @@ struct SettingsView: View {
     @State private var isAlarmStyleExpanded = false
     @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
     @AppStorage(UserPreferences.appUIThemeKey) private var appUIThemeRaw = AppUITheme.defaultTheme.rawValue
+    #if DEBUG
+    @AppStorage(UserPreferences.developerUnlockInsightsKey) private var developerUnlockInsights = true
+    #endif
 
     var body: some View {
         NavigationStack {
@@ -75,6 +78,9 @@ struct SettingsView: View {
             appSection
             discoverSection
             subscriptionSection()
+            #if DEBUG
+            developerSection
+            #endif
             supportSection()
             actionsSection(vm: vm)
             legalSection()
@@ -423,6 +429,24 @@ struct SettingsView: View {
             Text(subscription.errorMessage ?? "")
         }
     }
+
+    #if DEBUG
+    private var developerSection: some View {
+        Section {
+            Toggle("Unlock Insights", isOn: $developerUnlockInsights)
+                .foregroundStyle(Theme.labelPrimary)
+                .tint(Theme.accent)
+        } header: {
+            Text("Developer")
+                .foregroundStyle(Theme.labelSecondary)
+        } footer: {
+            Text("DEBUG only. Opens Insights without a subscription so you can test charts locally. Turn off to preview the paywall.")
+                .foregroundStyle(Theme.labelSecondary)
+                .font(.caption)
+        }
+        .listRowBackground(Theme.surface)
+    }
+    #endif
 
     private var appSection: some View {
         Section {

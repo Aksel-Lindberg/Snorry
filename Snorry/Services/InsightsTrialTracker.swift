@@ -21,8 +21,22 @@ enum InsightsTrialTracker {
     /// Whether the user may open Insights without a subscription.
     static func canAccessInsights(hasPremium: Bool, context: ModelContext) -> Bool {
         if hasPremium { return true }
+        if isDeveloperUnlockEnabled { return true }
         updateMaxCompletedNights(from: context)
         return persistedMaxCompletedNights < freeNightLimit
+    }
+
+    /// DEBUG Settings can unlock Insights without showing Premium status or the paywall.
+    static var isDeveloperUnlockEnabled: Bool {
+        #if DEBUG
+        let defaults = UserDefaults.standard
+        let key = UserPreferences.developerUnlockInsightsKey
+        // Unset means on — DEBUG runs should reach Insights without a subscription.
+        if defaults.object(forKey: key) == nil { return true }
+        return defaults.bool(forKey: key)
+        #else
+        false
+        #endif
     }
 
     /// Refreshes the persisted max from current SwiftData sessions.
