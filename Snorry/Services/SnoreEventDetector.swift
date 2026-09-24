@@ -182,7 +182,9 @@ final class SnoreEventDetector: @unchecked Sendable {
 
         let wasActive = classifierActive
         classifierActive = classifierResult
-        continuation?.yield(.snoringActive(classifierResult))
+        if wasActive != classifierResult {
+            continuation?.yield(.snoringActive(classifierResult))
+        }
 
         if wasActive && !classifierResult {
             // Classifier can drop between audio ticks — start the pause clock immediately.

@@ -35,7 +35,6 @@ struct HomeView: View {
     @State private var showPermissions = false
     @State private var showHelp = false
     @State private var showSettings = false
-    @State private var scrollAlertIntoView = false
     @AppStorage(UserPreferences.displayNameKey) private var userDisplayName = ""
     @AppStorage(UserPreferences.hasSeenTonightWelcomeKey) private var hasSeenTonightWelcome = false
     @State private var isFirstTonightVisit = false
@@ -170,21 +169,6 @@ struct HomeView: View {
             }
             .scrollIndicators(.hidden)
             .clearsFloatingTabBar()
-            .onChange(of: scrollAlertIntoView) { _, shouldScroll in
-                guard shouldScroll else { return }
-                scrollExpandedAlertCard(proxy: proxy)
-                scrollAlertIntoView = false
-            }
-        }
-    }
-
-    /// Scrolls the expanded alert card into view above the tab bar.
-    private func scrollExpandedAlertCard(proxy: ScrollViewProxy) {
-        // Let the disclosure animation lay out before scrolling.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            withAnimation(.easeInOut(duration: 0.4)) {
-                proxy.scrollTo(ScrollTarget.alertSetup, anchor: UnitPoint(x: 0.5, y: 0.06))
-            }
         }
     }
 
@@ -223,7 +207,7 @@ struct HomeView: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// Last session and alert setup (collapsed by default) — shared by phone and iPad layouts.
+    /// Last session and alert setup — shared by phone and iPad layouts.
     private func monitorBottomCards(vm: MonitorViewModel) -> some View {
         let showCardShortcuts = !vm.isMonitoring
 
@@ -237,13 +221,6 @@ struct HomeView: View {
                     notificationsAuthorized: vm.notificationAuthorized,
                     caption: "Used for the next recording session",
                     compact: true,
-                    collapsible: true,
-                    startsCollapsed: true,
-                    onExpandedChange: { expanded in
-                        if expanded {
-                            scrollAlertIntoView = true
-                        }
-                    },
                     footerLinkTitle: showCardShortcuts ? "Change in Settings" : nil,
                     onFooterLinkTap: showCardShortcuts ? { showSettings = true } : nil
                 )
@@ -443,7 +420,14 @@ struct HomeView: View {
             return
         }
 
-        vm.startMonitoring()
+        // Navigate first so the recording screen appears before mic session setup.
         showRecordingScreen = true
+        Task { @MainActor in
+            await Task.yield()
+            vm.startMonitoring()
+            if !vm.isMonitoring {
+                showRecordingScreen = false
+            }
+        }
     }
 }

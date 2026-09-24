@@ -11,29 +11,25 @@ struct SessionDetailView: View {
         ZStack {
             Theme.nightGradient.ignoresSafeArea()
 
-            if let vm {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        statsCards(vm: vm)
+            ScrollView {
+                VStack(spacing: 20) {
+                    statsCards
+                    if let vm {
                         watchSnoreCard(vm: vm)
                         if let alertCard = AlertSetupSummaryCard.forSession(session) {
                             alertCard
                         }
                         eventsList(vm: vm)
+                    } else {
+                        if let alertCard = AlertSetupSummaryCard.forSession(session) {
+                            alertCard
+                        }
+                        eventsLoadingPlaceholder
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
-                    .padding(.bottom, 40)
                 }
-            } else {
-                VStack(spacing: 14) {
-                    ProgressView()
-                        .controlSize(.large)
-                        .tint(Theme.accent)
-                    Text("Loading session…")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Theme.labelSecondary)
-                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 40)
             }
         }
         .navigationTitle(session.startDate.formatted(date: .abbreviated, time: .shortened))
@@ -50,13 +46,28 @@ struct SessionDetailView: View {
 
     // MARK: Stats row
 
-    private func statsCards(vm: SessionDetailViewModel) -> some View {
+    /// Rolled-up session fields render immediately; event sorting loads on the next turn.
+    private var statsCards: some View {
         HStack(alignment: .top, spacing: 12) {
-            StatCard(label: "Sleep duration", value: vm.durationString, icon: "clock")
-            // Snore events / duration use snoring-only counts from the session rollup.
+            StatCard(label: "Sleep duration", value: session.displayDurationSummary, icon: "clock")
             StatCard(label: "Snore events", value: "\(session.displayEventCount)", icon: "waveform.badge.exclamationmark")
             StatCard(label: "Snore duration", value: session.displayTotalSnoreTime, icon: "zzz")
         }
+    }
+
+    private var eventsLoadingPlaceholder: some View {
+        VStack(spacing: 14) {
+            ProgressView()
+                .controlSize(.large)
+                .tint(Theme.accent)
+            Text("Loading sound events…")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Theme.labelSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+        .padding(16)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
     }
 
     // MARK: Watch snore card
@@ -92,14 +103,14 @@ struct SessionDetailView: View {
     /// Snore Clock legend — one line when space allows; otherwise breaks after "time".
     private var snoreClockLegend: some View {
         ViewThatFits(in: .horizontal) {
-            Text("Arc position = time  ·  length = duration")
+            Text("Arc position = time    length = duration")
                 .font(.footnote)
                 .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                .multilineTextAlignment(.trailing)
+                .lineLimit(1)
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text("Arc position = time")
-                Text("·  length = duration")
+                Text("length = duration")
             }
             .font(.footnote)
             .foregroundStyle(Theme.labelOnSurfaceSecondary)
@@ -137,7 +148,7 @@ struct SessionDetailView: View {
                         event: event,
                         maxEventDuration: maxEventDuration,
                         isPlaying: vm.playingEventID == event.id,
-                        canReplay: event.playbackURL != nil,
+                        canReplay: vm.showsPlaybackChrome(for: event),
                         onTap: { vm.togglePlayback(of: event) },
                         onShare: { AppAnalytics.logSnoreClipShared() }
                     )
@@ -205,7 +216,12 @@ private struct SnoreWatchFace: View {
             // — Radii —
             let outerR = dim * 0.46    // decorative outer ring
             let arcR   = dim * 0.42    // centre-line of the snore-arc track
-            let arcW   = dim * 0.055   // stroke width of each snore arc
+            #if DEBUG
+            let marketingArcs = AppStoreDemoSeeder.showsMarketingChrome
+            #else
+            let marketingArcs = false
+            #endif
+            let arcW   = dim * (marketingArcs ? 0.072 : 0.055)
             let faceR  = dim * 0.365   // inner face boundary
 
             // — Outer bezel ring —
@@ -268,7 +284,9 @@ private struct SnoreWatchFace: View {
             // a 4° floor made 2s snores look like ~8 minutes). Butt caps keep thick strokes
             // from extending past the true angle the way round caps do.
             for arc in arcData {
-                let sweepDeg = (arc.duration / Self.dialSeconds) * 360.0
+                let proportionalSweep = (arc.duration / Self.dialSeconds) * 360.0
+                let minSweep = marketingArcs ? 3.0 : 0.0
+                let sweepDeg = max(minSweep, proportionalSweep)
                 guard sweepDeg > 1e-6 else { continue }
                 var p = Path()
                 p.addArc(center: CGPoint(x: cx, y: cy),

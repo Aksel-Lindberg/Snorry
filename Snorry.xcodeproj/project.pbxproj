@@ -90,6 +90,7 @@
 		EF96694FBC2893F5056D48FE /* Double tones.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = D478DD736616BB856D2F2D94 /* Double tones.mp3 */; };
 		F6F9545BB9B8179202A70A85 /* AudioSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0CC6D2C570ADD8994AFDE52 /* AudioSessionManager.swift */; };
 		F8A2B3C4D5E60718293A4B5D /* SnoreRumbleGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A2B3C4D5E60718293A4B5C /* SnoreRumbleGate.swift */; };
+		A1S2D3E4F5A60718293A4B5E /* AppStoreDemoSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1S2D3E4F5A60718293A4B5F /* AppStoreDemoSeeder.swift */; };
 		F8A2B3C4D5E60718293A4B5F /* SnoreRumbleGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A2B3C4D5E60718293A4B5E /* SnoreRumbleGateTests.swift */; };
 		F9537C4A3F8A5E54F1AB8222 /* AlertSetupSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC3AAF0922B2A428E2CD2A6E /* AlertSetupSummaryCard.swift */; };
 		FBAA00012EAA4B00C99A0001 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */; };
@@ -229,6 +230,7 @@
 		F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSettingsChange.swift; path = Models/AlertSettingsChange.swift; sourceTree = "<group>"; };
 		F8170BA25460F76D30A51269 /* Singball.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Singball.mp3; path = Resources/Singball.mp3; sourceTree = "<group>"; };
 		F8A2B3C4D5E60718293A4B5C /* SnoreRumbleGate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreRumbleGate.swift; path = Utilities/SnoreRumbleGate.swift; sourceTree = "<group>"; };
+		A1S2D3E4F5A60718293A4B5F /* AppStoreDemoSeeder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppStoreDemoSeeder.swift; path = Utilities/AppStoreDemoSeeder.swift; sourceTree = "<group>"; };
 		F8A2B3C4D5E60718293A4B5E /* SnoreRumbleGateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnoreRumbleGateTests.swift; sourceTree = "<group>"; };
 		F9B7B29710F28E6010817EE4 /* SnoreGIFData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreGIFData.swift; path = Resources/SnoreGIFData.swift; sourceTree = "<group>"; };
 		FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -392,6 +394,7 @@
 				BF43A2D12306F7CD8D9E23C3 /* SnoreClipSpectralAnalyzer.swift */,
 				C99A00022EAA4B00C99A0010 /* SnoreClipSharing.swift */,
 				F8A2B3C4D5E60718293A4B5C /* SnoreRumbleGate.swift */,
+				A1S2D3E4F5A60718293A4B5F /* AppStoreDemoSeeder.swift */,
 				E0D7E4820D5B40D5D01D18D1 /* Theme.swift */,
 				INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */,
 				SLP00012EAA4B00C99A0003 /* SleepNight.swift */,
@@ -675,6 +678,7 @@
 				EF5CC0251F040554878D0EBD /* SnoreClipSpectralAnalyzer.swift in Sources */,
 				C99A00032EAA4B00C99A0011 /* SnoreClipSharing.swift in Sources */,
 				F8A2B3C4D5E60718293A4B5D /* SnoreRumbleGate.swift in Sources */,
+				A1S2D3E4F5A60718293A4B5E /* AppStoreDemoSeeder.swift in Sources */,
 				5AE41B3C3FD7C95969F2831C /* Theme.swift in Sources */,
 				INS00012EAA4B00C99A0002 /* InsightsConfiguration.swift in Sources */,
 				SLP00012EAA4B00C99A0004 /* SleepNight.swift in Sources */,

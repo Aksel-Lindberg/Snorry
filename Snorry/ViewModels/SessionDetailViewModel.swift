@@ -42,6 +42,16 @@ final class SessionDetailViewModel {
 
     // MARK: Playback
 
+    /// Marketing captures show enabled play buttons even without AAC files on disk.
+    func showsPlaybackChrome(for event: SnoreEvent) -> Bool {
+        if event.playbackURL != nil { return true }
+        #if DEBUG
+        return AppStoreDemoSeeder.showsMarketingChrome
+        #else
+        return false
+        #endif
+    }
+
     func togglePlayback(of event: SnoreEvent) {
         if playingEventID == event.id {
             stopPlayback()

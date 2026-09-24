@@ -226,6 +226,69 @@ struct HabitCorrelationTests {
         #expect(days.contains(dayB))
     }
 
+    @Test func loggedHabitTitlesIncludeBuiltInCustomAndExerciseCompletion() {
+        let dayLogged = day(0)
+        let dayExerciseOnly = day(-1)
+        let custom = CustomHabit(title: "Mouth tape")
+        let logs = [
+            HabitLog(habitID: HabitKind.drankAlcohol.id, dayStart: dayLogged),
+            HabitLog(habitID: custom.logID, dayStart: dayLogged)
+        ]
+
+        let titles = AnalyticsViewModel.loggedHabitTitlesByDay(
+            habitLogs: logs,
+            exerciseDays: [dayLogged, dayExerciseOnly],
+            habits: HabitDefinition.all(customHabits: [custom]),
+            calendar: calendar
+        )
+
+        #expect(titles[dayLogged] == [
+            HabitKind.myofascialExercise.title,
+            HabitKind.drankAlcohol.title,
+            custom.title
+        ])
+        #expect(titles[dayExerciseOnly] == [HabitKind.myofascialExercise.title])
+    }
+
+    @Test func correlationSectionsFollowHabitsTabOrderAndDropEmpty() {
+        let spray = habit(.nasalSpray, withMinutes: 20, withoutMinutes: 5)
+        let exercise = habit(.myofascialExercise, withMinutes: 4, withoutMinutes: 10)
+        let alcohol = habit(.drankAlcohol, withMinutes: 20, withoutMinutes: 7)
+        let caffeine = habit(.caffeineLate, withMinutes: 12, withoutMinutes: 10)
+        let custom = HabitCorrelationPoint(
+            id: "custom.1",
+            title: "Mouth tape",
+            systemImage: "tag.fill",
+            insightClause: "on nights you logged Mouth tape",
+            expectedEffect: .unknown,
+            avgWithHabitMinutes: 8,
+            avgWithoutHabitMinutes: 8,
+            nightsWithHabit: 3,
+            nightsWithoutHabit: 3
+        )
+
+        let sections = AnalyticsViewModel.habitCorrelationSections(
+            from: [caffeine, custom, alcohol, exercise, spray]
+        )
+
+        #expect(sections.map(\.effect) == [.mayHelp, .mayAddSnoring, .unknown])
+        #expect(sections[0].points.map(\.id) == [
+            HabitKind.nasalSpray.id,
+            HabitKind.myofascialExercise.id
+        ])
+        #expect(sections[1].points.map(\.id) == [
+            HabitKind.drankAlcohol.id,
+            HabitKind.caffeineLate.id
+        ])
+        #expect(sections[2].points.map(\.id) == ["custom.1"])
+    }
+
+    @Test func habitDeltaScaleUsesLargestAbsoluteDelta() {
+        let alcohol = habit(.drankAlcohol, withMinutes: 20, withoutMinutes: 7)
+        let exercise = habit(.myofascialExercise, withMinutes: 4, withoutMinutes: 10)
+        #expect(AnalyticsViewModel.habitDeltaScale(for: [alcohol, exercise]) == 15)
+    }
+
     @Test func lastDayStartInWeekReturnsEndOfCalendarWeek() {
         let midWeek = day(-3)
         guard let interval = calendar.dateInterval(of: .weekOfYear, for: midWeek) else {
@@ -262,6 +325,24 @@ struct HabitCorrelationTests {
     private func day(_ offset: Int) -> Date {
         let today = calendar.startOfDay(for: Date())
         return calendar.date(byAdding: .day, value: offset, to: today)!
+    }
+
+    private func habit(
+        _ kind: HabitKind,
+        withMinutes: Double,
+        withoutMinutes: Double
+    ) -> HabitCorrelationPoint {
+        HabitCorrelationPoint(
+            id: kind.id,
+            title: kind.title,
+            systemImage: kind.systemImage,
+            insightClause: kind.insightClause,
+            expectedEffect: kind.expectedEffect,
+            avgWithHabitMinutes: withMinutes,
+            avgWithoutHabitMinutes: withoutMinutes,
+            nightsWithHabit: 3,
+            nightsWithoutHabit: 3
+        )
     }
 }
 

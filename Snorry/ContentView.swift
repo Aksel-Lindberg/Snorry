@@ -95,6 +95,13 @@ struct RootView: View {
     private func setupMonitorViewModelIfNeeded() {
         guard monitorVM == nil else { return }
         let vm = MonitorViewModel(modelContext: modelContext)
+        #if DEBUG
+        if AppStoreDemoSeeder.shouldOpenRecordingScreen {
+            vm.applyAppStoreRecordingDemo()
+            AppStoreDemoSeeder.consumeRecordingScreenFlag()
+            showRecordingScreen = true
+        }
+        #endif
         monitorVM = vm
         Task { await vm.syncNotificationAuthorizationFromSystem() }
     }

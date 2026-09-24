@@ -75,11 +75,15 @@ struct SnorryApp: App {
                 // `nil` for `.system` must not fall back to dark — that would ignore iPhone appearance.
                 .preferredColorScheme(appUITheme.preferredColorScheme)
                 .task {
-                    let store = SessionStore(context: sharedModelContainer.mainContext)
+                    let context = sharedModelContainer.mainContext
+                    #if DEBUG
+                    try? AppStoreDemoSeeder.seedIfRequested(context: context)
+                    #endif
+                    let store = SessionStore(context: context)
                     store.recoverOrphanedSession()
                     store.reconcileEndedSessionsOnLaunch()
                     await appEnv.subscription.refreshEntitlements()
-                    InsightsTrialTracker.updateMaxCompletedNights(from: sharedModelContainer.mainContext)
+                    InsightsTrialTracker.updateMaxCompletedNights(from: context)
                 }
         }
         .modelContainer(sharedModelContainer)

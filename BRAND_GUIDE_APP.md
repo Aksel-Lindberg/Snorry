@@ -115,7 +115,7 @@ Default easing: ease-in-out. Spring damping ≥ 0.7 for sheets only. Respect `pr
 - **Nav:** Toolbar app icon + Help (?)
 - **Header:** Snorry wordmark; handwritten subtitle (brand alignment TBD)
 - **Hero:** Large START circle — moon, waveform, mic + **START**; caption **Tap to start recording** directly below the circle
-- **Alert Setup card:** Collapsed by default; caption "Used for the next recording session"
+- **Alert Setup card:** One-line summary (push, sound, style); caption "Used for the next recording session"; **Change in Settings** when not recording
 - **Last Session card:** Always visible. Three columns: Sleep duration / Snore events / Snore duration. Empty state: all **—** + footer *No recordings yet.*
 
 **Marketing screenshots:** Prefer real app UI; crop tab bar labels if phone appears small in posts.

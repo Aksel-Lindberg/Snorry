@@ -123,6 +123,9 @@ final class MonitorViewModel {
     private var soundAlarmAffectedMonitoring = false
     /// After an alert clears, allow faster mic recovery if ticks stay stale.
     private var monitoringRestoreGraceUntil: Date?
+    /// Session peak — updated from the audio task, flushed to SwiftData at 1 Hz.
+    @ObservationIgnored
+    private var livePeakDB: Float = -160
 
     /// Copied from settings at session start (alert UI / playback).
     private var sessionPushEnabled = true
@@ -249,6 +252,7 @@ final class MonitorViewModel {
         monitoringRestoreGraceUntil = nil
         monitoringStartedAt = nil
         lastPipelineRecoveryAt = nil
+        livePeakDB = -160
 
         let session = store.startSession()
         activeSession = session
@@ -402,43 +406,50 @@ final class MonitorViewModel {
         monitoringRestoreGraceUntil = nil
         monitoringStartedAt = nil
         lastPipelineRecoveryAt = nil
+        livePeakDB = -160
 
         UIApplication.shared.isIdleTimerDisabled = false
     }
 
     /// Async stop invoked by the Stop Monitoring button.
-    /// Tears down pipelines, classifies clips on background-recorded nights, then finalizes.
+    /// Tears down pipelines, finalizes the session, then classifies background clips without blocking return to Tonight.
     func stopMonitoringAsync() async {
         guard isMonitoring, !isStoppingMonitoring else { return }
         isStoppingMonitoring = true
         stoppingStatusMessage = "Finishing audio and storing events."
         await Task.yield()
-        defer { isStoppingMonitoring = false }
 
         teardownPipelines()
 
-        // Classify clips when the device was locked/backgrounded at any point this session.
+        // Capture events before finalize clears activeSession; classification runs after the user returns home.
+        let eventsToClassify: [SnoreEvent]
         if let session = activeSession,
            session.hadBackgroundRecordingPeriod == true {
-            let completedEvents = session.events.filter { $0.endDate != nil }
-            if !completedEvents.isEmpty {
-                stoppingStatusMessage = "Classifying sounds…"
-                await Task.yield()
-                let support = FileManager.default.urls(
-                    for: .applicationSupportDirectory, in: .userDomainMask
-                ).first!
-                await SessionClipSoundClassifier.classifyAll(
-                    events: completedEvents,
-                    applicationSupport: support,
-                    preserveDetectorSnoreEvents: true
-                )
-            }
+            eventsToClassify = session.events.filter { $0.endDate != nil }
+        } else {
+            eventsToClassify = []
         }
 
         let durationSeconds = elapsedSeconds
         sessionStore?.finalizeSession()
         resetMonitoringState()
         AppAnalytics.logMonitoringStopped(durationSeconds: durationSeconds)
+        isStoppingMonitoring = false
+
+        guard !eventsToClassify.isEmpty else { return }
+
+        let support = FileManager.default.urls(
+            for: .applicationSupportDirectory, in: .userDomainMask
+        ).first!
+
+        Task { @MainActor [weak self] in
+            await SessionClipSoundClassifier.classifyAll(
+                events: eventsToClassify,
+                applicationSupport: support,
+                preserveDetectorSnoreEvents: true
+            )
+            try? self?.modelContext.save()
+        }
     }
 
     // MARK: Async pipelines
@@ -459,6 +470,12 @@ final class MonitorViewModel {
 
         monitorTask = Task(priority: .userInitiated) { [weak self] in
             guard let stream = audioRef.stream else { return }
+            // Never `await` the main actor here — a busy UI thread would stall the detector
+            // for seconds (the repeating 5–6 s hangs in the console).
+            var lastUIPublish = Date.distantPast
+            let uiInterval: TimeInterval = 1.0 / 12.0
+            var smoothedBands: [Float] = []
+
             for await tick in stream {
                 guard !Task.isCancelled else { break }
 
@@ -469,25 +486,26 @@ final class MonitorViewModel {
                 // `ClipRecorder.write` no-ops when no file is open; safe every tick (clip IO is locked).
                 clipsRef.write(buffer: tick.nativeBuffer)
 
+                let now = tick.timestamp
+                guard now.timeIntervalSince(lastUIPublish) >= uiInterval else { continue }
+                lastUIPublish = now
+
                 let rawBands = spectrumRef.bands(fromPCM: tick.buffer)
+                if smoothedBands.count != rawBands.count {
+                    smoothedBands = rawBands
+                } else {
+                    let smoothingAlpha: Float = 0.38
+                    for bandIndex in rawBands.indices {
+                        smoothedBands[bandIndex] = smoothingAlpha * rawBands[bandIndex]
+                            + (1 - smoothingAlpha) * smoothedBands[bandIndex]
+                    }
+                }
+                let bandsToPublish = smoothedBands
+                let db = tick.dBFS
 
-                await MainActor.run { [weak self] in
+                Task { @MainActor [weak self] in
                     guard let self, self.isMonitoring else { return }
-
-                    if self.spectrumBands.count != rawBands.count {
-                        self.spectrumBands = rawBands
-                    } else {
-                        let smoothingAlpha: Float = 0.38
-                        for bandIndex in rawBands.indices {
-                            self.spectrumBands[bandIndex] = smoothingAlpha * rawBands[bandIndex]
-                                + (1 - smoothingAlpha) * self.spectrumBands[bandIndex]
-                        }
-                    }
-
-                    self.currentDB = tick.dBFS
-                    if tick.dBFS > (self.activeSession?.peakDB ?? -160) {
-                        self.activeSession?.peakDB = tick.dBFS
-                    }
+                    self.publishLiveAudioUI(dBFS: db, bands: bandsToPublish)
                 }
             }
         }
@@ -538,6 +556,9 @@ final class MonitorViewModel {
                 updateAlertSnoringState()
                 ensureSoundAlarmDelivery()
                 // Persist waveform sample every second
+                if livePeakDB > (activeSession?.peakDB ?? -160) {
+                    activeSession?.peakDB = livePeakDB
+                }
                 sessionStore?.addWaveformSample(
                     dBFS: currentDB,
                     isSnoringActive: isSnoreEventActive && isSnoring
@@ -593,6 +614,16 @@ final class MonitorViewModel {
             AudioSessionManager.shared.restoreMonitoringAfterAlarm()
         } else {
             audioService.reconfigureAfterRouteChange()
+        }
+    }
+
+    /// Spectrum + level for the recording UI. Called at ~12 Hz so `@Observable` does not
+    /// invalidate SwiftUI on every 20 ms audio tick.
+    private func publishLiveAudioUI(dBFS: Float, bands: [Float]) {
+        spectrumBands = bands
+        currentDB = dBFS
+        if dBFS > livePeakDB {
+            livePeakDB = dBFS
         }
     }
 
@@ -1159,4 +1190,49 @@ final class MonitorViewModel {
         sessionStore?.endEvent(id: id, at: Date(), peakDB: peak, avgDB: peak)
         activeEventID = nil
     }
+
+    #if DEBUG
+    /// Populates live recording UI for App Store frame 01 (no microphone required).
+    func applyAppStoreRecordingDemo() {
+        isMonitoring = true
+        isSnoring = true
+        isEpisodeConfirmed = true
+        activeEventID = UUID()
+        elapsedSeconds = 29
+        snoreEventCount = 1
+        currentDB = -54
+        alertPhase = .idle
+        monitoringStartedAt = Date().addingTimeInterval(-Double(elapsedSeconds))
+        spectrumBands = Self.appStoreDemoSpectrumBands
+        timelinePoints = Self.appStoreDemoTimelinePoints()
+    }
+
+    private static var appStoreDemoSpectrumBands: [Float] {
+        // Low-frequency-heavy with a small low-mid bump — typical snore rumble (85–400 Hz).
+        (0..<52).map { index in
+            let lowFreq = exp(-Double(index) / 9.0)
+            let midBump = exp(-pow(Double(index) - 12.0, 2) / 20.0) * 0.42
+            return Float(0.05 + lowFreq * 0.78 + midBump)
+        }
+    }
+
+    /// One active bout in the last few minutes of the 10-minute live timeline window.
+    private static func appStoreDemoTimelinePoints() -> [TimelinePoint] {
+        let now = Date()
+        var points: [TimelinePoint] = []
+        for secondsAgo in stride(from: 600, through: 0, by: 3) {
+            let time = now.addingTimeInterval(-Double(secondsAgo))
+            let inBout = secondsAgo <= 210 && secondsAgo >= 45
+            let dB: Float
+            if inBout {
+                let wave = sin(Double(secondsAgo) / 7.5)
+                dB = Float(-50 + wave * 7)
+            } else {
+                dB = -76
+            }
+            points.append(TimelinePoint(time: time, dBFS: dB, isSnoring: inBout))
+        }
+        return points
+    }
+    #endif
 }

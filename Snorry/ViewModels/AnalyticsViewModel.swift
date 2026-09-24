@@ -124,6 +124,14 @@ struct HabitCorrelationPoint: Identifiable {
     }
 }
 
+// MARK: - Habit rows grouped the same way as the Habits tab
+struct HabitCorrelationSection: Identifiable {
+    let effect: HabitExpectedEffect
+    let points: [HabitCorrelationPoint]
+
+    var id: String { effect.id }
+}
+
 // MARK: - Metrics for one analytics time window
 struct PeriodSnapshot {
     let sessionCount: Int
@@ -183,13 +191,20 @@ final class AnalyticsViewModel {
         sessionsByDay: [:]
     )
     var habitCorrelationPoints: [HabitCorrelationPoint] = []
-    var exerciseLoggedDayStarts: Set<Date> = []
+    /// Habit titles logged on each night, including airway-exercise completions.
+    var loggedHabitTitlesByDay: [Date: [String]] = [:]
     private var oldestSessionStart: Date?
 
     private let context: ModelContext
 
     init(context: ModelContext) {
         self.context = context
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "appStoreDemoInsightsMonth") {
+            selectedRange = .month
+            UserDefaults.standard.set(false, forKey: "appStoreDemoInsightsMonth")
+        }
+        #endif
         refresh()
     }
 
@@ -285,21 +300,25 @@ final class AnalyticsViewModel {
         }
     }
 
-    func setRange(_ range: AnalyticsRange) {
+    /// Updates the range control first, then loads chart data on the next turn so the picker paints immediately.
+    func setRange(_ range: AnalyticsRange) async {
         selectedRange = range
         periodOffset = 0
+        await Task.yield()
         refresh()
     }
 
-    func goToPreviousPeriod() {
+    func goToPreviousPeriod() async {
         guard canGoBack else { return }
         periodOffset -= 1
+        await Task.yield()
         refresh()
     }
 
-    func goToNextPeriod() {
+    func goToNextPeriod() async {
         guard canGoForward else { return }
         periodOffset += 1
+        await Task.yield()
         refresh()
     }
 
@@ -353,7 +372,6 @@ final class AnalyticsViewModel {
             calendar: cal
         )
 
-        loadExerciseDays(from: visible.start, until: visible.endExclusive, calendar: cal)
         loadHabitCorrelation(from: visible.start, until: visible.endExclusive, calendar: cal)
     }
 
@@ -565,6 +583,13 @@ final class AnalyticsViewModel {
         return Self.snoreMinutesChartMax(from: values)
     }
 
+    /// Shared half-width for diverging habit bars, so section charts use one scale.
+    static func habitDeltaScale(for points: [HabitCorrelationPoint]) -> Double {
+        let peak = points.map { abs($0.deltaMinutes) }.max() ?? 0
+        let step: Double = peak < 15 ? 5 : peak < 60 ? 10 : 30
+        return max(step, ceil(peak / step) * step)
+    }
+
     static func snoreMinutesChartMax(from values: [Double]) -> Double {
         let peak = values.max() ?? 0
         guard peak > 0 else { return 10 }
@@ -583,12 +608,13 @@ final class AnalyticsViewModel {
     }
 
     private func fetchSessions(from start: Date, until endExclusive: Date) -> [SnoreSession] {
+        let rangeStart = start
+        let rangeEnd = endExclusive
         let descriptor = FetchDescriptor<SnoreSession>(
-            predicate: #Predicate { $0.startDate >= start },
+            predicate: #Predicate { $0.startDate >= rangeStart && $0.startDate < rangeEnd },
             sortBy: [SortDescriptor(\.startDate)]
         )
-        let rows = (try? context.fetch(descriptor)) ?? []
-        return rows.filter { $0.startDate < endExclusive }
+        return (try? context.fetch(descriptor)) ?? []
     }
 
     private static func buildPeriodSnapshot(
@@ -671,29 +697,6 @@ final class AnalyticsViewModel {
         return points
     }
 
-    private func loadExerciseDays(from start: Date, until endExclusive: Date, calendar: Calendar) {
-        let exerciseDescriptor = FetchDescriptor<MyofascialExerciseCompletion>(
-            predicate: #Predicate { $0.completedAt >= start },
-            sortBy: [SortDescriptor(\.completedAt)]
-        )
-        let exerciseRows = (try? context.fetch(exerciseDescriptor)) ?? []
-
-        let airwayHabitID = HabitKind.myofascialExercise.id
-        let habitDescriptor = FetchDescriptor<HabitLog>(
-            predicate: #Predicate { $0.dayStart >= start && $0.habitID == airwayHabitID },
-            sortBy: [SortDescriptor(\.dayStart)]
-        )
-        let habitRows = (try? context.fetch(habitDescriptor)) ?? []
-
-        exerciseLoggedDayStarts = Self.airwayExerciseDayStarts(
-            exerciseCompletions: exerciseRows,
-            habitLogs: habitRows,
-            rangeStart: start,
-            rangeEndExclusive: endExclusive,
-            calendar: calendar
-        )
-    }
-
     /// Days with an exercise completion and/or the built-in airway-exercises habit logged.
     static func airwayExerciseDayStarts(
         exerciseCompletions: [MyofascialExerciseCompletion],
@@ -717,23 +720,33 @@ final class AnalyticsViewModel {
     }
 
     private func loadHabitCorrelation(from start: Date, until endExclusive: Date, calendar: Calendar) {
+        let rangeStart = start
+        let rangeEnd = endExclusive
         let habitDescriptor = FetchDescriptor<HabitLog>(
-            predicate: #Predicate { $0.dayStart >= start },
+            predicate: #Predicate { $0.dayStart >= rangeStart && $0.dayStart < rangeEnd },
             sortBy: [SortDescriptor(\.dayStart)]
         )
-        let habitLogs = ((try? context.fetch(habitDescriptor)) ?? []).filter { $0.dayStart < endExclusive }
+        let habitLogs = (try? context.fetch(habitDescriptor)) ?? []
 
         let exerciseDescriptor = FetchDescriptor<MyofascialExerciseCompletion>(
-            predicate: #Predicate { $0.completedAt >= start },
+            predicate: #Predicate { $0.completedAt >= rangeStart && $0.completedAt < rangeEnd },
             sortBy: [SortDescriptor(\.completedAt)]
         )
-        let exerciseRows = ((try? context.fetch(exerciseDescriptor)) ?? []).filter { $0.completedAt < endExclusive }
+        let exerciseRows = (try? context.fetch(exerciseDescriptor)) ?? []
         let exerciseDays = Set(exerciseRows.map { calendar.startOfDay(for: $0.completedAt) })
 
         let customDescriptor = FetchDescriptor<CustomHabit>(
             sortBy: [SortDescriptor(\.createdAt)]
         )
         let customHabits = (try? context.fetch(customDescriptor)) ?? []
+
+        let habits = HabitDefinition.all(customHabits: customHabits)
+        loggedHabitTitlesByDay = Self.loggedHabitTitlesByDay(
+            habitLogs: habitLogs,
+            exerciseDays: exerciseDays,
+            habits: habits,
+            calendar: calendar
+        )
 
         let sessionNights = currentPeriod.sessionDays
         guard !sessionNights.isEmpty else {
@@ -745,9 +758,54 @@ final class AnalyticsViewModel {
             sessionNights: sessionNights,
             habitLogs: habitLogs,
             exerciseDays: exerciseDays,
-            customHabits: customHabits,
+            habits: habits,
             calendar: calendar
         )
+    }
+
+    /// Titles logged on each night. An airway-exercise completion counts as that habit.
+    static func loggedHabitTitlesByDay(
+        habitLogs: [HabitLog],
+        exerciseDays: Set<Date>,
+        habits: [HabitDefinition],
+        calendar: Calendar
+    ) -> [Date: [String]] {
+        let ordered = HabitExpectedEffect.habitsTabSections.flatMap { effect in
+            habits.filter { $0.expectedEffect == effect }
+        }
+        let habitsByID = Dictionary(uniqueKeysWithValues: ordered.map { ($0.id, $0) })
+        var titlesByDay: [Date: Set<String>] = [:]
+
+        for log in habitLogs {
+            let day = calendar.startOfDay(for: log.dayStart)
+            guard let habit = habitsByID[log.habitID] else { continue }
+            titlesByDay[day, default: []].insert(habit.title)
+        }
+
+        let exerciseTitle = HabitKind.myofascialExercise.title
+        for day in exerciseDays {
+            titlesByDay[calendar.startOfDay(for: day), default: []].insert(exerciseTitle)
+        }
+
+        let order = ordered.map(\.title)
+        return titlesByDay.mapValues { titles in
+            titles.sorted { lhs, rhs in
+                (order.firstIndex(of: lhs) ?? .max) < (order.firstIndex(of: rhs) ?? .max)
+            }
+        }
+    }
+
+    /// Non-empty sections in Habits-tab order. Points stay sorted by absolute delta.
+    static func habitCorrelationSections(
+        from points: [HabitCorrelationPoint]
+    ) -> [HabitCorrelationSection] {
+        HabitExpectedEffect.habitsTabSections.compactMap { effect in
+            let sectionPoints = points
+                .filter { $0.expectedEffect == effect }
+                .sorted { abs($0.deltaMinutes) > abs($1.deltaMinutes) }
+            guard !sectionPoints.isEmpty else { return nil }
+            return HabitCorrelationSection(effect: effect, points: sectionPoints)
+        }
     }
 
     static func buildHabitCorrelationPoints(
