@@ -95,6 +95,7 @@ struct HabitCorrelationTests {
         #expect(ateLate?.nightsWithoutHabit == 1)
         #expect(ateLate?.deltaMinutes == 10)
         #expect(ateLate?.expectedEffect == .mayAddSnoring)
+        #expect(ateLate?.loggedDayStarts == Set([dayA, dayB]))
     }
 
     @Test func myofascialUnionsExerciseCompletions() {
@@ -121,6 +122,27 @@ struct HabitCorrelationTests {
         #expect(exercise?.avgWithHabitMinutes == 18)
         #expect(exercise?.avgWithoutHabitMinutes == 12)
         #expect(exercise?.expectedEffect == .mayHelp)
+        #expect(exercise?.loggedDayStarts == Set([dayB]))
+    }
+
+    @Test func loggedDayStartsIncludesExerciseOnlyAirwayNight() {
+        let dayA = day(0)
+        let dayB = day(-1)
+        let nights = [
+            DailySnorePoint(date: dayA, snoreMinutes: 12, eventCount: 2),
+            DailySnorePoint(date: dayB, snoreMinutes: 18, eventCount: 3)
+        ]
+        let logs = [HabitLog(habitID: HabitKind.myofascialExercise.id, dayStart: dayA)]
+
+        let points = AnalyticsViewModel.buildHabitCorrelationPoints(
+            sessionNights: nights,
+            habitLogs: logs,
+            exerciseDays: [dayB],
+            calendar: calendar
+        )
+
+        let exercise = points.first { $0.id == HabitKind.myofascialExercise.id }
+        #expect(exercise?.loggedDayStarts == Set([dayA, dayB]))
     }
 
     @Test func lowConfidenceWhenFewNightsInBucket() {
@@ -278,7 +300,8 @@ struct HabitCorrelationTests {
             avgWithHabitMinutes: 8,
             avgWithoutHabitMinutes: 8,
             nightsWithHabit: 3,
-            nightsWithoutHabit: 3
+            nightsWithoutHabit: 3,
+            loggedDayStarts: []
         )
 
         let sections = AnalyticsViewModel.habitCorrelationSections(
@@ -344,7 +367,8 @@ struct HabitCorrelationTests {
     private func habit(
         _ kind: HabitKind,
         withMinutes: Double,
-        withoutMinutes: Double
+        withoutMinutes: Double,
+        loggedDayStarts: Set<Date> = []
     ) -> HabitCorrelationPoint {
         HabitCorrelationPoint(
             id: kind.id,
@@ -355,7 +379,8 @@ struct HabitCorrelationTests {
             avgWithHabitMinutes: withMinutes,
             avgWithoutHabitMinutes: withoutMinutes,
             nightsWithHabit: 3,
-            nightsWithoutHabit: 3
+            nightsWithoutHabit: 3,
+            loggedDayStarts: loggedDayStarts
         )
     }
 }
@@ -619,7 +644,8 @@ struct InsightHabitCopyTests {
         _ kind: HabitKind,
         withMinutes: Double,
         withoutMinutes: Double,
-        nights: Int = 3
+        nights: Int = 3,
+        loggedDayStarts: Set<Date> = []
     ) -> HabitCorrelationPoint {
         HabitCorrelationPoint(
             id: kind.id,
@@ -630,7 +656,8 @@ struct InsightHabitCopyTests {
             avgWithHabitMinutes: withMinutes,
             avgWithoutHabitMinutes: withoutMinutes,
             nightsWithHabit: nights,
-            nightsWithoutHabit: nights
+            nightsWithoutHabit: nights,
+            loggedDayStarts: loggedDayStarts
         )
     }
 

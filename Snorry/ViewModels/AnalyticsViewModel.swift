@@ -87,6 +87,8 @@ struct HabitCorrelationPoint: Identifiable {
     let avgWithoutHabitMinutes: Double
     let nightsWithHabit: Int
     let nightsWithoutHabit: Int
+    /// Start-of-day dates in the visible period when this habit was logged.
+    let loggedDayStarts: Set<Date>
 
     /// Positive delta means more snoring when the habit was present.
     var deltaMinutes: Double { avgWithHabitMinutes - avgWithoutHabitMinutes }
@@ -938,6 +940,13 @@ final class AnalyticsViewModel {
 
             guard !withValues.isEmpty else { continue }
 
+            let loggedInPeriod = Set(
+                sessionNights.compactMap { night -> Date? in
+                    let day = calendar.startOfDay(for: night.date)
+                    return effectiveDays.contains(day) ? day : nil
+                }
+            )
+
             points.append(
                 HabitCorrelationPoint(
                     id: habit.id,
@@ -950,7 +959,8 @@ final class AnalyticsViewModel {
                         ? 0
                         : withoutValues.reduce(0, +) / Double(withoutValues.count),
                     nightsWithHabit: withValues.count,
-                    nightsWithoutHabit: withoutValues.count
+                    nightsWithoutHabit: withoutValues.count,
+                    loggedDayStarts: loggedInPeriod
                 )
             )
         }

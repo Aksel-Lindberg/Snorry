@@ -129,34 +129,54 @@ private struct AnalyticsContent: View {
     @State private var areEventsExpanded = false
     @State private var selectedChartDay: Date?
     @State private var highlightedChartDay: Date?
+    @State private var highlightedHabitID: String?
     @State private var sessionDetailRoute: SessionDetailRoute?
     @State private var multiSessionPicker: ChartDayPicker?
 
+    private enum ScrollAnchor {
+        static let dailySnoreChart = "dailySnoreChart"
+    }
+
+    private var highlightedHabit: HabitCorrelationPoint? {
+        guard let highlightedHabitID else { return nil }
+        return vm.habitCorrelationPoints.first { $0.id == highlightedHabitID }
+    }
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                rangePicker
-                if vm.isRefreshing {
-                    insightsRefreshingBanner
-                }
-                if vm.hasSessionDataInPeriod {
-                    metricCardsRow
-                    InsightBanner(message: vm.insightMessage)
-                }
-                snoreTrendCard
-                HabitCorrelationCard(
-                    points: vm.habitCorrelationPoints,
-                    xMax: vm.habitChartXMax,
-                    range: vm.selectedRange,
-                    onSelectMonth: {
-                        Task { await vm.setRange(.month) }
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    rangePicker
+                    if vm.isRefreshing {
+                        insightsRefreshingBanner
                     }
-                )
+                    if vm.hasSessionDataInPeriod {
+                        metricCardsRow
+                        InsightBanner(
+                            message: vm.insightMessage,
+                            footnote: insightHabitTapHint
+                        )
+                    }
+                    snoreTrendCard
+                        .id(ScrollAnchor.dailySnoreChart)
+                    HabitCorrelationCard(
+                        points: vm.habitCorrelationPoints,
+                        xMax: vm.habitChartXMax,
+                        range: vm.selectedRange,
+                        highlightedHabitID: highlightedHabitID,
+                        onSelectMonth: {
+                            Task { await vm.setRange(.month) }
+                        },
+                        onToggleHighlight: { point in
+                            toggleHabitHighlight(point, scrollProxy: proxy)
+                        }
+                    )
+                }
+                .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
+                .padding(.bottom, horizontalSizeClass == .regular ? 16 : 24)
+                .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 16)
-            .padding(.bottom, horizontalSizeClass == .regular ? 16 : 24)
-            .frame(maxWidth: horizontalSizeClass == .regular ? 980 : .infinity)
-            .frame(maxWidth: .infinity)
         }
         .clearsFloatingTabBar()
         .navigationDestination(item: $sessionDetailRoute) { route in
@@ -175,9 +195,35 @@ private struct AnalyticsContent: View {
         }
         .onChange(of: vm.selectedRange) { _, _ in
             highlightedChartDay = nil
+            highlightedHabitID = nil
         }
         .onChange(of: vm.periodOffset) { _, _ in
             highlightedChartDay = nil
+            highlightedHabitID = nil
+        }
+        .onChange(of: vm.habitCorrelationPoints.map(\.id)) { _, habitIDs in
+            guard let highlightedHabitID else { return }
+            if !habitIDs.contains(highlightedHabitID) {
+                self.highlightedHabitID = nil
+            }
+        }
+    }
+
+    /// Shown on the insight card when Month / 3 Months habit correlations are available.
+    private var insightHabitTapHint: String? {
+        guard vm.selectedRange.showsHabitCorrelation,
+              !vm.habitCorrelationPoints.isEmpty else { return nil }
+        return "Tap a habit below to see its impact on the chart."
+    }
+
+    private func toggleHabitHighlight(_ point: HabitCorrelationPoint, scrollProxy: ScrollViewProxy) {
+        if highlightedHabitID == point.id {
+            highlightedHabitID = nil
+            return
+        }
+        highlightedHabitID = point.id
+        withAnimation(.easeInOut(duration: 0.25)) {
+            scrollProxy.scrollTo(ScrollAnchor.dailySnoreChart, anchor: .top)
         }
     }
 
@@ -422,6 +468,9 @@ private struct AnalyticsContent: View {
                     snoreMinutesYMax: vm.snoreMinutesYMax,
                     selectedRange: vm.selectedRange,
                     highlightedDay: highlightedChartDay,
+                    habitHighlightDayStarts: highlightedHabit?.loggedDayStarts ?? [],
+                    habitHighlightTitle: highlightedHabit?.title,
+                    habitHighlightColor: highlightedHabit.map { habitCorrelationHighlightColor(for: $0) },
                     selectedDay: $selectedChartDay
                 )
 
@@ -466,14 +515,70 @@ private struct AnalyticsContent: View {
 
             chartLegendRow
 
-            if let best = vm.bestSnoreDay, let worst = vm.worstSnoreDay,
-               vm.currentPeriod.sessionDays.count >= 2,
-               best.date != worst.date || best.snoreMinutes != worst.snoreMinutes {
-                Text("Best: \(daySnoreLabel(best)) · Worst: \(daySnoreLabel(worst))")
-                    .font(.caption)
-                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            if let extremes = chartExtremeDays {
+                chartExtremesRow(quietest: extremes.quietest, loudest: extremes.loudest)
             }
         }
+    }
+
+    /// Quietest and loudest nights for the current chart scope (whole period or highlighted habit).
+    private var chartExtremeDays: (quietest: DailySnorePoint, loudest: DailySnorePoint)? {
+        let calendar = Calendar.current
+        let scopedDays: [DailySnorePoint]
+        if let habit = highlightedHabit {
+            scopedDays = vm.currentPeriod.sessionDays.filter {
+                habit.loggedDayStarts.contains(calendar.startOfDay(for: $0.date))
+            }
+        } else {
+            scopedDays = vm.currentPeriod.sessionDays
+        }
+
+        guard scopedDays.count >= 2,
+              let quietest = AnalyticsViewModel.extremeSnoreDay(in: scopedDays, preferMinimum: true),
+              let loudest = AnalyticsViewModel.extremeSnoreDay(in: scopedDays, preferMinimum: false),
+              !scopedDays.allSatisfy({ $0.snoreMinutes <= 0 }),
+              quietest.date != loudest.date || quietest.snoreMinutes != loudest.snoreMinutes
+        else { return nil }
+
+        return (quietest, loudest)
+    }
+
+    private func chartExtremesRow(quietest: DailySnorePoint, loudest: DailySnorePoint) -> some View {
+        HStack(spacing: 0) {
+            Text("Quietest: ")
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            Text(extremeDayLabel(quietest))
+                .foregroundStyle(Theme.good)
+            Text(" · Loudest: ")
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            Text(extremeDayLabel(loudest))
+                .foregroundStyle(Theme.snoring)
+        }
+        .font(.caption)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Quietest night, \(extremeDayAccessibilityLabel(quietest)). "
+            + "Loudest night, \(extremeDayAccessibilityLabel(loudest))."
+        )
+    }
+
+    private func extremeDayLabel(_ point: DailySnorePoint) -> String {
+        let datePart: String
+        if vm.selectedRange == .week {
+            datePart = point.date.formatted(.dateTime.weekday(.abbreviated))
+        } else {
+            datePart = point.date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+        }
+        let valuePart = point.snoreMinutes <= 0 ? "Quiet · 0m" : minuteLabel(point.snoreMinutes)
+        return "\(datePart) · \(valuePart)"
+    }
+
+    private func extremeDayAccessibilityLabel(_ point: DailySnorePoint) -> String {
+        let datePart = point.date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+        if point.snoreMinutes <= 0 {
+            return "\(datePart), quiet night, 0 minutes"
+        }
+        return "\(datePart), \(minuteLabel(point.snoreMinutes))"
     }
 
     private var chartSubtitle: String {
@@ -488,12 +593,32 @@ private struct AnalyticsContent: View {
 
     @ViewBuilder
     private var chartLegendRow: some View {
-        if vm.trendLinePoints != nil {
-            HStack(spacing: 4) {
-                trendLegendDash
-                Text("Trend")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+        HStack(spacing: 12) {
+            if vm.trendLinePoints != nil {
+                HStack(spacing: 4) {
+                    trendLegendDash
+                    Text("Trend")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                }
+            }
+            if let habit = highlightedHabit {
+                HStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(habitCorrelationHighlightColor(for: habit))
+                        .frame(width: 12, height: 8)
+                    Text("\(habit.title) · \(habit.nightsWithHabit) \(habit.nightsWithHabit == 1 ? "night" : "nights")")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Button("Clear") {
+                    highlightedHabitID = nil
+                }
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(Theme.accent)
+                .accessibilityHint("Removes habit highlight from the daily chart")
             }
         }
     }
@@ -503,11 +628,6 @@ private struct AnalyticsContent: View {
             .stroke(style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
             .foregroundStyle(Color.purple.opacity(0.85))
             .frame(width: 18, height: 2)
-    }
-
-    private func daySnoreLabel(_ point: DailySnorePoint) -> String {
-        let day = point.date.formatted(.dateTime.weekday(.abbreviated))
-        return "\(day) \(minuteLabel(point.snoreMinutes))"
     }
 
     /// Explains 0-snore recorded nights vs days with no session on the chart.
@@ -628,6 +748,7 @@ private func snoreChartXAxisLabelColor(for date: Date, in points: [DailySnorePoi
 private struct InsightBanner: View {
 
     let message: InsightMessage
+    var footnote: String?
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -636,14 +757,24 @@ private struct InsightBanner: View {
                 .foregroundStyle(iconColor)
                 .symbolRenderingMode(.hierarchical)
 
-            Text(message.text)
-                .font(.subheadline)
-                .foregroundStyle(Theme.labelPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(message.text)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.labelPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let footnote {
+                    Text(footnote)
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+        .accessibilityElement(children: .combine)
     }
 
     private var iconName: String {
@@ -822,7 +953,17 @@ private struct SnoreDurationHeroChart: View {
     let snoreMinutesYMax: Double
     let selectedRange: AnalyticsRange
     let highlightedDay: Date?
+    let habitHighlightDayStarts: Set<Date>
+    let habitHighlightTitle: String?
+    /// Snoring = red, reduction = green, flat = accent — matches Habits vs Snore duration.
+    let habitHighlightColor: Color?
     @Binding var selectedDay: Date?
+
+    private var isHabitHighlightActive: Bool { !habitHighlightDayStarts.isEmpty }
+
+    private var activeHabitHighlightColor: Color {
+        habitHighlightColor ?? Theme.accent
+    }
 
     private enum Layout {
         static let trailingYLabelWidth: CGFloat = 42
@@ -878,12 +1019,31 @@ private struct SnoreDurationHeroChart: View {
     }
 
     private func barFill(for point: DailySnorePoint) -> Color {
-        Theme.accent.opacity(isDayHighlighted(point) ? 1 : 0.85)
+        let daySelected = isDayHighlighted(point)
+        if isHabitHighlightActive {
+            if isHabitLoggedNight(point) {
+                return activeHabitHighlightColor.opacity(daySelected ? 1 : 0.92)
+            }
+            return Theme.accent.opacity(0.35)
+        }
+        return Theme.accent.opacity(daySelected ? 1 : 0.85)
     }
 
     private func isDayHighlighted(_ point: DailySnorePoint) -> Bool {
         guard let highlightedDay else { return false }
         return Calendar.current.isDate(point.date, inSameDayAs: highlightedDay)
+    }
+
+    private func isHabitLoggedNight(_ point: DailySnorePoint) -> Bool {
+        let day = Calendar.current.startOfDay(for: point.date)
+        return habitHighlightDayStarts.contains(day)
+    }
+
+    private func quietNightBarTint(for point: DailySnorePoint) -> Color {
+        if isHabitHighlightActive, isHabitLoggedNight(point) {
+            return activeHabitHighlightColor.opacity(0.92)
+        }
+        return Theme.accent.opacity(0.85)
     }
 
     @ViewBuilder
@@ -895,8 +1055,12 @@ private struct SnoreDurationHeroChart: View {
                     .foregroundStyle(Theme.labelSecondary)
             }
         } else if point.hadSession {
-            let barTint = Theme.accent.opacity(0.85)
-            if selectedRange == .week {
+            let barTint = quietNightBarTint(for: point)
+            if isHabitHighlightActive {
+                Capsule()
+                    .fill(barTint)
+                    .frame(width: 14, height: 4)
+            } else if selectedRange == .week {
                 VStack(spacing: 3) {
                     Text("0m")
                         .font(.system(size: 9, weight: .semibold, design: .monospaced))
@@ -925,6 +1089,11 @@ private struct SnoreDurationHeroChart: View {
             label = "\(day), quiet night, 0 minutes"
         } else {
             label = "\(day), \(minuteLabel(point.snoreMinutes))"
+        }
+        if isHabitHighlightActive,
+           isHabitLoggedNight(point),
+           let habitHighlightTitle {
+            label += ", \(habitHighlightTitle) logged"
         }
         return label
     }
@@ -1142,9 +1311,11 @@ private struct HabitCorrelationCard: View {
     let points: [HabitCorrelationPoint]
     let xMax: Double
     let range: AnalyticsRange
+    let highlightedHabitID: String?
     let onSelectMonth: () -> Void
+    let onToggleHighlight: (HabitCorrelationPoint) -> Void
 
-    @State private var selectedPoint: HabitCorrelationPoint?
+    @State private var detailPoint: HabitCorrelationPoint?
 
     private var sections: [HabitCorrelationSection] {
         AnalyticsViewModel.habitCorrelationSections(from: points)
@@ -1172,7 +1343,9 @@ private struct HabitCorrelationCard: View {
                             HabitDeltaSectionChart(
                                 points: section.points,
                                 scale: deltaScale,
-                                onSelect: { selectedPoint = $0 }
+                                highlightedHabitID: highlightedHabitID,
+                                onToggleHighlight: onToggleHighlight,
+                                onShowDetails: { detailPoint = $0 }
                             )
                         }
                     }
@@ -1182,25 +1355,30 @@ private struct HabitCorrelationCard: View {
         }
         .padding(16)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
-        .sheet(item: $selectedPoint) { point in
+        .sheet(item: $detailPoint) { point in
             HabitCorrelationDetailSheet(point: point, xMax: xMax)
         }
     }
 
     private var cardHeader: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 4) {
             Text("Habits vs Snore duration")
                 .font(.headline)
                 .foregroundStyle(Theme.labelPrimary)
             Text(headerSubtitle)
-                .font(.caption)
+                .font(headerSubtitleFont)
                 .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private var headerSubtitleFont: Font {
+        range.showsHabitCorrelation ? .subheadline.weight(.medium) : .caption
     }
 
     private var headerSubtitle: String {
         if range.showsHabitCorrelation {
-            return "Change in average snore minutes when logged"
+            return "Tap a habit to see its impact on the chart above"
         }
         return "Shown for Month and 3 Months"
     }
@@ -1265,19 +1443,14 @@ private struct HabitDeltaSectionChart: View {
 
     let points: [HabitCorrelationPoint]
     let scale: Double
-    let onSelect: (HabitCorrelationPoint) -> Void
+    let highlightedHabitID: String?
+    let onToggleHighlight: (HabitCorrelationPoint) -> Void
+    let onShowDetails: (HabitCorrelationPoint) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(points.enumerated()), id: \.element.id) { index, point in
-                Button {
-                    onSelect(point)
-                } label: {
-                    deltaRow(point)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(accessibilityLabel(for: point))
-                .accessibilityHint("Shows logged and not logged snore minutes")
+                deltaRow(point, isHighlighted: highlightedHabitID == point.id)
 
                 if index < points.count - 1 {
                     Divider()
@@ -1294,32 +1467,54 @@ private struct HabitDeltaSectionChart: View {
         .background(Theme.surfaceSecondary, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
     }
 
-    private func deltaRow(_ point: HabitCorrelationPoint) -> some View {
+    private func deltaRow(_ point: HabitCorrelationPoint, isHighlighted: Bool) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 10) {
-                Image(systemName: point.systemImage)
-                    .font(.body.weight(.semibold))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(Theme.accent)
-                    .frame(width: 28, height: 28)
-                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8))
+                Button {
+                    onToggleHighlight(point)
+                } label: {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: point.systemImage)
+                            .font(.body.weight(.semibold))
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(isHighlighted ? deltaColor(point) : Theme.accent)
+                            .frame(width: 28, height: 28)
+                            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8))
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(point.title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(point.isLowConfidence ? Theme.labelSecondary : Theme.labelPrimary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    Text(nightSampleCaption(for: point))
-                        .font(.caption2)
-                        .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(point.title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(point.isLowConfidence ? Theme.labelSecondary : Theme.labelPrimary)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+                            Text(nightSampleCaption(for: point))
+                                .font(.caption2)
+                                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Text(point.signedDeltaLabel ?? "about the same")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(deltaColor(point))
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .buttonStyle(.plain)
+                .accessibilityLabel(accessibilityLabel(for: point))
+                .accessibilityHint(highlightAccessibilityHint(for: point))
+                .accessibilityAddTraits(isHighlighted ? .isSelected : [])
 
-                Text(point.signedDeltaLabel ?? "about the same")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(deltaColor(point))
-                    .fixedSize(horizontal: true, vertical: false)
+                Button {
+                    onShowDetails(point)
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.body)
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Details for \(point.title)")
+                .accessibilityHint("Shows logged and not logged snore minutes")
             }
 
             Chart {
@@ -1339,9 +1534,16 @@ private struct HabitDeltaSectionChart: View {
             .chartLegend(.hidden)
             .frame(height: 22)
             .allowsHitTesting(false)
+            .padding(.leading, 38)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
+        .background(
+            isHighlighted
+                ? deltaColor(point).opacity(0.10)
+                : Color.clear,
+            in: RoundedRectangle(cornerRadius: 10)
+        )
     }
 
     private func nightSampleCaption(for point: HabitCorrelationPoint) -> String {
@@ -1388,7 +1590,17 @@ private struct HabitDeltaSectionChart: View {
         if point.isLowConfidence {
             label += " Early signal."
         }
+        if highlightedHabitID == point.id {
+            label += " Highlighted on daily chart."
+        }
         return label
+    }
+
+    private func highlightAccessibilityHint(for point: HabitCorrelationPoint) -> String {
+        if highlightedHabitID == point.id {
+            return "Clears highlight on the daily chart above"
+        }
+        return "Highlights logged nights on the daily chart above"
     }
 }
 
@@ -1399,6 +1611,14 @@ private func habitEffectColor(_ effect: HabitExpectedEffect) -> Color {
     case .howYouFelt:    return Theme.warning
     case .unknown:       return Theme.labelSecondary
     }
+}
+
+/// Daily chart highlight — red when the habit tracks with more snoring, green when less, accent when flat.
+private func habitCorrelationHighlightColor(for point: HabitCorrelationPoint) -> Color {
+    let minimum = InsightsConfiguration.minimumHabitDeltaMinutesForInsight
+    if point.deltaMinutes >= minimum { return Theme.snoring }
+    if point.deltaMinutes <= -minimum { return Theme.good }
+    return Theme.accent
 }
 
 // MARK: - Logged vs not-logged detail

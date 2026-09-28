@@ -163,14 +163,17 @@ final class SessionStore {
 
     func deleteSession(_ session: SnoreSession) {
         cancelPendingSave()
-        // Remove audio clips
-        for event in session.events {
-            if let url = event.audioURL {
-                try? FileManager.default.removeItem(at: url)
-            }
-        }
+        let clipURLs = session.events.compactMap(\.audioURL)
         context.delete(session)
         saveContext()
+        // Clip files are removed off the main actor so large nights do not freeze the UI.
+        if !clipURLs.isEmpty {
+            Task.detached(priority: .utility) {
+                for url in clipURLs {
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
+        }
     }
 
     // MARK: Orphan recovery
@@ -195,30 +198,6 @@ final class SessionStore {
             logger.info("Recovered orphaned session: \(id)")
         }
         UserDefaults.standard.removeObject(forKey: "currentSessionID")
-    }
-
-    /// Repairs denormalized stats for sessions saved before orphan rollup existed, or rows where `eventCount` drifted.
-    func reconcileEndedSessionsOnLaunch() {
-        let descriptor = FetchDescriptor<SnoreSession>()
-        guard let sessions = try? context.fetch(descriptor) else { return }
-        var anyChanged = false
-        for session in sessions {
-            guard let sessionEnd = session.endDate else { continue }
-            var touched = false
-            for event in session.events where event.endDate == nil {
-                event.endDate = sessionEnd
-                touched = true
-            }
-            let completed = session.events.filter { $0.endDate != nil }.count
-            if touched || completed != session.eventCount {
-                rollupStatistics(for: session)
-                anyChanged = true
-            }
-        }
-        if anyChanged {
-            saveContext()
-            logger.info("Reconciled session rollups for ended sessions")
-        }
     }
 
     // MARK: Private

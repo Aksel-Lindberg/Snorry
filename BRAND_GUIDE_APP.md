@@ -178,6 +178,13 @@ When the user leaves Recording while a session is still active:
 | Saving overlay | Saving session… |
 | Saving status | Stopping the microphone. · Saving snore events and your night. |
 
+### History — list
+
+| Element | Copy |
+|---------|------|
+| Swipe delete (one row) | Deleting session… |
+| Swipe delete (multiple rows) | Deleting sessions… |
+
 ### History — session detail
 
 | Element | Copy |
@@ -190,6 +197,11 @@ When the user leaves Recording while a session is still active:
 |---------|------|
 | First load | Loading insights… |
 | Range / period reload | Updating insights… |
+| Insight card habit hint (Month / 3 Months) | Tap a habit below to see its impact on the chart. |
+| Habits vs Snore duration subtitle (Month / 3 Months) | Tap a habit to see its impact on the chart above |
+| Daily chart habit highlight | Red = more snoring with habit · Green = less · Accent = about the same |
+| Daily chart extremes row | Quietest: … · Loudest: … (scoped to highlighted habit when active) |
+| Quiet night extreme label | Quiet · 0m |
 
 ### Settings — Profile
 

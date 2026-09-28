@@ -10,6 +10,8 @@ struct SessionsListView: View {
     /// Live-updates when logs are bulk-deleted from Settings (no stale `SnoreSession` references).
     @Query(sort: \SnoreSession.startDate, order: .reverse)
     private var sessions: [SnoreSession]
+    @State private var isDeletingSessions = false
+    @State private var deletingSessionCount = 0
 
     var body: some View {
         NavigationStack {
@@ -30,20 +32,29 @@ struct SessionsListView: View {
             if sessions.isEmpty {
                 emptyState
             } else {
-                List {
-                    let maxSnore = sessions.map(\.totalSnoreDuration).max() ?? 0
-                    ForEach(sessions) { session in
-                        NavigationLink(destination: SessionDetailView(session: session)) {
-                            SessionRowView(session: session, maxSnoreDuration: maxSnore)
-                        }
-                        .listRowBackground(Theme.surface)
-                        .listRowSeparatorTint(Theme.surfaceSecondary)
+                VStack(spacing: 0) {
+                    if isDeletingSessions {
+                        sessionDeletingBanner
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 8)
                     }
-                    .onDelete(perform: deleteSessions)
+
+                    List {
+                        let maxSnore = sessions.map(\.totalSnoreDuration).max() ?? 0
+                        ForEach(sessions) { session in
+                            NavigationLink(destination: SessionDetailView(session: session)) {
+                                SessionRowView(session: session, maxSnoreDuration: maxSnore)
+                            }
+                            .listRowBackground(Theme.surface)
+                            .listRowSeparatorTint(Theme.surfaceSecondary)
+                        }
+                        .onDelete(perform: deleteSessions)
+                    }
+                    .scrollContentBackground(.hidden)
+                    .listStyle(.insetGrouped)
+                    .clearsFloatingTabBar()
+                    .allowsHitTesting(!isDeletingSessions)
                 }
-                .scrollContentBackground(.hidden)
-                .listStyle(.insetGrouped)
-                .clearsFloatingTabBar()
             }
         }
         .frame(maxWidth: horizontalSizeClass == .regular ? 840 : .infinity)
@@ -51,10 +62,77 @@ struct SessionsListView: View {
     }
 
     private func deleteSessions(at offsets: IndexSet) {
-        let store = SessionStore(context: context)
-        for index in offsets {
-            store.deleteSession(sessions[index])
+        guard !isDeletingSessions else { return }
+
+        let sessionsToDelete = offsets.map { sessions[$0] }
+        deletingSessionCount = sessionsToDelete.count
+
+        Task { @MainActor in
+            isDeletingSessions = true
+            // Let the banner paint before SwiftData work begins.
+            await Task.yield()
+
+            SessionStore.cancelPendingDebouncedSave(for: context)
+
+            let ids = sessionsToDelete.map(\.id)
+            do {
+                let deleter = SleepLogsDeletionActor(modelContainer: context.container)
+                let clipURLs = try await deleter.deleteSessions(withIDs: ids)
+                Task.detached(priority: .utility) {
+                    Self.deleteClipFiles(urls: clipURLs)
+                }
+            } catch {
+                // Fall back to the main-context path if the actor delete fails.
+                let store = SessionStore(context: context)
+                for session in sessionsToDelete {
+                    store.deleteSession(session)
+                }
+            }
+
+            isDeletingSessions = false
+            deletingSessionCount = 0
         }
+    }
+
+    /// Best-effort background cleanup for persisted clip files after DB rows are removed.
+    nonisolated private static func deleteClipFiles(urls: [URL]) {
+        let fileManager = FileManager.default
+        var parentDirectories = Set<URL>()
+
+        for url in urls {
+            parentDirectories.insert(url.deletingLastPathComponent())
+            try? fileManager.removeItem(at: url)
+        }
+
+        for directory in parentDirectories {
+            let remaining = (try? fileManager.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            )) ?? []
+            if remaining.isEmpty {
+                try? fileManager.removeItem(at: directory)
+            }
+        }
+    }
+
+    private var sessionDeletingBanner: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .controlSize(.small)
+                .tint(Theme.accent)
+            Text(deletingSessionCount == 1 ? "Deleting session…" : "Deleting sessions…")
+                .font(.footnote)
+                .foregroundStyle(Theme.labelSecondary)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            deletingSessionCount == 1 ? "Deleting session" : "Deleting sessions"
+        )
     }
 
     private var emptyState: some View {

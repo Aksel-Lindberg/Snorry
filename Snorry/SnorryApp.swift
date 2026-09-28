@@ -76,13 +76,22 @@ struct SnorryApp: App {
                 .preferredColorScheme(appUITheme.preferredColorScheme)
                 .task {
                     let context = sharedModelContainer.mainContext
+                    let container = sharedModelContainer
+                    // Paint the first frame before launch maintenance touches SwiftData.
+                    await Task.yield()
                     #if DEBUG
                     try? AppStoreDemoSeeder.seedIfRequested(context: context)
                     #endif
                     let store = SessionStore(context: context)
                     store.recoverOrphanedSession()
-                    store.reconcileEndedSessionsOnLaunch()
-                    await appEnv.subscription.refreshEntitlements()
+
+                    async let subscriptionRefresh: Void = appEnv.subscription.refreshEntitlements()
+                    async let sessionReconcile: Void = {
+                        let actor = SleepLogsDeletionActor(modelContainer: container)
+                        try? await actor.reconcileEndedSessionsOnLaunch()
+                    }()
+                    _ = await (subscriptionRefresh, sessionReconcile)
+
                     InsightsTrialTracker.updateMaxCompletedNights(from: context)
                 }
         }

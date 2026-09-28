@@ -163,7 +163,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "hand.draw.fill",
                                 title: "Swipe to delete",
-                                detail: "Swipe left on a row to delete that night’s session, waveform samples, and clips from storage."
+                                detail: "Swipe left on a row to delete that night’s session, waveform samples, and clips from storage. A short “Deleting session…” banner appears while removal finishes."
                             )
                             HelpBullet(
                                 icon: "chevron.right.circle.fill",
@@ -239,7 +239,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chart.bar.fill",
                                 title: "Daily snore duration",
-                                detail: "The main chart shows minutes for every sleep night in the range, a dashed trend line when you have enough data, green markers when you logged airway exercises that day, and numbered markers when alert settings were saved. Tap a day to open that night in Sleep History. Recordings that start after midnight and before 6:00 count as the previous night; two recordings on the same sleep night are added together. Expand Snore events below the chart for event counts."
+                                detail: "The main chart shows minutes for every sleep night in the range and a dashed trend line when you have enough data. On Month or 3 Months, tap a habit in Habits vs Snore duration to highlight its logged nights in mint on this chart; tap the habit again or Clear to remove the highlight. Tap a day to open that night in Sleep History. Recordings that start after midnight and before 6:00 count as the previous night; two recordings on the same sleep night are added together. Expand Snore events below the chart for event counts."
                             )
                             HelpBullet(
                                 icon: "mappin.and.ellipse",
@@ -249,7 +249,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "checklist",
                                 title: "Habits vs snore duration",
-                                detail: "On Week, the card explains that a longer range is needed and offers View Month. Month and 3 Months show one card per logged habit with a Logged vs Not logged chart and a one-line delta, sorted by the largest difference. Built-in items show a May add snoring, May reduce snoring, or How you felt chip; the bars and delta are your nights. Low night counts are flagged as an early signal. Log habits on the Habits tab to populate this section."
+                                detail: "On Week, the card explains that a longer range is needed and offers View Month. Month and 3 Months show one row per logged habit with a delta bar and one-line summary, sorted by the largest difference. Tap a row to highlight that habit's nights on the daily chart above; tap again to clear. Use the info button for logged vs not logged averages. Built-in items show a May add snoring, May reduce snoring, or How you felt chip. Low night counts are flagged as an early signal. Log habits on the Habits tab to populate this section."
                             )
                         }
 
