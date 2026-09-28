@@ -46,7 +46,8 @@ struct MonitorView: View {
                 .frame(maxWidth: .infinity)
             }
             .scrollIndicators(.hidden)
-            .allowsHitTesting(!vm.isStoppingMonitoring)
+            .allowsHitTesting(!vm.isSessionBusy)
+            .accessibilityHidden(vm.isSessionBusy)
             .safeAreaInset(edge: .top, spacing: 0) {
                 HStack {
                     HomeAppIconMark()
@@ -66,8 +67,8 @@ struct MonitorView: View {
                     )
             }
 
-            if vm.isStoppingMonitoring {
-                stoppingOverlay
+            if vm.isSessionBusy {
+                sessionWaitOverlay
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -288,13 +289,17 @@ struct MonitorView: View {
             .padding(.vertical, 18)
             .background(Theme.stopGradient, in: RoundedRectangle(cornerRadius: Theme.radiusButton))
         }
-        .disabled(vm.isStoppingMonitoring)
+        .disabled(vm.isSessionBusy)
         .accessibilityLabel("Stop recording")
         .accessibilityHint("Ends the session and saves to Sleep History")
     }
 
-    private var stoppingOverlay: some View {
-        ZStack {
+    /// Blocking status while the night screen starts, or while stop writes the session.
+    private var sessionWaitOverlay: some View {
+        let title = vm.isStoppingMonitoring ? "Saving session…" : "Starting recording…"
+        let message = vm.isStoppingMonitoring ? vm.stoppingStatusMessage : vm.startingStatusMessage
+
+        return ZStack {
             Color.black.opacity(0.42)
                 .ignoresSafeArea()
 
@@ -302,14 +307,14 @@ struct MonitorView: View {
                 ProgressView()
                     .controlSize(.large)
                     .tint(Theme.accent)
-                Text("Saving session…")
+                Text(title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.labelPrimary)
-                Text(vm.stoppingStatusMessage)
+                Text(message)
                     .font(.caption)
                     .foregroundStyle(Theme.labelSecondary)
                     .multilineTextAlignment(.center)
-                    .animation(.easeInOut, value: vm.stoppingStatusMessage)
+                    .animation(.easeInOut, value: message)
             }
             .padding(26)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
@@ -319,8 +324,9 @@ struct MonitorView: View {
             )
             .padding(.horizontal, 36)
         }
+        .accessibilityElement(children: .combine)
         .transition(.opacity)
-        .animation(.easeOut(duration: 0.2), value: vm.isStoppingMonitoring)
+        .animation(.easeOut(duration: 0.2), value: vm.isSessionBusy)
     }
 
     // MARK: Helpers

@@ -21,10 +21,20 @@ final class MonitorViewModel {
     var soundAlertVolumePercent: Int = 0
     var elapsedSeconds: Int = 0
     var snoreEventCount = 0
+    /// True while start or stop is blocking the recording screen.
+    var isSessionBusy: Bool { isStartingMonitoring || isStoppingMonitoring }
+    /// True while the mic pipeline is starting — the recording screen shows a blocking overlay.
+    var isStartingMonitoring = false
+    /// Short status shown in the starting overlay.
+    var startingStatusMessage = "Preparing tonight’s recording."
     /// True while tearing down audio pipelines and finalizing SwiftData — UI shows a blocking overlay.
     var isStoppingMonitoring = false
-    /// Short status shown in the stopping overlay; changes during classification phase.
-    var stoppingStatusMessage: String = "Finishing audio and storing events."
+    /// Short status shown in the stopping overlay; updates as audio stops and the night is saved.
+    var stoppingStatusMessage = "Stopping the microphone."
+    /// Prevents a second start from clearing the overlay while the first start is still running.
+    private var isStartInFlight = false
+    /// True while background clips from the last stopped session are being labeled on Tonight.
+    var isClassifyingSessionSounds = false
 
     /// Three-state detection status for the UI status badge.
     enum DetectionPhase { case quiet, detecting, confirmed }
@@ -228,11 +238,35 @@ final class MonitorViewModel {
 
     // MARK: Start / Stop
 
-    func startMonitoring() {
+    /// Arms the starting overlay before navigation so the night screen explains the wait.
+    /// Returns false when a start or stop is already in progress.
+    func beginStartingRecording() -> Bool {
+        guard !isMonitoring, !isStoppingMonitoring, !isStartingMonitoring, !isStartInFlight else { return false }
+        isStartingMonitoring = true
+        startingStatusMessage = "Preparing tonight’s recording."
+        return true
+    }
+
+    func startMonitoring() async {
+        guard !isStartInFlight else { return }
         guard !isMonitoring,
               !isStoppingMonitoring,
               microphonePermission == .granted,
-              let store = sessionStore else { return }
+              let store = sessionStore else {
+            isStartingMonitoring = false
+            return
+        }
+
+        isStartInFlight = true
+        defer {
+            isStartInFlight = false
+            isStartingMonitoring = false
+        }
+
+        isStartingMonitoring = true
+        startingStatusMessage = "Preparing tonight’s recording."
+        // Let the overlay paint before session setup and the mic engine block the main actor.
+        await Task.yield()
 
         // Clear any orphaned tasks from a prior session that did not tear down cleanly.
         cancelTasks()
@@ -262,6 +296,9 @@ final class MonitorViewModel {
 
         // Release any clip-replay session left open from session detail or settings preview.
         AudioSessionManager.shared.endClipReplaySession(restoreMonitoring: false)
+
+        startingStatusMessage = "Turning on the microphone."
+        await Task.yield()
 
         do {
             classifier.start()
@@ -416,7 +453,8 @@ final class MonitorViewModel {
     func stopMonitoringAsync() async {
         guard isMonitoring, !isStoppingMonitoring else { return }
         isStoppingMonitoring = true
-        stoppingStatusMessage = "Finishing audio and storing events."
+        stoppingStatusMessage = "Stopping the microphone."
+        // Let the overlay paint before teardown blocks the main actor.
         await Task.yield()
 
         teardownPipelines()
@@ -430,6 +468,9 @@ final class MonitorViewModel {
             eventsToClassify = []
         }
 
+        stoppingStatusMessage = "Saving snore events and your night."
+        await Task.yield()
+
         let durationSeconds = elapsedSeconds
         sessionStore?.finalizeSession()
         resetMonitoringState()
@@ -442,7 +483,9 @@ final class MonitorViewModel {
             for: .applicationSupportDirectory, in: .userDomainMask
         ).first!
 
+        isClassifyingSessionSounds = true
         Task { @MainActor [weak self] in
+            defer { self?.isClassifyingSessionSounds = false }
             await SessionClipSoundClassifier.classifyAll(
                 events: eventsToClassify,
                 applicationSupport: support,

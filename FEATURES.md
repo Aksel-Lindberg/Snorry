@@ -202,7 +202,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 ### Features
 
 - **Night picker** — choose which calendar night habits apply to (defaults to last night before noon)  
-- **One-tap toggles** — grouped as **May reduce snoring** (Did airway exercises, Breath practice, Used nasal spray, Used nasal strip), **May add snoring** (Ate late, Drank alcohol, Had caffeine late, Slept on your back), and **How you felt** (Congested)  
+- **One-tap toggles** — grouped as **May reduce snoring** (Did airway exercises, Breath practice, Used nasal spray, Used nasal strip), **May add snoring** (Ate late, Drank alcohol, Had caffeine late, Slept on your back), and **How you felt** (Congested, Heartburn, Felt sick)  
 - **Custom habits** — **Yours** section; add your own buttons (editable and removable); long-press to edit or delete  
 - **Insights integration** — logged habits feed the **Habits vs Snore duration** card  
 - **Did airway exercises** — counts exercise completions from the Exercises tab as well; turning off here does not delete exercise history  

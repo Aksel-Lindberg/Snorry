@@ -27,7 +27,12 @@ struct AnalyticsView: View {
                     if let vm {
                         AnalyticsContent(vm: vm)
                     } else {
-                        ProgressView().tint(Theme.accent)
+                        VStack(spacing: 12) {
+                            ProgressView().tint(Theme.accent)
+                            Text("Loading insights…")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(Theme.labelSecondary)
+                        }
                     }
                 } else {
                     AnalyticsLockedView {
@@ -131,6 +136,9 @@ private struct AnalyticsContent: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 rangePicker
+                if vm.isRefreshing {
+                    insightsRefreshingBanner
+                }
                 if vm.hasSessionDataInPeriod {
                     metricCardsRow
                     InsightBanner(message: vm.insightMessage)
@@ -203,6 +211,23 @@ private struct AnalyticsContent: View {
     private func dailyPoint(for dayStart: Date) -> DailySnorePoint? {
         let calendar = Calendar.current
         return vm.dailyPoints.first { calendar.isDate($0.date, inSameDayAs: dayStart) }
+    }
+
+    private var insightsRefreshingBanner: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .controlSize(.small)
+                .tint(Theme.accent)
+            Text("Updating insights…")
+                .font(.footnote)
+                .foregroundStyle(Theme.labelSecondary)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Updating insights")
     }
 
     // MARK: Range picker

@@ -16,6 +16,8 @@ final class SessionDetailViewModel {
 
     // Playback state
     var playingEventID: UUID?
+    /// Event whose clip is being decoded before playback starts.
+    var preparingEventID: UUID?
     /// Surfaces decode / session errors in the UI so replay failures are never silent.
     var playbackDiagnostic: String?
 
@@ -24,6 +26,8 @@ final class SessionDetailViewModel {
     private let logger     = Logger(subsystem: "app.Snorry", category: "SessionDetail")
     /// Tracks whether clip replay has activated the audio session (released in tearDownPlayback).
     private var replaySessionConfigured = false
+    /// Monotonic token so a stale prepare task cannot start playback after the user cancels.
+    private var playbackRequestID = UUID()
 
     /// Loads events off the navigation transition so the History list stays responsive.
     static func prepare(session: SnoreSession) async -> SessionDetailViewModel {
@@ -53,7 +57,7 @@ final class SessionDetailViewModel {
     }
 
     func togglePlayback(of event: SnoreEvent) {
-        if playingEventID == event.id {
+        if playingEventID == event.id || preparingEventID == event.id {
             stopPlayback()
             return
         }
@@ -66,32 +70,57 @@ final class SessionDetailViewModel {
             return
         }
 
+        let requestID = UUID()
+        playbackRequestID = requestID
+
+        Task {
+            await startPlayback(of: event, url: url, requestID: requestID)
+        }
+    }
+
+    func stopPlayback() {
+        playbackRequestID = UUID()
+        stopPlaybackInternal(deactivateSession: true)
+    }
+
+    /// Called when the user leaves session detail — releases replay audio resources.
+    func tearDownPlayback() {
+        playbackRequestID = UUID()
+        stopPlaybackInternal(deactivateSession: true)
+    }
+
+    private func startPlayback(of event: SnoreEvent, url: URL, requestID: UUID) async {
         stopPlaybackInternal(deactivateSession: false)
+
+        preparingEventID = event.id
+        playingEventID = nil
+        playbackDiagnostic = nil
+        // Let the row paint “Preparing audio…” before decode work begins.
+        await Task.yield()
+
+        guard playbackRequestID == requestID else { return }
 
         clipPlayer.onFinish = { [weak self] in
             Task { @MainActor in self?.playbackDidFinish() }
         }
 
         do {
+            let buffer = try await NormalizingClipPlayer.prepareBuffer(from: url)
+            guard playbackRequestID == requestID else { return }
+
+            preparingEventID = nil
             try ensureReplaySessionConfigured()
-            try clipPlayer.play(url: url)
+            try clipPlayer.playPreparedBuffer(buffer)
             playingEventID = event.id
             playbackDiagnostic = nil
         } catch {
+            guard playbackRequestID == requestID else { return }
             logger.error("Replay failed: \(error.localizedDescription)")
             playbackDiagnostic = error.localizedDescription
+            preparingEventID = nil
             playingEventID = nil
             clipPlayer.stop()
         }
-    }
-
-    func stopPlayback() {
-        stopPlaybackInternal(deactivateSession: true)
-    }
-
-    /// Called when the user leaves session detail — releases replay audio resources.
-    func tearDownPlayback() {
-        stopPlaybackInternal(deactivateSession: true)
     }
 
     private func ensureReplaySessionConfigured() throws {
@@ -115,6 +144,7 @@ final class SessionDetailViewModel {
 
     private func stopPlaybackInternal(deactivateSession: Bool) {
         clipPlayer.stop()
+        preparingEventID = nil
         playingEventID = nil
         if deactivateSession {
             releaseReplaySession()

@@ -140,7 +140,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "stop.circle.fill",
                                 title: "Stop recording",
-                                detail: "Tears down audio, saves the session to Sleep History, and dismisses this screen. A short overlay can appear while clips finish encoding; if the night included locked or background recording, you may briefly see a “classifying sounds” step before returning home."
+                                detail: "Tears down audio, saves the session to Sleep History, and dismisses this screen. A short overlay shows while the microphone stops and your night is saved. If the night included locked or background recording, Tonight may show “Labeling sounds from last night.” while clips are classified after you return home."
                             )
                             HelpBullet(
                                 icon: "arrow.uturn.left.circle.fill",
@@ -173,7 +173,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "play.circle.fill",
                                 title: "Event playback",
-                                detail: "In Sound Events, tap the play button on any row with a saved AAC clip to hear that bout. Rows without a clip file show a dimmed control—usually when encoding failed or the bout was too short to store."
+                                detail: "In Sound Events, tap the play button on any row with a saved AAC clip to hear that bout. The row shows “Preparing audio…” while the clip loads. Rows without a clip file show a dimmed control—usually when encoding failed or the bout was too short to store."
                             )
                             HelpBullet(
                                 icon: "square.and.arrow.up",
@@ -196,7 +196,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "hand.tap.fill",
                                 title: "Toggle habits",
-                                detail: "Habits are grouped as May reduce snoring (airway exercises, breath practice, nasal spray, nasal strip), May add snoring (late meals, alcohol, caffeine, back sleeping), and How you felt (congestion). Tap a button to log or remove it for that night. The grouping is typical, not a diagnosis."
+                                detail: "Habits are grouped as May reduce snoring (airway exercises, breath practice, nasal spray, nasal strip), May add snoring (late meals, alcohol, caffeine, back sleeping), and How you felt (congestion, heartburn, feeling sick). Tap a button to log or remove it for that night. The grouping is typical, not a diagnosis."
                             )
                             HelpBullet(
                                 icon: "plus.circle.fill",

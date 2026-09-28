@@ -86,9 +86,16 @@ struct PermissionsView: View {
     }
 
     private func beginMonitoringIfAllowed() {
+        guard vm.beginStartingRecording() else { return }
         isPresented = false
-        vm.startMonitoring()
         showMonitor = true
+        Task { @MainActor in
+            await Task.yield()
+            await vm.startMonitoring()
+            if !vm.isMonitoring {
+                showMonitor = false
+            }
+        }
     }
 }
 

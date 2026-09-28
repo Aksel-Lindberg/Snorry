@@ -19,9 +19,9 @@ final class NormalizingClipPlayer: @unchecked Sendable {
 
     /// Maximum linear gain (+18 dB ≈ ×8) to prevent near-silent clips from becoming
     /// uncomfortably loud while still giving a strong boost to typical snore levels.
-    private static let maxGain: Float   = 8.0
+    nonisolated private static let maxGain: Float   = 8.0
     /// Target peak after normalisation (–1 dBFS).
-    private static let targetPeak: Float = 0.891
+    nonisolated private static let targetPeak: Float = 0.891
 
     init() {
         engine.attach(playerNode)
@@ -29,31 +29,17 @@ final class NormalizingClipPlayer: @unchecked Sendable {
 
     // MARK: - Playback
 
-    /// Loads `url`, peak-normalises the decoded buffer, and starts playback.
-    /// Throws on any I/O or AVAudioEngine error.
-    func play(url: URL) throws {
+    /// Decodes and peak-normalises off the main actor so the UI can show a preparing state.
+    nonisolated static func prepareBuffer(from url: URL) async throws -> AVAudioPCMBuffer {
+        try await Task.detached(priority: .userInitiated) {
+            try prepareBufferSync(from: url)
+        }.value
+    }
+
+    /// Starts playback from a prepared buffer — must run on the main actor (AVAudioEngine).
+    @MainActor
+    func playPreparedBuffer(_ buffer: AVAudioPCMBuffer) throws {
         stop()
-
-        let file       = try AVAudioFile(forReading: url)
-        let frameCount = AVAudioFrameCount(file.length)
-        guard frameCount > 0 else {
-            throw NSError(
-                domain: "app.Snorry", code: -3,
-                userInfo: [NSLocalizedDescriptionKey: "Recorded clip is empty."]
-            )
-        }
-
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat,
-                                            frameCapacity: frameCount) else {
-            throw NSError(
-                domain: "app.Snorry", code: -2,
-                userInfo: [NSLocalizedDescriptionKey: "Could not allocate normalisation buffer."]
-            )
-        }
-        try file.read(into: buffer)
-        buffer.frameLength = frameCount
-
-        applyPeakNormalisation(to: buffer)
 
         // Route through the output node (Apple's simple-playback pattern) so the graph
         // stays connected even when the main mixer link was torn down by a prior stop.
@@ -69,6 +55,14 @@ final class NormalizingClipPlayer: @unchecked Sendable {
         playerNode.play()
     }
 
+    /// Loads `url`, peak-normalises the decoded buffer, and starts playback.
+    /// Throws on any I/O or AVAudioEngine error.
+    @MainActor
+    func play(url: URL) async throws {
+        let buffer = try await Self.prepareBuffer(from: url)
+        try playPreparedBuffer(buffer)
+    }
+
     /// Stops playback immediately (no fade).
     func stop() {
         playerNode.stop()
@@ -81,6 +75,32 @@ final class NormalizingClipPlayer: @unchecked Sendable {
 
     // MARK: - Private
 
+    nonisolated private static func prepareBufferSync(from url: URL) throws -> AVAudioPCMBuffer {
+        let file = try AVAudioFile(forReading: url)
+        let frameCount = AVAudioFrameCount(file.length)
+        guard frameCount > 0 else {
+            throw NSError(
+                domain: "app.Snorry", code: -3,
+                userInfo: [NSLocalizedDescriptionKey: "Recorded clip is empty."]
+            )
+        }
+
+        guard let buffer = AVAudioPCMBuffer(
+            pcmFormat: file.processingFormat,
+            frameCapacity: frameCount
+        ) else {
+            throw NSError(
+                domain: "app.Snorry", code: -2,
+                userInfo: [NSLocalizedDescriptionKey: "Could not allocate normalisation buffer."]
+            )
+        }
+        try file.read(into: buffer)
+        buffer.frameLength = frameCount
+
+        applyPeakNormalisation(to: buffer)
+        return buffer
+    }
+
     private func didFinish() {
         stop()
         onFinish?()
@@ -88,7 +108,7 @@ final class NormalizingClipPlayer: @unchecked Sendable {
 
     /// Finds the peak magnitude across all channels with `vDSP_maxmgv`, then
     /// multiplies every sample by the normalisation gain with `vDSP_vsmul`.
-    private func applyPeakNormalisation(to buffer: AVAudioPCMBuffer) {
+    nonisolated private static func applyPeakNormalisation(to buffer: AVAudioPCMBuffer) {
         guard let channelData = buffer.floatChannelData else { return }
         let channelCount = Int(buffer.format.channelCount)
         let frameCount   = vDSP_Length(buffer.frameLength)

@@ -148,6 +148,7 @@ struct SessionDetailView: View {
                         event: event,
                         maxEventDuration: maxEventDuration,
                         isPlaying: vm.playingEventID == event.id,
+                        isPreparing: vm.preparingEventID == event.id,
                         canReplay: vm.showsPlaybackChrome(for: event),
                         onTap: { vm.togglePlayback(of: event) },
                         onShare: { AppAnalytics.logSnoreClipShared() }
@@ -346,6 +347,7 @@ struct EventPlaybackRow: View {
     /// Longest bout in this session list — duration bars are relative to this, like Sleep History.
     let maxEventDuration: TimeInterval
     let isPlaying: Bool
+    let isPreparing: Bool
     /// False when no file exists — avoids a tappable UI that silently does nothing.
     let canReplay: Bool
     let onTap: () -> Void
@@ -373,20 +375,37 @@ struct EventPlaybackRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 12) {
                 Button(action: onTap) {
-                    Image(systemName: isPlaying ? "stop.circle.fill" : "play.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(isPlaying ? Theme.snoring : Theme.accent)
-                        .animation(.spring(duration: 0.3), value: isPlaying)
+                    Group {
+                        if isPreparing {
+                            ProgressView()
+                                .controlSize(.regular)
+                                .tint(Theme.accent)
+                        } else {
+                            Image(systemName: isPlaying ? "stop.circle.fill" : "play.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(isPlaying ? Theme.snoring : Theme.accent)
+                                .animation(.spring(duration: 0.3), value: isPlaying)
+                        }
+                    }
+                    .frame(width: 28, height: 28)
                 }
-                .disabled(!canReplay)
-                .opacity(canReplay ? 1.0 : 0.3)
-                .accessibilityLabel(isPlaying ? "Stop playback" : "Play recording")
+                .disabled(!canReplay && !isPreparing)
+                .opacity(canReplay || isPreparing ? 1.0 : 0.3)
+                .accessibilityLabel(
+                    isPreparing ? "Preparing audio" : (isPlaying ? "Stop playback" : "Play recording")
+                )
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(timeString)
                         .font(.subheadline.bold())
                         .foregroundStyle(Theme.labelPrimary)
-                    SoundKindBadge(kind: event.soundKind)
+                    if isPreparing {
+                        Text("Preparing audio…")
+                            .font(.caption)
+                            .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                    } else {
+                        SoundKindBadge(kind: event.soundKind)
+                    }
                 }
 
                 Spacer()

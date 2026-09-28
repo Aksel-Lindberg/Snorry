@@ -212,6 +212,10 @@ struct HomeView: View {
         let showCardShortcuts = !vm.isMonitoring
 
         return VStack(alignment: .leading, spacing: usesCompressedPadLayout ? 10 : 16) {
+            if vm.isClassifyingSessionSounds {
+                sessionSoundLabelingBanner
+            }
+
             recentSessionCard(showShortcut: showCardShortcuts)
                 .id(ScrollTarget.lastSession)
 
@@ -228,6 +232,24 @@ struct HomeView: View {
             }
         }
         .padding(.top, usesCompressedPadLayout ? 6 : 10)
+    }
+
+    /// Non-blocking status while post-stop clip classification runs on Tonight.
+    private var sessionSoundLabelingBanner: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .controlSize(.small)
+                .tint(Theme.accent)
+            Text("Labeling sounds from last night.")
+                .font(.footnote)
+                .foregroundStyle(Theme.labelSecondary)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Labeling sounds from last night")
     }
 
     // MARK: Header
@@ -278,7 +300,7 @@ struct HomeView: View {
             } label: {
                 SleepAnimationView(presentation: .startButton, diameter: buttonSize)
             }
-            .disabled(vm.microphonePermission == .denied)
+            .disabled(vm.microphonePermission == .denied || vm.isStartingMonitoring)
             .buttonStyle(.plain)
             .opacity(vm.microphonePermission == .denied ? 0.42 : 1)
             .accessibilityLabel(sessionActiveOnHome ? "Return to recording" : "Start recording")
@@ -420,11 +442,12 @@ struct HomeView: View {
             return
         }
 
-        // Navigate first so the recording screen appears before mic session setup.
+        // Show the night screen with a starting overlay before mic session setup.
+        guard vm.beginStartingRecording() else { return }
         showRecordingScreen = true
         Task { @MainActor in
             await Task.yield()
-            vm.startMonitoring()
+            await vm.startMonitoring()
             if !vm.isMonitoring {
                 showRecordingScreen = false
             }

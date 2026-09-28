@@ -52,6 +52,8 @@ enum HabitKind: String, CaseIterable, Identifiable {
     case caffeineLate
     case sleptOnBack
     case congested
+    case heartburn
+    case feltSick
 
     var id: String { rawValue }
 
@@ -65,6 +67,8 @@ enum HabitKind: String, CaseIterable, Identifiable {
         case .myofascialExercise:  return "Did airway exercises"
         case .breathAndHum:        return "Breath practice"
         case .congested:           return "Congested"
+        case .heartburn:           return "Heartburn"
+        case .feltSick:            return "Felt sick"
         case .sleptOnBack:         return "Slept on your back"
         }
     }
@@ -79,6 +83,8 @@ enum HabitKind: String, CaseIterable, Identifiable {
         case .myofascialExercise:  return "Tongue or throat exercises"
         case .breathAndHum:        return "Long exhale, or hum it out"
         case .congested:           return "Blocked or stuffy nose"
+        case .heartburn:           return "Reflux after lying down"
+        case .feltSick:            return "Cold or flu"
         case .sleptOnBack:         return "Most of the night"
         }
     }
@@ -93,6 +99,8 @@ enum HabitKind: String, CaseIterable, Identifiable {
         case .myofascialExercise:  return "figure.mind.and.body"
         case .breathAndHum:        return "wind"
         case .congested:           return "allergens"
+        case .heartburn:           return "flame.fill"
+        case .feltSick:            return "medical.thermometer"
         case .sleptOnBack:         return "bed.double.fill"
         }
     }
@@ -104,7 +112,7 @@ enum HabitKind: String, CaseIterable, Identifiable {
             return .mayAddSnoring
         case .nasalSpray, .nasalClip, .myofascialExercise, .breathAndHum:
             return .mayHelp
-        case .congested:
+        case .congested, .heartburn, .feltSick:
             return .howYouFelt
         }
     }
@@ -120,6 +128,8 @@ enum HabitKind: String, CaseIterable, Identifiable {
         case .myofascialExercise:  return "on nights you did airway exercises"
         case .breathAndHum:        return "on nights you did breath practice"
         case .congested:           return "on nights you were congested"
+        case .heartburn:           return "on nights you had heartburn"
+        case .feltSick:            return "on nights you felt sick"
         case .sleptOnBack:         return "on nights you slept on your back"
         }
     }

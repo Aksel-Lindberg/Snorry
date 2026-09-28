@@ -64,27 +64,27 @@ enum AppStoreDemoSeeder {
             1:  [.caffeineLate, .drankAlcohol, .sleptOnBack],           // last night — Habits frame
             2:  [.myofascialExercise, .breathAndHum],
             3:  [.ateLate, .congested],
-            4:  [.caffeineLate, .ateLate],
+            4:  [.caffeineLate, .ateLate, .heartburn],
             5:  [.drankAlcohol, .sleptOnBack],
             6:  [.myofascialExercise, .nasalSpray],
             7:  [.congested, .sleptOnBack],
             8:  [.breathAndHum, .nasalClip],
             9:  [.drankAlcohol, .ateLate, .caffeineLate],
-            10: [.myofascialExercise],
-            11: [.caffeineLate],
+            10: [.myofascialExercise, .feltSick],
+            11: [.caffeineLate, .heartburn],
             12: [.drankAlcohol, .congested],
             13: [.ateLate, .sleptOnBack],
             14: [.myofascialExercise, .breathAndHum, .nasalSpray],
             15: [.caffeineLate, .sleptOnBack],
-            16: [.drankAlcohol],
+            16: [.drankAlcohol, .feltSick],
             17: [.ateLate, .congested],
-            18: [.myofascialExercise, .nasalClip],
+            18: [.myofascialExercise, .nasalClip, .heartburn],
             19: [.caffeineLate, .drankAlcohol],
             20: [.breathAndHum, .sleptOnBack],
             21: [.ateLate],
             22: [.drankAlcohol, .caffeineLate, .congested],
             23: [.myofascialExercise, .ateLate],
-            24: [.nasalSpray, .breathAndHum],
+            24: [.nasalSpray, .breathAndHum, .feltSick],
         ]
 
         for offset in 1...24 {
@@ -97,6 +97,8 @@ enum AppStoreDemoSeeder {
             if habits.contains(.caffeineLate) { snoreMinutes += 10 }
             if habits.contains(.sleptOnBack) { snoreMinutes += 6 }
             if habits.contains(.congested) { snoreMinutes += 5 }
+            if habits.contains(.heartburn) { snoreMinutes += 5 }
+            if habits.contains(.feltSick) { snoreMinutes += 5 }
             if habits.contains(.myofascialExercise) || habits.contains(.breathAndHum) { snoreMinutes -= 4 }
             if habits.contains(.ateLate) { snoreMinutes += 4 }
             snoreMinutes = max(2, snoreMinutes)

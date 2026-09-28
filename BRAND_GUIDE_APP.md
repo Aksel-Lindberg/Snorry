@@ -129,7 +129,8 @@ Default easing: ease-in-out. Spring damping ≥ 0.7 for sheets only. Respect `pr
 - **Status badge (dynamic):** Quiet · Detecting Pattern… · Snoring Detected
 - **Live Power Spectrum:** Short subtext *Frequency view of tonight’s audio*; technical detail via **info** sheet (ⓘ)
 - **Stop button:** Sticky at bottom — always visible without scrolling; **Stop Recording** / **Stopping…**
-- **Overlay on stop:** Saving session…
+- **Overlay on start:** Starting recording… — *Preparing tonight’s recording.* then *Turning on the microphone.*
+- **Overlay on stop:** Saving session… — *Stopping the microphone.* then *Saving snore events and your night.*
 
 Do not replace status badge copy with listening language — badge shows live detection state.
 
@@ -156,6 +157,7 @@ When the user leaves Recording while a session is still active:
 | Insights trial | Insights is free for your first 7 recorded nights |
 | Insights paywall | Subscribe to keep snore trends, charts, and habit correlations |
 | Last Session empty footer | No recordings yet. |
+| Sound labeling banner (after background night) | Labeling sounds from last night. |
 | Alert Setup caption | Used for the next recording session |
 | Mic permission | Microphone access required to record snoring |
 | VoiceOver START | Label: Start recording · Hint: Begins an overnight snore recording session |
@@ -171,6 +173,23 @@ When the user leaves Recording while a session is still active:
 | Spectrum card subtext | Frequency view of tonight’s audio |
 | Stop button | Stop Recording |
 | Stopping | Stopping… |
+| Starting overlay | Starting recording… |
+| Starting status | Preparing tonight’s recording. · Turning on the microphone. |
+| Saving overlay | Saving session… |
+| Saving status | Stopping the microphone. · Saving snore events and your night. |
+
+### History — session detail
+
+| Element | Copy |
+|---------|------|
+| Clip preparing | Preparing audio… |
+
+### Insights
+
+| Element | Copy |
+|---------|------|
+| First load | Loading insights… |
+| Range / period reload | Updating insights… |
 
 ### Settings — Profile
 

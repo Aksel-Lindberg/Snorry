@@ -40,7 +40,21 @@ struct HabitGroupingTests {
         ])
 
         let felt = HabitDefinition.inSection(.howYouFelt, customHabits: [])
-        #expect(felt.compactMap(\.builtInKind) == [.congested])
+        #expect(felt.compactMap(\.builtInKind) == [.congested, .heartburn, .feltSick])
+    }
+
+    @Test func heartburnIsAHowYouFeltCondition() {
+        #expect(HabitKind.heartburn.title == "Heartburn")
+        #expect(HabitKind.heartburn.subtitle == "Reflux after lying down")
+        #expect(HabitKind.heartburn.expectedEffect == .howYouFelt)
+        #expect(HabitKind.heartburn.insightClause == "on nights you had heartburn")
+    }
+
+    @Test func feltSickIsAHowYouFeltCondition() {
+        #expect(HabitKind.feltSick.title == "Felt sick")
+        #expect(HabitKind.feltSick.subtitle == "Cold or flu")
+        #expect(HabitKind.feltSick.expectedEffect == .howYouFelt)
+        #expect(HabitKind.feltSick.insightClause == "on nights you felt sick")
     }
 }
 
@@ -769,6 +783,133 @@ struct AnalyticsPeriodBoundsTests {
         #expect(label.contains("17"))
         #expect(label.contains("23"))
         #expect(label.contains("Aug"))
+    }
+
+    // MARK: Opening period on boundary days
+
+    @Test func mondayOpensPreviousWeekWhenCurrentIsEmpty() {
+        let monday = date(2026, 9, 28)
+        #expect(AnalyticsViewModel.isFirstDayOfPeriod(range: .week, now: monday, calendar: calendar))
+        #expect(
+            AnalyticsViewModel.openingPeriodOffset(
+                range: .week,
+                now: monday,
+                currentPeriodSessionCount: 0,
+                previousPeriodSessionCount: 3,
+                calendar: calendar
+            ) == -1
+        )
+    }
+
+    @Test func mondayStaysOnCurrentWeekWhenItHasRecordings() {
+        let monday = date(2026, 9, 28)
+        #expect(
+            AnalyticsViewModel.openingPeriodOffset(
+                range: .week,
+                now: monday,
+                currentPeriodSessionCount: 1,
+                previousPeriodSessionCount: 3,
+                calendar: calendar
+            ) == 0
+        )
+    }
+
+    @Test func tuesdayDoesNotOpenPreviousWeekEvenWhenEmpty() {
+        let tuesday = date(2026, 9, 29)
+        #expect(!AnalyticsViewModel.isFirstDayOfPeriod(range: .week, now: tuesday, calendar: calendar))
+        #expect(
+            AnalyticsViewModel.openingPeriodOffset(
+                range: .week,
+                now: tuesday,
+                currentPeriodSessionCount: 0,
+                previousPeriodSessionCount: 3,
+                calendar: calendar
+            ) == 0
+        )
+    }
+
+    @Test func sundayStartCalendarUsesSundayAsWeekBoundary() {
+        var sundayStart = Calendar(identifier: .gregorian)
+        sundayStart.firstWeekday = 1
+        sundayStart.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        let sunday = sundayStart.date(from: DateComponents(year: 2026, month: 9, day: 27))!
+        let monday = sundayStart.date(from: DateComponents(year: 2026, month: 9, day: 28))!
+
+        #expect(AnalyticsViewModel.isFirstDayOfPeriod(range: .week, now: sunday, calendar: sundayStart))
+        #expect(!AnalyticsViewModel.isFirstDayOfPeriod(range: .week, now: monday, calendar: sundayStart))
+        #expect(
+            AnalyticsViewModel.openingPeriodOffset(
+                range: .week,
+                now: sunday,
+                currentPeriodSessionCount: 0,
+                previousPeriodSessionCount: 2,
+                calendar: sundayStart
+            ) == -1
+        )
+        #expect(
+            AnalyticsViewModel.openingPeriodOffset(
+                range: .week,
+                now: monday,
+                currentPeriodSessionCount: 0,
+                previousPeriodSessionCount: 2,
+                calendar: sundayStart
+            ) == 0
+        )
+    }
+
+    @Test func firstOfMonthOpensPreviousMonthWhenCurrentIsEmpty() {
+        let first = date(2026, 10, 1)
+        #expect(AnalyticsViewModel.isFirstDayOfPeriod(range: .month, now: first, calendar: calendar))
+        #expect(
+            AnalyticsViewModel.openingPeriodOffset(
+                range: .month,
+                now: first,
+                currentPeriodSessionCount: 0,
+                previousPeriodSessionCount: 5,
+                calendar: calendar
+            ) == -1
+        )
+    }
+
+    @Test func secondOfMonthDoesNotOpenPreviousMonth() {
+        let second = date(2026, 10, 2)
+        #expect(!AnalyticsViewModel.isFirstDayOfPeriod(range: .month, now: second, calendar: calendar))
+        #expect(
+            AnalyticsViewModel.openingPeriodOffset(
+                range: .month,
+                now: second,
+                currentPeriodSessionCount: 0,
+                previousPeriodSessionCount: 5,
+                calendar: calendar
+            ) == 0
+        )
+    }
+
+    @Test func boundaryDayStaysOnCurrentPeriodWhenBothAreEmpty() {
+        let monday = date(2026, 9, 28)
+        #expect(
+            AnalyticsViewModel.openingPeriodOffset(
+                range: .week,
+                now: monday,
+                currentPeriodSessionCount: 0,
+                previousPeriodSessionCount: 0,
+                calendar: calendar
+            ) == 0
+        )
+    }
+
+    @Test func threeMonthsNeverOpensPreviousPeriod() {
+        let monday = date(2026, 9, 28)
+        #expect(
+            AnalyticsViewModel.openingPeriodOffset(
+                range: .threeMonths,
+                now: monday,
+                currentPeriodSessionCount: 0,
+                previousPeriodSessionCount: 10,
+                calendar: calendar
+            ) == 0
+        )
     }
 
     private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
