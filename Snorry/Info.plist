@@ -21,6 +21,8 @@
 	<string>17f9525206e3979b7a009627f722c955</string>
 	<key>FacebookDisplayName</key>
 	<string>Snorry iOS App</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
