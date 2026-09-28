@@ -484,8 +484,8 @@ def nudge_frame() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     out_name = "01_a-nudge-when-you-snore.png"
     im.save(OUT / out_name, "PNG")
-    im.save(MARKETING_OUT / out_name, "PNG")
-    print("wrote", out_name)
+    # Frame 01 is a manual mockup in Marketing/ — do not overwrite it from the script.
+    print("wrote", out_name, "(Dropbox only; Marketing/01 kept as manual mockup)")
 
 
 def habits_frame() -> None:
