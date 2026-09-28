@@ -135,6 +135,16 @@ struct SessionDetailView: View {
                 }
             }
 
+            if let summary = EventMetricScale.nightLoudness(samples: vm.allCompletedEvents.map {
+                EventMetricScale.LoudnessSample(
+                    peakDB: $0.peakDB,
+                    avgDB: $0.avgDB,
+                    duration: $0.duration ?? 0
+                )
+            }) {
+                nightLoudnessSummary(summary)
+            }
+
             if vm.allCompletedEvents.isEmpty {
                 Text("No sound events detected this session.")
                     .font(.caption)
@@ -143,10 +153,19 @@ struct SessionDetailView: View {
             } else {
                 // Same relative scale as Sleep History: longest bout in this list = full bar.
                 let maxEventDuration = vm.allCompletedEvents.compactMap(\.duration).max() ?? 0
-                ForEach(vm.allCompletedEvents) { event in
+                let loudnessSamples = vm.allCompletedEvents.map {
+                    EventMetricScale.LoudnessSample(
+                        peakDB: $0.peakDB,
+                        avgDB: $0.avgDB,
+                        duration: $0.duration ?? 0
+                    )
+                }
+                let loudestPeakIndex = EventMetricScale.indexOfLoudestPeak(in: loudnessSamples)
+                ForEach(Array(vm.allCompletedEvents.enumerated()), id: \.element.id) { index, event in
                     EventPlaybackRow(
                         event: event,
                         maxEventDuration: maxEventDuration,
+                        isNightLoudest: loudestPeakIndex == index,
                         isPlaying: vm.playingEventID == event.id,
                         isPreparing: vm.preparingEventID == event.id,
                         canReplay: vm.showsPlaybackChrome(for: event),
@@ -164,6 +183,37 @@ struct SessionDetailView: View {
         }
         .padding(16)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.radiusCard))
+    }
+
+    /// Loudest peak and duration-weighted average for the bouts in this list.
+    private func nightLoudnessSummary(_ summary: EventMetricScale.NightLoudnessSummary) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                loudnessStat(title: "Loudest", word: summary.loudest)
+                loudnessStat(title: "Average", word: summary.average)
+            }
+            Text(EventMetricScale.loudnessScaleCaption)
+                .font(.caption2)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func loudnessStat(title: String, word: EventMetricScale.LoudnessWord) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+            Text(word.title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.labelPrimary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Theme.surfaceSecondary, in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(word.title)")
     }
 }
 
@@ -346,6 +396,8 @@ struct EventPlaybackRow: View {
     let event: SnoreEvent
     /// Longest bout in this session list — duration bars are relative to this, like Sleep History.
     let maxEventDuration: TimeInterval
+    /// True for the bout whose peak reached the night’s highest level.
+    var isNightLoudest: Bool = false
     let isPlaying: Bool
     let isPreparing: Bool
     /// False when no file exists — avoids a tappable UI that silently does nothing.
@@ -362,7 +414,9 @@ struct EventPlaybackRow: View {
         return String(format: "%.0fs", d)
     }
 
-    private var hasVolume: Bool { event.avgDB > -160 }
+    private var rowLoudness: EventMetricScale.RowLoudness? {
+        EventMetricScale.rowLoudness(avgDB: event.avgDB, peakDB: event.peakDB)
+    }
 
     private var durationFill: CGFloat {
         CGFloat(EventMetricScale.durationFill(
@@ -396,9 +450,20 @@ struct EventPlaybackRow: View {
                 )
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(timeString)
-                        .font(.subheadline.bold())
-                        .foregroundStyle(Theme.labelPrimary)
+                    HStack(spacing: 6) {
+                        Text(timeString)
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Theme.labelPrimary)
+                        if isNightLoudest {
+                            Text("Loudest")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(Theme.snoring)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Theme.snoring.opacity(0.14), in: Capsule())
+                                .accessibilityLabel("Loudest moment this night")
+                        }
+                    }
                     if isPreparing {
                         Text("Preparing audio…")
                             .font(.caption)
@@ -419,7 +484,7 @@ struct EventPlaybackRow: View {
                 }
             }
 
-            if event.duration != nil || hasVolume {
+            if event.duration != nil || rowLoudness != nil {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         if event.duration != nil {
@@ -436,17 +501,8 @@ struct EventPlaybackRow: View {
 
                         Spacer(minLength: 8)
 
-                        if hasVolume {
-                            Label {
-                                Text(String(format: "%.0f dB", event.avgDB))
-                                    .font(Theme.monoDigit(size: 12, weight: .medium))
-                            } icon: {
-                                Image(systemName: "speaker.wave.2")
-                            }
-                            .font(.caption)
-                            .foregroundStyle(Theme.labelOnSurfaceSecondary)
-                            .labelStyle(.titleAndIcon)
-                            .accessibilityLabel("Average volume \(Int(event.avgDB.rounded())) decibels")
+                        if let rowLoudness {
+                            loudnessLine(rowLoudness)
                         }
                     }
 
@@ -458,6 +514,39 @@ struct EventPlaybackRow: View {
             }
         }
         .padding(.vertical, 6)
+    }
+
+    @ViewBuilder
+    private func loudnessLine(_ rowLoudness: EventMetricScale.RowLoudness) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "speaker.wave.2")
+                .font(.caption)
+                .foregroundStyle(Theme.labelOnSurfaceSecondary)
+
+            if let louderPeak = rowLoudness.louderPeak {
+                Text("Avg")
+                    .font(.caption)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                Text(rowLoudness.average.title)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Theme.labelPrimary)
+                Text("·")
+                    .font(.caption)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                Text("Peak")
+                    .font(.caption)
+                    .foregroundStyle(Theme.labelOnSurfaceSecondary)
+                Text(louderPeak.title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.snoring)
+            } else {
+                Text(rowLoudness.average.title)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Theme.labelPrimary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(rowLoudness.accessibilityLabel)
     }
 
     /// Same visual language as Sleep History session rows: coral bar vs the longest item in view.
@@ -477,13 +566,132 @@ struct EventPlaybackRow: View {
 
 // MARK: - Event metric scale
 
-/// Shared fill math for event-row bars. Kept free of SwiftUI so unit tests can cover it.
+/// Shared fill math and loudness words for the Sound Events card. Kept free of SwiftUI so unit tests can cover it.
 nonisolated enum EventMetricScale {
+    /// Stored level when a bout has no usable reading.
+    static let missingLevelDB: Float = -160
+
+    /// Caption under the night loudness summary tiles.
+    static let loudnessScaleCaption =
+        "How loud this iPhone heard these sounds. Soft, Moderate, Loud, Very loud."
+
+    /// Plain-language loudness for a dBFS reading. Nil when the reading is missing.
+    /// Bands match levels Snorry actually records on an iPhone microphone.
+    enum LoudnessWord: String, Equatable, Sendable {
+        case soft
+        case moderate
+        case loud
+        case veryLoud
+
+        var title: String {
+            switch self {
+            case .soft:     return "Soft"
+            case .moderate: return "Moderate"
+            case .loud:     return "Loud"
+            case .veryLoud: return "Very loud"
+            }
+        }
+
+        /// Higher means a louder band on the iPhone microphone scale.
+        var severity: Int {
+            switch self {
+            case .soft:     return 0
+            case .moderate: return 1
+            case .loud:     return 2
+            case .veryLoud: return 3
+            }
+        }
+    }
+
+    /// Average and optional louder peak for one bout row.
+    struct RowLoudness: Equatable, Sendable {
+        var average: LoudnessWord
+        /// Set only when the peak band is louder than the average band.
+        var louderPeak: LoudnessWord?
+
+        var accessibilityLabel: String {
+            if let louderPeak {
+                return "Average loudness \(average.title), peak \(louderPeak.title)"
+            }
+            return "Loudness \(average.title)"
+        }
+    }
+
+    /// One bout’s levels, without pulling in the SwiftData model.
+    struct LoudnessSample: Equatable, Sendable {
+        var peakDB: Float
+        var avgDB: Float
+        var duration: TimeInterval
+    }
+
+    /// Loudest peak and duration-weighted average for the events shown in the list.
+    struct NightLoudnessSummary: Equatable, Sendable {
+        var loudest: LoudnessWord
+        var average: LoudnessWord
+    }
+
     /// Linear fill against the longest bout in the current session list.
     /// A 10-minute absolute range made typical 10–50 s snores look empty next to volume.
     static func durationFill(duration: TimeInterval, maxDuration: TimeInterval) -> Double {
         guard duration > 0, maxDuration > 0 else { return 0 }
         return min(1, duration / maxDuration)
+    }
+
+    /// Maps dBFS onto Soft / Moderate / Loud / Very loud. Quieter than or equal to −50 is Soft.
+    static func loudnessWord(dBFS: Float) -> LoudnessWord? {
+        guard dBFS > missingLevelDB else { return nil }
+        if dBFS > -30 { return .veryLoud }
+        if dBFS > -40 { return .loud }
+        if dBFS > -50 { return .moderate }
+        return .soft
+    }
+
+    /// Row labels from average and peak dBFS. Peak is omitted when it falls in the same band as average.
+    static func rowLoudness(avgDB: Float, peakDB: Float) -> RowLoudness? {
+        guard let average = loudnessWord(dBFS: avgDB) else { return nil }
+        guard peakDB > missingLevelDB, let peak = loudnessWord(dBFS: peakDB) else {
+            return RowLoudness(average: average, louderPeak: nil)
+        }
+        if peak.severity > average.severity {
+            return RowLoudness(average: average, louderPeak: peak)
+        }
+        return RowLoudness(average: average, louderPeak: nil)
+    }
+
+    /// Index of the bout with the highest peak dBFS. On a tie, the earliest bout wins.
+    static func indexOfLoudestPeak(in samples: [LoudnessSample]) -> Int? {
+        var bestIndex: Int?
+        var bestPeak = missingLevelDB
+        for (index, sample) in samples.enumerated() {
+            guard sample.peakDB > missingLevelDB else { continue }
+            if sample.peakDB > bestPeak {
+                bestPeak = sample.peakDB
+                bestIndex = index
+            }
+        }
+        return bestIndex
+    }
+
+    /// Night summary from the bouts in the Sound Events list. Nil when none have a real level.
+    static func nightLoudness(samples: [LoudnessSample]) -> NightLoudnessSummary? {
+        guard let loudestDB = samples.map(\.peakDB).filter({ $0 > missingLevelDB }).max(),
+              let loudest = loudnessWord(dBFS: loudestDB),
+              let averageDB = durationWeightedAverageDB(samples: samples),
+              let average = loudnessWord(dBFS: averageDB) else { return nil }
+        return NightLoudnessSummary(loudest: loudest, average: average)
+    }
+
+    /// Weights each bout by its duration. Falls back to an unweighted mean when every duration is zero.
+    static func durationWeightedAverageDB(samples: [LoudnessSample]) -> Float? {
+        let valid = samples.filter { $0.avgDB > missingLevelDB }
+        guard !valid.isEmpty else { return nil }
+        let totalWeight = valid.reduce(0.0) { $0 + max($1.duration, 0) }
+        if totalWeight > 0 {
+            let sum = valid.reduce(0.0) { $0 + Double($1.avgDB) * max($1.duration, 0) }
+            return Float(sum / totalWeight)
+        }
+        let sum = valid.reduce(0.0) { $0 + Double($1.avgDB) }
+        return Float(sum / Double(valid.count))
     }
 }
 

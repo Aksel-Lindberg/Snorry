@@ -181,7 +181,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 - **Summary stats** — sleep duration, snore events, snore duration, average BRPM when available  
 - **Snore Clock** — visual timeline of snoring bouts only  
-- **Sound events list** — each bout as a row; duration bar scaled to the longest bout that night (same relative rule as Sleep History); average volume shown as a reading  
+- **Sound events list** — night summary of loudest and average loudness in plain words (Soft, Moderate, Loud, Very loud) with a short scale caption; each bout as a row with average loudness, peak loudness when the spike was in a louder band, a Loudest mark on the night’s highest peak, and a duration bar scaled to the longest bout that night  
 - **Clip playback** — tap events with audio to hear the saved **AAC clip** (when recorded)  
 - **Sound labels** (after background/locked nights) — events may show **Snoring**, **Sleep talking**, or **Environment**  
 - **Alert setup snapshot** — shows current Settings preferences for context  

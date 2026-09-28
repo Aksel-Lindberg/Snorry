@@ -195,8 +195,8 @@ final class AnalyticsViewModel {
     var loggedHabitTitlesByDay: [Date: [String]] = [:]
     /// True while range or period navigation reloads chart data.
     var isRefreshing = false
-    /// Applies boundary-day opening offset once after init or range change, not on every refresh.
-    private var shouldApplyOpeningPeriodOffset = true
+    /// Set when the user pages forward to the current period; suppresses auto-opening the prior week/month.
+    private var userPinnedCurrentPeriod = false
     private var oldestSessionStart: Date?
 
     private let context: ModelContext
@@ -308,7 +308,7 @@ final class AnalyticsViewModel {
     func setRange(_ range: AnalyticsRange) async {
         selectedRange = range
         periodOffset = 0
-        shouldApplyOpeningPeriodOffset = true
+        userPinnedCurrentPeriod = false
         isRefreshing = true
         await Task.yield()
         refresh()
@@ -318,6 +318,7 @@ final class AnalyticsViewModel {
     func goToPreviousPeriod() async {
         guard canGoBack else { return }
         periodOffset -= 1
+        userPinnedCurrentPeriod = false
         isRefreshing = true
         await Task.yield()
         refresh()
@@ -327,6 +328,9 @@ final class AnalyticsViewModel {
     func goToNextPeriod() async {
         guard canGoForward else { return }
         periodOffset += 1
+        if periodOffset == 0 {
+            userPinnedCurrentPeriod = true
+        }
         isRefreshing = true
         await Task.yield()
         refresh()
@@ -342,54 +346,71 @@ final class AnalyticsViewModel {
 
         if !selectedRange.allowsPaging {
             periodOffset = 0
-            shouldApplyOpeningPeriodOffset = false
-        } else if shouldApplyOpeningPeriodOffset {
-            shouldApplyOpeningPeriodOffset = false
-            if periodOffset == 0 {
-                applyOpeningPeriodOffsetIfNeeded(now: now, calendar: cal)
-            }
+            userPinnedCurrentPeriod = false
         }
 
+        loadPeriodSnapshots(now: now, calendar: cal)
+
+        if tryOpeningPreviousPeriodIfNeeded(now: now, calendar: cal) {
+            loadPeriodSnapshots(now: now, calendar: cal)
+        }
+    }
+
+    private func loadPeriodSnapshots(now: Date, calendar: Calendar) {
         guard let visible = Self.visibleBounds(
             range: selectedRange,
             offset: periodOffset,
             now: now,
-            calendar: cal
+            calendar: calendar
         ) else { return }
         visibleBounds = visible
 
         guard let previous = Self.previousBounds(
             before: visible.start,
             range: selectedRange,
-            calendar: cal
+            calendar: calendar
         ) else { return }
 
-        let fetchEnd = SleepNight.fetchEndExclusive(after: visible.endExclusive, calendar: cal)
+        let fetchEnd = SleepNight.fetchEndExclusive(after: visible.endExclusive, calendar: calendar)
         let sessions = fetchSessions(from: previous.start, until: fetchEnd)
         currentPeriod = Self.buildPeriodSnapshot(
             sessions: SleepNight.completedSessions(
                 in: sessions,
                 rangeStart: visible.start,
                 rangeEnd: visible.lastDayStart,
-                calendar: cal
+                calendar: calendar
             ),
             rangeStart: visible.start,
             rangeEnd: visible.lastDayStart,
-            calendar: cal
+            calendar: calendar
         )
         previousPeriod = Self.buildPeriodSnapshot(
             sessions: SleepNight.completedSessions(
                 in: sessions,
                 rangeStart: previous.start,
                 rangeEnd: previous.lastDayStart,
-                calendar: cal
+                calendar: calendar
             ),
             rangeStart: previous.start,
             rangeEnd: previous.lastDayStart,
-            calendar: cal
+            calendar: calendar
         )
 
-        loadHabitCorrelation(from: visible.start, until: visible.endExclusive, calendar: cal)
+        loadHabitCorrelation(from: visible.start, until: visible.endExclusive, calendar: calendar)
+    }
+
+    /// After loading offset 0 on a week/month boundary, shift back when only the prior period has recordings.
+    private func tryOpeningPreviousPeriodIfNeeded(now: Date, calendar: Calendar) -> Bool {
+        let offset = Self.openingPeriodOffset(
+            range: selectedRange,
+            now: now,
+            currentPeriodSessionCount: currentPeriod.sessionCount,
+            previousPeriodSessionCount: previousPeriod.sessionCount,
+            calendar: calendar
+        )
+        guard offset != 0, !userPinnedCurrentPeriod else { return false }
+        periodOffset = offset
+        return true
     }
 
     func sessions(on dayStart: Date) -> [SnoreSession] {
@@ -650,44 +671,6 @@ final class AnalyticsViewModel {
     }
 
     // MARK: Private helpers
-
-    /// Shifts to the prior week/month on boundary days when last night's data lives there.
-    private func applyOpeningPeriodOffsetIfNeeded(now: Date, calendar: Calendar) {
-        guard let current = Self.visibleBounds(
-            range: selectedRange,
-            offset: 0,
-            now: now,
-            calendar: calendar
-        ),
-        let previous = Self.previousBounds(
-            before: current.start,
-            range: selectedRange,
-            calendar: calendar
-        ) else { return }
-
-        let fetchEnd = SleepNight.fetchEndExclusive(after: current.endExclusive, calendar: calendar)
-        let sessions = fetchSessions(from: previous.start, until: fetchEnd)
-        let currentCount = SleepNight.completedSessions(
-            in: sessions,
-            rangeStart: current.start,
-            rangeEnd: current.lastDayStart,
-            calendar: calendar
-        ).count
-        let previousCount = SleepNight.completedSessions(
-            in: sessions,
-            rangeStart: previous.start,
-            rangeEnd: previous.lastDayStart,
-            calendar: calendar
-        ).count
-
-        periodOffset = Self.openingPeriodOffset(
-            range: selectedRange,
-            now: now,
-            currentPeriodSessionCount: currentCount,
-            previousPeriodSessionCount: previousCount,
-            calendar: calendar
-        )
-    }
 
     private func fetchOldestSessionStart() -> Date? {
         var descriptor = FetchDescriptor<SnoreSession>(

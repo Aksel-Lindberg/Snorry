@@ -168,7 +168,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chevron.right.circle.fill",
                                 title: "Session detail",
-                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, and a Sound Events list. Each event row has a duration bar scaled to the longest bout that night, plus average volume as a reading. Events are labeled Snoring, Sleep Talking, or Environment; background nights classify non-snore sounds more often."
+                                detail: "Shows duration stats, Snore Clock (snoring bouts only), alert setup used for that recording, and a Sound Events list. The list starts with that night’s loudest and average loudness in plain words (Soft, Moderate, Loud, or Very loud), with a short scale caption. Each row shows average loudness and, when the peak was louder, a Peak label in the snoring color. The bout with the night’s highest peak is marked Loudest. Rows also have a duration bar scaled to the longest bout that night. Events are labeled Snoring, Sleep Talking, or Environment; background nights classify non-snore sounds more often."
                             )
                             HelpBullet(
                                 icon: "play.circle.fill",
