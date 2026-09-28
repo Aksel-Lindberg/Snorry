@@ -213,7 +213,7 @@ struct HelpCenterView: View {
                         helpAccordion(
                             section: .analytics,
                             title: "Insights tab",
-                            subtitle: "Ranges, trends, habit & settings markers",
+                            subtitle: "Ranges, trends, habit highlight & correlations",
                             systemImage: "chart.line.uptrend.xyaxis"
                         ) {
                             HelpBullet(
@@ -239,12 +239,7 @@ struct HelpCenterView: View {
                             HelpBullet(
                                 icon: "chart.bar.fill",
                                 title: "Daily snore duration",
-                                detail: "The main chart shows minutes for every sleep night in the range and a dashed trend line when you have enough data. On Month or 3 Months, tap a habit in Habits vs Snore duration to highlight its logged nights in mint on this chart; tap the habit again or Clear to remove the highlight. Tap a day to open that night in Sleep History. Recordings that start after midnight and before 6:00 count as the previous night; two recordings on the same sleep night are added together. Expand Snore events below the chart for event counts."
-                            )
-                            HelpBullet(
-                                icon: "mappin.and.ellipse",
-                                title: "Settings change markers",
-                                detail: "Expand the legend under the chart to read each saved change (push on/off, sound on/off, or alarm style). You can also remove individual markers from Insights without touching your current Settings values."
+                                detail: "The main chart shows minutes for every sleep night in the range, a dashed trend line when you have enough data, and Quietest / Loudest nights for the period. On Month or 3 Months, tap a habit in Habits vs Snore duration to highlight its logged nights on this chart (green when the habit tracks with less snoring, red when it tracks with more, blue when about the same); tap the habit again or Clear to remove the highlight. Tap a day to open that night in Sleep History. Recordings that start after midnight and before 6:00 count as the previous night; two recordings on the same sleep night are added together. Expand Snore events below the chart for event counts."
                             )
                             HelpBullet(
                                 icon: "checklist",

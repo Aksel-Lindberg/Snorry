@@ -64,7 +64,7 @@ struct SnorryTests {
     }
 
     @Test func rowLoudnessHidesPeakWhenInSameBandAsAverage() {
-        let row = EventMetricScale.rowLoudness(avgDB: -55, peakDB: -48)
+        let row = EventMetricScale.rowLoudness(avgDB: -55, peakDB: -52)
         #expect(row?.average == .soft)
         #expect(row?.louderPeak == nil)
     }

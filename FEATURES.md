@@ -225,18 +225,17 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 
 - **Time range** — Week / Month / 3 Months  
 - **Summary pills** — average snore minutes per day, session count, days with data  
-- **Snore duration trend** — daily snore minutes and event counts; optional **numbered markers** when you saved Settings changes  
-- **Settings change legend** — expand to read what changed; delete individual markers without changing current Settings  
-- **Habits vs snore duration** — Month and 3 Months show one card per logged habit (Logged vs Not logged; May add snoring / May reduce snoring / How you felt chip); Week prompts you to switch range (correlation only)  
+- **Snore duration trend** — daily snore minutes, trend line, and quietest/loudest nights; optional **habit highlight** on Month and 3 Months (tap a habit to color its logged nights on the chart; tap again or Clear to reset)  
+- **Habits vs snore duration** — Month and 3 Months show one row per logged habit with a delta bar and info sheet (Logged vs Not logged; May add snoring / May reduce snoring / How you felt chip); Week prompts you to switch range (correlation only)  
 
 ### Typical use
 
 | Scenario | How to use |
 |----------|------------|
 | “Am I improving?” | Month view → trend line of daily snore minutes |
-| Test a settings experiment | Save new push/sound setup → numbered marker appears on the Daily snore duration chart → compare weeks before/after |
-| See which habits correlate with more or less snoring | Month or 3 Months → Habits vs Snore duration cards |
-| Clean chart markers | Remove obsolete settings-change markers from legend |
+| See which nights a habit was logged | Month or 3 Months → tap a habit → its nights highlight on the daily chart |
+| See which habits correlate with more or less snoring | Month or 3 Months → Habits vs Snore duration rows; info button for logged vs not logged averages |
+| Compare quiet vs loud nights | Daily snore duration → Quietest / Loudest line under the chart |
 
 ---
 
@@ -347,7 +346,7 @@ You can enable **push only**, **sound only**, or **both**. With both, push fires
 1. Note current Insights trend (week view).  
 2. Change one setting (e.g. enable repeat push) → **Save**.  
 3. Use app for 7–14 nights.  
-4. Insights → check the new numbered **settings marker** on the Daily snore duration chart.  
+4. Insights → tap a habit on Month view to highlight its nights on the daily chart.  
 5. Interpret as personal correlation, not proven causation.
 
 ---
