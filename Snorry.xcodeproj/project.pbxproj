@@ -53,6 +53,7 @@
 		A1B2C3D4E5F60002A1B2C3D4 /* SessionClipSoundClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001A1B2C3D4 /* SessionClipSoundClassifier.swift */; };
 		A1B2C3D4E5F60004A1B2C3D4 /* SoundClassificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */; };
 		A1B2C3D4E5F60005A1B2C3D5 /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */; };
+		A1S2D3E4F5A60718293A4B5E /* AppStoreDemoSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1S2D3E4F5A60718293A4B5F /* AppStoreDemoSeeder.swift */; };
 		A4B0A49A1378A7721A654C36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 799CEF95A14F0173040FE75B /* HomeView.swift */; };
 		A98E1AF9D24946D3969651DF /* Marimba intrumental.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */; };
 		AC645F2038FE2E11B32BC934 /* Tornado.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = E8752C417837145970A7AE3E /* Tornado.mp3 */; };
@@ -90,7 +91,6 @@
 		EF96694FBC2893F5056D48FE /* Double tones.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = D478DD736616BB856D2F2D94 /* Double tones.mp3 */; };
 		F6F9545BB9B8179202A70A85 /* AudioSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0CC6D2C570ADD8994AFDE52 /* AudioSessionManager.swift */; };
 		F8A2B3C4D5E60718293A4B5D /* SnoreRumbleGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A2B3C4D5E60718293A4B5C /* SnoreRumbleGate.swift */; };
-		A1S2D3E4F5A60718293A4B5E /* AppStoreDemoSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1S2D3E4F5A60718293A4B5F /* AppStoreDemoSeeder.swift */; };
 		F8A2B3C4D5E60718293A4B5F /* SnoreRumbleGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A2B3C4D5E60718293A4B5E /* SnoreRumbleGateTests.swift */; };
 		F9537C4A3F8A5E54F1AB8222 /* AlertSetupSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC3AAF0922B2A428E2CD2A6E /* AlertSetupSummaryCard.swift */; };
 		FBAA00012EAA4B00C99A0001 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */; };
@@ -116,6 +116,7 @@
 		MFX0012EAA4B00C99A000C /* ZoomableImageScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */; };
 		SAV0A0012EAA4B00C99A0002 /* SoundAlertVolumeEscalation.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */; };
 		SAV0A0012EAA4B00C99A0004 /* SoundAlertVolumeEscalationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */; };
+		SDT0A0012EAA4B00C99A0002 /* SnoreDetectionTuningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SDT0A0012EAA4B00C99A0001 /* SnoreDetectionTuningTests.swift */; };
 		SLP00012EAA4B00C99A0001 /* SleepAllyPromoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */; };
 		SLP00012EAA4B00C99A0004 /* SleepNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = SLP00012EAA4B00C99A0003 /* SleepNight.swift */; };
 		SUB00012EAA4B00C99A0002 /* SubscriptionProductID.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */; };
@@ -191,6 +192,7 @@
 		A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundClassificationTests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UserPreferences.swift; path = Utilities/UserPreferences.swift; sourceTree = "<group>"; };
 		A1C3C8E48A75DE8B17178BC1 /* Snorry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Snorry.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1S2D3E4F5A60718293A4B5F /* AppStoreDemoSeeder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppStoreDemoSeeder.swift; path = Utilities/AppStoreDemoSeeder.swift; sourceTree = "<group>"; };
 		A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WaveformView.swift; path = Views/WaveformView.swift; sourceTree = "<group>"; };
 		A854F1BE96B16C0133B0B0CD /* Icecracks.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Icecracks.mp3; path = Resources/Icecracks.mp3; sourceTree = "<group>"; };
 		AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AudioMathTests.swift; sourceTree = "<group>"; };
@@ -230,7 +232,6 @@
 		F5487CFE1DBFA85FE66F15E3 /* AlertSettingsChange.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AlertSettingsChange.swift; path = Models/AlertSettingsChange.swift; sourceTree = "<group>"; };
 		F8170BA25460F76D30A51269 /* Singball.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Singball.mp3; path = Resources/Singball.mp3; sourceTree = "<group>"; };
 		F8A2B3C4D5E60718293A4B5C /* SnoreRumbleGate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreRumbleGate.swift; path = Utilities/SnoreRumbleGate.swift; sourceTree = "<group>"; };
-		A1S2D3E4F5A60718293A4B5F /* AppStoreDemoSeeder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppStoreDemoSeeder.swift; path = Utilities/AppStoreDemoSeeder.swift; sourceTree = "<group>"; };
 		F8A2B3C4D5E60718293A4B5E /* SnoreRumbleGateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnoreRumbleGateTests.swift; sourceTree = "<group>"; };
 		F9B7B29710F28E6010817EE4 /* SnoreGIFData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SnoreGIFData.swift; path = Resources/SnoreGIFData.swift; sourceTree = "<group>"; };
 		FBAA00012EAA4B00C99A0002 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -253,6 +254,7 @@
 		MFX0012EAA4B00C99A000B /* ZoomableImageScrollView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ZoomableImageScrollView.swift; path = Views/ZoomableImageScrollView.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0001 /* SoundAlertVolumeEscalation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SoundAlertVolumeEscalation.swift; path = Utilities/SoundAlertVolumeEscalation.swift; sourceTree = "<group>"; };
 		SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundAlertVolumeEscalationTests.swift; sourceTree = "<group>"; };
+		SDT0A0012EAA4B00C99A0001 /* SnoreDetectionTuningTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnoreDetectionTuningTests.swift; sourceTree = "<group>"; };
 		SLP00012EAA4B00C99A0002 /* SleepAllyPromoView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepAllyPromoView.swift; path = Views/SleepAllyPromoView.swift; sourceTree = "<group>"; };
 		SLP00012EAA4B00C99A0003 /* SleepNight.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SleepNight.swift; path = Utilities/SleepNight.swift; sourceTree = "<group>"; };
 		SUB00012EAA4B00C99A0001 /* SubscriptionProductID.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SubscriptionProductID.swift; path = Models/SubscriptionProductID.swift; sourceTree = "<group>"; };
@@ -451,6 +453,7 @@
 				A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */,
 				C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */,
 				6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */,
+				SDT0A0012EAA4B00C99A0001 /* SnoreDetectionTuningTests.swift */,
 				F8A2B3C4D5E60718293A4B5E /* SnoreRumbleGateTests.swift */,
 				HBT0012EAA4B00C99A0007 /* HabitCorrelationTests.swift */,
 				TRI00012EAA4B00C99A0003 /* InsightsTrialTrackerTests.swift */,
@@ -726,6 +729,7 @@
 				A1B2C3D4E5F60004A1B2C3D4 /* SoundClassificationTests.swift in Sources */,
 				204A3710F3EFE4F903D04FEC /* SnoreClipSpectralAnalyzerTests.swift in Sources */,
 				BA1ABF8B48D0F03CE67C68E9 /* SnoreEventDetectorTests.swift in Sources */,
+				SDT0A0012EAA4B00C99A0002 /* SnoreDetectionTuningTests.swift in Sources */,
 				F8A2B3C4D5E60718293A4B5F /* SnoreRumbleGateTests.swift in Sources */,
 				HBT0012EAA4B00C99A0008 /* HabitCorrelationTests.swift in Sources */,
 				TRI00012EAA4B00C99A0004 /* InsightsTrialTrackerTests.swift in Sources */,
@@ -989,7 +993,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.16;
+				MARKETING_VERSION = 1.17;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1034,7 +1038,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.16;
+				MARKETING_VERSION = 1.17;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Snorry.Snorry;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

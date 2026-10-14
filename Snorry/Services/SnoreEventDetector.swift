@@ -21,9 +21,8 @@ enum DetectorEvent: Sendable {
 /// Phase 1 — PENDING: classifier is active but pattern not yet confirmed.
 /// Phase 2 — CONFIRMED: enough onsets confirmed; event is live.
 ///
-/// First episode of a monitoring session requires 5 s continuous rumble-validated snoring
-/// and 4 inhalations. Every subsequent episode requires 5 s continuous snoring and
-/// 2 inhalations so the alarm re-arms within seconds after a clear.
+/// Every episode requires 5 s continuous rumble-validated snoring and 2 inhalations
+/// before a bout is logged.
 ///
 /// Confirmed events end after 10 s of classifier silence, or 10 s without a new breath onset
 /// when the classifier stays stuck active (e.g. steady ambient noise).
@@ -45,7 +44,8 @@ final class SnoreEventDetector: @unchecked Sendable {
     /// Gaps shorter than this between active stretches still count toward the 5 s total (inter-snore pauses).
     var activeGapBridge: TimeInterval = 4.0
     private let minInhalationInterval: TimeInterval = AudioMath.minInhalationInterval
-    private let ambientAlpha: Float            = 0.02   // EMA weight for ambient baseline
+    private let ambientAlpha: Float            = 0.02   // EMA weight when level is at or below the floor
+    private let ambientPeakAlpha: Float        = 0.002  // slow drift upward during snoring peaks
     private let inhalationWindowSize           = 30     // max inhalations tracked per bout
 
     /// dB above the ambient baseline required to register the exhale/snore peak of a breath cycle.
@@ -73,12 +73,10 @@ final class SnoreEventDetector: @unchecked Sendable {
     private let quietBelowTrendDB: Float = 1.0
     private var breathPhase: BreathPhase = .quiet
 
-    // MARK: Session-level flag
-    /// True after the first confirmed episode this monitoring session.
-    /// Persists through `resetForNewEpisode()` so subsequent episodes confirm faster.
-    private var sessionHasConfirmedEpisode = false
+    private let confirmationThreshold = 2
 
-    private var confirmationThreshold: Int { sessionHasConfirmedEpisode ? 2 : 4 }
+    /// False until the first audio tick seeds level trackers from live input.
+    private var hasSeededLevelFromAudio = false
 
     // MARK: Per-episode state
     private var pendingID: UUID?
@@ -123,7 +121,8 @@ final class SnoreEventDetector: @unchecked Sendable {
         let (s, c) = AsyncStream<DetectorEvent>.makeStream()
         stream = s
         continuation = c
-        sessionHasConfirmedEpisode = false
+        hasSeededLevelFromAudio = false
+        ambientBaseline = -50
         resetEpisodeState()
     }
 
@@ -145,8 +144,6 @@ final class SnoreEventDetector: @unchecked Sendable {
         defer { feedLock.unlock() }
         if isConfirmed { finishCurrentEvent(at: Date()) }
         resetEpisodeState()
-        // sessionHasConfirmedEpisode intentionally NOT reset here —
-        // re-arms faster on the next episode.
     }
 
     // MARK: Private reset helpers
@@ -163,8 +160,9 @@ final class SnoreEventDetector: @unchecked Sendable {
         lastInhalationDate    = nil
         silenceStart     = nil
         inhalationTimestamps  = []
-        shortLevelEMA    = -50
-        longLevelEMA     = -50
+        let levelSeed = hasSeededLevelFromAudio ? ambientBaseline : -50
+        shortLevelEMA    = levelSeed
+        longLevelEMA     = levelSeed
         breathPhase      = .quiet
         accumulatedActiveTime = 0
         lastActiveTickTimestamp = nil
@@ -212,11 +210,7 @@ final class SnoreEventDetector: @unchecked Sendable {
         let now = tick.timestamp
 
         updateAccumulatedActiveTime(at: now)
-
-        // Update ambient baseline only while classifier is quiet.
-        if !classifierActive {
-            ambientBaseline = AudioMath.ema(current: ambientBaseline, new: db, alpha: ambientAlpha)
-        }
+        updateAmbientBaseline(db: db)
 
         // Inhalation detection: quiet → rising inhale → loud exhale/snore → quiet.
         if classifierActive {
@@ -264,6 +258,17 @@ final class SnoreEventDetector: @unchecked Sendable {
     }
 
     // MARK: Private helpers
+
+    /// Seeds and tracks the noise floor from every tick so phones agree even when the classifier is active.
+    private func updateAmbientBaseline(db: Float) {
+        if !hasSeededLevelFromAudio {
+            ambientBaseline = db
+            hasSeededLevelFromAudio = true
+            return
+        }
+        let alpha = db <= ambientBaseline ? ambientAlpha : ambientPeakAlpha
+        ambientBaseline = AudioMath.ema(current: ambientBaseline, new: db, alpha: alpha)
+    }
 
     private func updateBreathEnvelope(db: Float) {
         shortLevelEMA = AudioMath.ema(current: shortLevelEMA, new: db, alpha: shortLevelAlpha)
@@ -323,9 +328,8 @@ final class SnoreEventDetector: @unchecked Sendable {
               let anchor = accumulationAnchor,
               accumulatedActiveTime >= minContinuousSnoringBeforeConfirm else { return }
 
-        isConfirmed                = true
-        currentEventID             = id
-        sessionHasConfirmedEpisode = true
+        isConfirmed    = true
+        currentEventID = id
 
         logger.info("Snore event confirmed: \(id), threshold=\(self.confirmationThreshold)")
 
@@ -346,8 +350,9 @@ final class SnoreEventDetector: @unchecked Sendable {
         firstOnsetDate  = nil
         lastInhalationDate   = nil
         inhalationTimestamps = []
-        shortLevelEMA   = -50
-        longLevelEMA    = -50
+        let levelSeed = hasSeededLevelFromAudio ? ambientBaseline : -50
+        shortLevelEMA   = levelSeed
+        longLevelEMA    = levelSeed
         breathPhase     = .quiet
         eventPeakDB     = -160
         eventSumDB      = 0

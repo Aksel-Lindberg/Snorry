@@ -19,10 +19,15 @@ struct SnoreEventDetectorTests {
     }
 
     private func collectEvents(from detector: SnoreEventDetector) async -> [DetectorEvent] {
-        detector.stop()
         guard let stream = detector.stream else { return [] }
         var events: [DetectorEvent] = []
-        for await event in stream { events.append(event) }
+        let collectTask = Task {
+            for await event in stream {
+                events.append(event)
+            }
+        }
+        detector.stop()
+        await collectTask.value
         return events
     }
 
@@ -30,6 +35,56 @@ struct SnoreEventDetectorTests {
         events.reduce(0) { count, event in
             if case .snoreStarted = event { return count + 1 }
             return count
+        }
+    }
+
+    private func snoreStartDates(in events: [DetectorEvent]) -> [Date] {
+        events.compactMap { event in
+            if case .snoreStarted(_, let at, _) = event { return at }
+            return nil
+        }
+    }
+
+    /// Quiet bed with ~3 dB peaks — matches loudness near real multi-phone recordings.
+    private func feedSubtleBreathCycle(
+        detector: SnoreEventDetector,
+        at start: Date,
+        bedDB: Float = -34,
+        peakDB: Float = -31,
+        step: TimeInterval = 0.25
+    ) {
+        let dt = step * 0.35
+        let t1 = start.addingTimeInterval(dt)
+        let t2 = start.addingTimeInterval(dt * 2)
+        let t3 = start.addingTimeInterval(dt * 3)
+        detector.feed(classifierResult: true, at: start)
+        detector.feed(tick: makeTick(db: bedDB, at: start))
+        detector.feed(classifierResult: true, at: t1)
+        detector.feed(tick: makeTick(db: bedDB + 2, at: t1))
+        detector.feed(classifierResult: true, at: t2)
+        detector.feed(tick: makeTick(db: bedDB + 4, at: t2))
+        detector.feed(classifierResult: true, at: t3)
+        detector.feed(tick: makeTick(db: peakDB, at: t3))
+    }
+
+    private func feedClassifierActiveBed(
+        detector: SnoreEventDetector,
+        from start: Date,
+        through duration: TimeInterval,
+        bedDB: Float,
+        step: TimeInterval = 0.25,
+        breathAtOnsets: [TimeInterval]
+    ) {
+        var elapsed: TimeInterval = 0
+        while elapsed <= duration {
+            let tickTime = start.addingTimeInterval(elapsed)
+            if breathAtOnsets.contains(where: { abs($0 - elapsed) < step * 0.6 }) {
+                feedSubtleBreathCycle(detector: detector, at: tickTime, bedDB: bedDB)
+            } else {
+                detector.feed(classifierResult: true, at: tickTime)
+                detector.feed(tick: makeTick(db: bedDB, at: tickTime))
+            }
+            elapsed += step
         }
     }
 
@@ -52,7 +107,7 @@ struct SnoreEventDetectorTests {
         var elapsed: TimeInterval = 0
         while elapsed <= end {
             let tickTime = start.addingTimeInterval(elapsed)
-            detector.feed(classifierResult: true)
+            detector.feed(classifierResult: true, at: tickTime)
             if isOnsetTime(elapsed, spacing: onsetSpacing) {
                 feedBreathCycle(detector: detector, at: tickTime, step: step)
             } else {
@@ -69,11 +124,17 @@ struct SnoreEventDetectorTests {
         step: TimeInterval
     ) {
         let dt = step * 0.35
-        detector.feed(classifierResult: true)
+        let t1 = start.addingTimeInterval(dt)
+        let t2 = start.addingTimeInterval(dt * 2)
+        let t3 = start.addingTimeInterval(dt * 3)
+        detector.feed(classifierResult: true, at: start)
         detector.feed(tick: makeTick(db: -48, at: start))
-        detector.feed(tick: makeTick(db: -40, at: start.addingTimeInterval(dt)))
-        detector.feed(tick: makeTick(db: -32, at: start.addingTimeInterval(dt * 2)))
-        detector.feed(tick: makeTick(db: -20, at: start.addingTimeInterval(dt * 3)))
+        detector.feed(classifierResult: true, at: t1)
+        detector.feed(tick: makeTick(db: -40, at: t1))
+        detector.feed(classifierResult: true, at: t2)
+        detector.feed(tick: makeTick(db: -32, at: t2))
+        detector.feed(classifierResult: true, at: t3)
+        detector.feed(tick: makeTick(db: -20, at: t3))
     }
 
     /// Feeds inactive ticks over a time span.
@@ -86,7 +147,7 @@ struct SnoreEventDetectorTests {
         var elapsed: TimeInterval = 0
         while elapsed <= end {
             let tickTime = start.addingTimeInterval(elapsed)
-            detector.feed(classifierResult: false)
+            detector.feed(classifierResult: false, at: tickTime)
             detector.feed(tick: makeTick(db: -50, at: tickTime))
             elapsed += step
         }
@@ -103,7 +164,6 @@ struct SnoreEventDetectorTests {
     private func feedFirstEpisodePattern(detector: SnoreEventDetector, t0: Date, onsetSpacing: TimeInterval = 1.5) {
         for index in 0..<4 {
             let t = t0.addingTimeInterval(Double(index) * onsetSpacing)
-            detector.feed(classifierResult: true)
             feedBreathCycle(detector: detector, at: t, step: 0.25)
         }
     }
@@ -435,5 +495,105 @@ struct SnoreEventDetectorTests {
         }
         #expect(abs(endDate.timeIntervalSince(silenceOnset)) < 0.01,
                 "Duration should end when silence began, not after the full gap tolerance")
+    }
+
+    @Test func learnedFloorConfirmsSameSubtlePatternRegardlessOfClassifierLeadIn() async {
+        let t0 = Date(timeIntervalSince1970: 20_000)
+        let bed: Float = -34
+        let onsetSpacing: TimeInterval = 1.5
+        let onsets: [TimeInterval] = [0, onsetSpacing, onsetSpacing * 2, onsetSpacing * 3]
+
+        func runScenario(classifierLeadInQuiet: Bool) async -> [Date] {
+            let detector = SnoreEventDetector()
+            detector.onsetThresholdDB = 0.75
+            detector.minContinuousSnoringBeforeConfirm = 5
+            detector.start()
+
+            if classifierLeadInQuiet {
+                feedInactiveWindow(
+                    detector: detector,
+                    from: t0.addingTimeInterval(-2),
+                    through: 2.0,
+                    step: 0.25
+                )
+                for tick in stride(from: 0.0, through: 2.0, by: 0.25) {
+                    let time = t0.addingTimeInterval(-2 + tick)
+                    detector.feed(tick: makeTick(db: bed, at: time))
+                }
+            }
+
+            feedClassifierActiveBed(
+                detector: detector,
+                from: t0,
+                through: 5.5,
+                bedDB: bed,
+                breathAtOnsets: onsets
+            )
+            let events = await collectEvents(from: detector)
+            return snoreStartDates(in: events)
+        }
+
+        let immediateStarts = await runScenario(classifierLeadInQuiet: false)
+        let quietLeadStarts = await runScenario(classifierLeadInQuiet: true)
+
+        #expect(immediateStarts.count == 1)
+        #expect(quietLeadStarts.count == 1)
+        if immediateStarts.count == 1, quietLeadStarts.count == 1 {
+            #expect(abs(immediateStarts[0].timeIntervalSince(quietLeadStarts[0])) <= 0.25)
+        }
+    }
+
+    @Test func flatQuietBedDoesNotConfirm() async {
+        let detector = SnoreEventDetector()
+        detector.onsetThresholdDB = 0.75
+        detector.minContinuousSnoringBeforeConfirm = 5
+        detector.start()
+
+        let t0 = Date(timeIntervalSince1970: 21_000)
+        feedClassifierActiveBed(
+            detector: detector,
+            from: t0,
+            through: 6.0,
+            bedDB: -55,
+            breathAtOnsets: []
+        )
+
+        let events = await collectEvents(from: detector)
+        #expect(startedCount(in: events) == 0)
+    }
+
+    @Test func twoBreathCyclesConfirmFirstBoutAndSecondAfterSilenceGap() async {
+        let detector = SnoreEventDetector()
+        detector.onsetThresholdDB = 6
+        detector.minContinuousSnoringBeforeConfirm = 5
+        detector.confirmedGapTolerance = 10
+        detector.start()
+
+        let t0 = Date(timeIntervalSince1970: 22_000)
+        detector.feed(classifierResult: false, at: t0.addingTimeInterval(-1))
+        detector.feed(tick: makeTick(db: -50, at: t0.addingTimeInterval(-1)))
+
+        feedClassifierActiveBed(
+            detector: detector,
+            from: t0,
+            through: 5.5,
+            bedDB: -48,
+            breathAtOnsets: [0, 1.5]
+        )
+
+        let gapStart = t0.addingTimeInterval(6.0)
+        feedInactiveWindow(detector: detector, from: gapStart, through: 11.0, step: 0.5)
+
+        let secondBoutStart = gapStart.addingTimeInterval(11.0)
+        feedClassifierActiveBed(
+            detector: detector,
+            from: secondBoutStart,
+            through: 5.5,
+            bedDB: -48,
+            breathAtOnsets: [0, 1.5]
+        )
+
+        let events = await collectEvents(from: detector)
+        #expect(startedCount(in: events) == 2, "Both bouts should confirm with two breaths and 5 s active")
     }
 }

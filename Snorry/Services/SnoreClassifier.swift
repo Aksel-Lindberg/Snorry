@@ -43,7 +43,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     /// Background RMS gate: higher dBFS = louder required → **less** sensitive than foreground ML.
     /// Set from ``SnoreDetectionTuning`` together with `confidenceThreshold`.
     var energyFallbackThresholdDB: Float = -42
-    /// Lock-screen floor — rejects low-volume environment hum even when sensitivity is high.
+    /// Lock-screen RMS floor — set from ``SnoreDetectionTuning`` together with `energyFallbackThresholdDB`.
     var backgroundMinimumLevelDB: Float = -38
 
     /// Reject only when breathing confidence clearly exceeds snoring (foreground ML path).
@@ -321,6 +321,7 @@ enum SnoreDetectionTuning {
         let profile = profile(for: level)
         classifier.confidenceThreshold = profile.confidenceThreshold
         classifier.energyFallbackThresholdDB = profile.energyFallbackThresholdDB
+        classifier.backgroundMinimumLevelDB = profile.backgroundMinimumLevelDB
         classifier.breathingRejectionMargin = profile.breathingRejectionMargin
         classifier.rumbleConfig = profile.rumbleConfig
         detector.onsetThresholdDB = profile.onsetThresholdDB
@@ -330,6 +331,7 @@ enum SnoreDetectionTuning {
         let confidenceThreshold: Float
         let onsetThresholdDB: Float
         let energyFallbackThresholdDB: Float
+        let backgroundMinimumLevelDB: Float
         let rumbleConfig: SnoreRumbleGate.Config
         let breathingRejectionMargin: Float
     }
@@ -341,6 +343,7 @@ enum SnoreDetectionTuning {
                 confidenceThreshold: 0.75,
                 onsetThresholdDB: 20,
                 energyFallbackThresholdDB: -28,
+                backgroundMinimumLevelDB: -28,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.5, minSignalDBFS: -45),
                 breathingRejectionMargin: 0.12
             )
@@ -349,6 +352,7 @@ enum SnoreDetectionTuning {
                 confidenceThreshold: 0.525,
                 onsetThresholdDB: 11,
                 energyFallbackThresholdDB: -35,
+                backgroundMinimumLevelDB: -35,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.3, minSignalDBFS: -50),
                 breathingRejectionMargin: 0.08
             )
@@ -357,6 +361,7 @@ enum SnoreDetectionTuning {
                 confidenceThreshold: 0.30,
                 onsetThresholdDB: 2,
                 energyFallbackThresholdDB: -42,
+                backgroundMinimumLevelDB: -42,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.2, minSignalDBFS: -55),
                 breathingRejectionMargin: 0.06
             )
@@ -365,6 +370,7 @@ enum SnoreDetectionTuning {
                 confidenceThreshold: 0.22,
                 onsetThresholdDB: 1.25,
                 energyFallbackThresholdDB: -44,
+                backgroundMinimumLevelDB: -44,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.15, minSignalDBFS: -57),
                 breathingRejectionMargin: 0.05
             )
@@ -373,6 +379,7 @@ enum SnoreDetectionTuning {
                 confidenceThreshold: 0.15,
                 onsetThresholdDB: 0.75,
                 energyFallbackThresholdDB: -46,
+                backgroundMinimumLevelDB: -46,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.1, minSignalDBFS: -58),
                 breathingRejectionMargin: 0.04
             )
