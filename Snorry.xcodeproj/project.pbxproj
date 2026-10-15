@@ -53,6 +53,7 @@
 		A1B2C3D4E5F60002A1B2C3D4 /* SessionClipSoundClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001A1B2C3D4 /* SessionClipSoundClassifier.swift */; };
 		A1B2C3D4E5F60004A1B2C3D4 /* SoundClassificationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */; };
 		A1B2C3D4E5F60005A1B2C3D5 /* UserPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */; };
+		A1LOCK002EAA4B00C99A0001 /* LockScreenLoudnessGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1LOCK001EAA4B00C99A0001 /* LockScreenLoudnessGate.swift */; };
 		A1S2D3E4F5A60718293A4B5E /* AppStoreDemoSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1S2D3E4F5A60718293A4B5F /* AppStoreDemoSeeder.swift */; };
 		A4B0A49A1378A7721A654C36 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 799CEF95A14F0173040FE75B /* HomeView.swift */; };
 		A98E1AF9D24946D3969651DF /* Marimba intrumental.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 688044740861D1A9CF29F381 /* Marimba intrumental.mp3 */; };
@@ -106,6 +107,7 @@
 		HBT0012EAA4B00C99A000A /* CustomHabit.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A0009 /* CustomHabit.swift */; };
 		HBT0012EAA4B00C99A000C /* HabitDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = HBT0012EAA4B00C99A000B /* HabitDefinition.swift */; };
 		INS00012EAA4B00C99A0002 /* InsightsConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */; };
+		LSGT002EAA4B00C99A0001 /* LockScreenLoudnessGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = LSGT001EAA4B00C99A0001 /* LockScreenLoudnessGateTests.swift */; };
 		META00012EAA4B00C99A0002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0001 /* AppDelegate.swift */; };
 		META00012EAA4B00C99A0004 /* MetaAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = META00012EAA4B00C99A0003 /* MetaAnalytics.swift */; };
 		MFX0012EAA4B00C99A0002 /* MyofascialExercise.swift in Sources */ = {isa = PBXBuildFile; fileRef = MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */; };
@@ -192,6 +194,7 @@
 		A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoundClassificationTests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60006A1B2C3D5 /* UserPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UserPreferences.swift; path = Utilities/UserPreferences.swift; sourceTree = "<group>"; };
 		A1C3C8E48A75DE8B17178BC1 /* Snorry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Snorry.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1LOCK001EAA4B00C99A0001 /* LockScreenLoudnessGate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LockScreenLoudnessGate.swift; path = Utilities/LockScreenLoudnessGate.swift; sourceTree = "<group>"; };
 		A1S2D3E4F5A60718293A4B5F /* AppStoreDemoSeeder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppStoreDemoSeeder.swift; path = Utilities/AppStoreDemoSeeder.swift; sourceTree = "<group>"; };
 		A4A47568CC5A99AA08B61CE7 /* WaveformView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WaveformView.swift; path = Views/WaveformView.swift; sourceTree = "<group>"; };
 		A854F1BE96B16C0133B0B0CD /* Icecracks.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = Icecracks.mp3; path = Resources/Icecracks.mp3; sourceTree = "<group>"; };
@@ -244,6 +247,7 @@
 		HBT0012EAA4B00C99A0009 /* CustomHabit.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CustomHabit.swift; path = Models/CustomHabit.swift; sourceTree = "<group>"; };
 		HBT0012EAA4B00C99A000B /* HabitDefinition.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = HabitDefinition.swift; path = Models/HabitDefinition.swift; sourceTree = "<group>"; };
 		INS00012EAA4B00C99A0001 /* InsightsConfiguration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InsightsConfiguration.swift; path = Utilities/InsightsConfiguration.swift; sourceTree = "<group>"; };
+		LSGT001EAA4B00C99A0001 /* LockScreenLoudnessGateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LockScreenLoudnessGateTests.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0001 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		META00012EAA4B00C99A0003 /* MetaAnalytics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MetaAnalytics.swift; path = Services/MetaAnalytics.swift; sourceTree = "<group>"; };
 		MFX0012EAA4B00C99A0001 /* MyofascialExercise.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyofascialExercise.swift; path = Models/MyofascialExercise.swift; sourceTree = "<group>"; };
@@ -390,6 +394,7 @@
 				C99A00012EAA4B00C99A0001 /* Info.plist */,
 				C99A00012EAA4B00C99A0002 /* Snorry.entitlements */,
 				0E1FD86195053E77F6425F9F /* AudioMath.swift */,
+				A1LOCK001EAA4B00C99A0001 /* LockScreenLoudnessGate.swift */,
 				A0CC6D2C570ADD8994AFDE52 /* AudioSessionManager.swift */,
 				21AA62568AD509DB2EF3C867 /* LegalLinks.swift */,
 				2915EF6B455912B2713431C0 /* LiveSpectrumAnalyzer.swift */,
@@ -450,6 +455,7 @@
 				AST0A0012EAA4B00C99A0001 /* AlarmStyleTests.swift */,
 				SAV0A0012EAA4B00C99A0003 /* SoundAlertVolumeEscalationTests.swift */,
 				AB15D5FCC97D60EF6A14FE94 /* AudioMathTests.swift */,
+				LSGT001EAA4B00C99A0001 /* LockScreenLoudnessGateTests.swift */,
 				A1B2C3D4E5F60003A1B2C3D4 /* SoundClassificationTests.swift */,
 				C595BA3AB2D7804D393C962B /* SnoreClipSpectralAnalyzerTests.swift */,
 				6B4057698517753CE7EB23B0 /* SnoreEventDetectorTests.swift */,
@@ -675,6 +681,7 @@
 				D3F0BA1D9B15A737A7F58DFD /* SnoreEventDetector.swift in Sources */,
 				E897FC2C83E3A454C9FB91F4 /* SnorryApp.swift in Sources */,
 				676F52EF24FBBC3904445F24 /* AudioMath.swift in Sources */,
+				A1LOCK002EAA4B00C99A0001 /* LockScreenLoudnessGate.swift in Sources */,
 				F6F9545BB9B8179202A70A85 /* AudioSessionManager.swift in Sources */,
 				FE9BEEF3AFF1F8ACA4867D0B /* LegalLinks.swift in Sources */,
 				AF86D422BDA1C67CD7A9D9F3 /* LiveSpectrumAnalyzer.swift in Sources */,
@@ -730,6 +737,7 @@
 				204A3710F3EFE4F903D04FEC /* SnoreClipSpectralAnalyzerTests.swift in Sources */,
 				BA1ABF8B48D0F03CE67C68E9 /* SnoreEventDetectorTests.swift in Sources */,
 				SDT0A0012EAA4B00C99A0002 /* SnoreDetectionTuningTests.swift in Sources */,
+				LSGT002EAA4B00C99A0001 /* LockScreenLoudnessGateTests.swift in Sources */,
 				F8A2B3C4D5E60718293A4B5F /* SnoreRumbleGateTests.swift in Sources */,
 				HBT0012EAA4B00C99A0008 /* HabitCorrelationTests.swift in Sources */,
 				TRI00012EAA4B00C99A0004 /* InsightsTrialTrackerTests.swift in Sources */,
@@ -974,7 +982,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Snorry/Info.plist;
@@ -1019,7 +1027,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = Snorry/Snorry.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Snorry/Info.plist;

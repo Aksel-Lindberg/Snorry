@@ -364,7 +364,7 @@ final class MonitorViewModel {
         }
     }
 
-    /// Foreground: SoundAnalysis confidence + onset dB. Background / lock: RMS gate (`energyFallbackThresholdDB`).
+    /// Foreground: SoundAnalysis confidence + onset dB. Background / lock: rise above ambient + safety floor.
     private func applySnoreDetectionTuning(sensitivity: Double) {
         SnoreDetectionTuning.apply(
             sensitivityLevel: sensitivity,

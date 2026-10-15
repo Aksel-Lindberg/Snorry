@@ -40,11 +40,10 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
     /// Set from ``SnoreDetectionTuning`` using the saved sensitivity level (app default: maximum).
     var confidenceThreshold: Float = 0.60
 
-    /// Background RMS gate: higher dBFS = louder required → **less** sensitive than foreground ML.
-    /// Set from ``SnoreDetectionTuning`` together with `confidenceThreshold`.
-    var energyFallbackThresholdDB: Float = -42
-    /// Lock-screen RMS floor — set from ``SnoreDetectionTuning`` together with `energyFallbackThresholdDB`.
-    var backgroundMinimumLevelDB: Float = -38
+    /// dB above lock-screen ambient required for a loud frame (lower = more sensitive).
+    var lockScreenRiseDB: Float = 10
+    /// Absolute minimum dBFS for lock-screen loud frames.
+    var lockScreenSafetyFloorDB: Float = LockScreenLoudnessGate.defaultSafetyFloorDB
 
     /// Reject only when breathing confidence clearly exceeds snoring (foreground ML path).
     var breathingRejectionMargin: Float = 0.05
@@ -57,6 +56,8 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
 
     /// Only read/written on `analysisQueue` — true after `didEnterBackground`, false after `willEnterForeground`.
     private var useEnergyFallbackWhileBackground = false
+    /// Night quiet level for relative lock-screen gate; reset when entering lock-screen path.
+    private var lockScreenAmbient: Float?
 
     private let logger = Logger(subsystem: "app.Snorry", category: "Classifier")
 
@@ -88,6 +89,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
                 guard let self else { return }
                 self.useEnergyFallbackWhileBackground = true
                 self.rumbleTracker.useBackgroundStrictMode = true
+                self.lockScreenAmbient = nil
                 self.voteWindow.removeAll()
                 self.rumbleVoteWindow.removeAll()
             }
@@ -189,6 +191,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
             guard self.useEnergyFallbackWhileBackground != enabled else { return }
             self.useEnergyFallbackWhileBackground = enabled
             self.rumbleTracker.useBackgroundStrictMode = enabled
+            if enabled { self.lockScreenAmbient = nil }
             self.voteWindow.removeAll()
             self.rumbleVoteWindow.removeAll()
         }
@@ -211,6 +214,7 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
         analysisQueue.sync {
             useEnergyFallbackWhileBackground = false
             rumbleTracker.useBackgroundStrictMode = false
+            lockScreenAmbient = nil
             voteWindow.removeAll()
             rumbleVoteWindow.removeAll()
         }
@@ -239,8 +243,17 @@ final class SnoreClassifier: NSObject, @unchecked Sendable {
 
             if self.useEnergyFallbackWhileBackground {
                 let db = AudioMath.rmsDBFS(buffer: buffer)
-                let threshold = max(self.energyFallbackThresholdDB, self.backgroundMinimumLevelDB)
-                let loud = db >= threshold
+                let ambientForTest = self.lockScreenAmbient ?? db
+                let loud = LockScreenLoudnessGate.isLockScreenLoud(
+                    db: db,
+                    ambient: ambientForTest,
+                    riseDB: self.lockScreenRiseDB,
+                    safetyFloorDB: self.lockScreenSafetyFloorDB
+                )
+                self.lockScreenAmbient = LockScreenLoudnessGate.nextAmbient(
+                    current: self.lockScreenAmbient,
+                    sample: db
+                )
                 self.pushVoteFrame(loud && self.rumbleRecentlyPassed)
                 return
             }
@@ -309,8 +322,10 @@ extension SnoreClassifier: SNResultsObserving {
 
 // MARK: - Snore sensitivity → classifier + onset detector
 
-/// Maps stored snore sensitivity (1…5) to foreground ML thresholds and the lock-screen RMS gate.
+/// Maps stored snore sensitivity (1…5) to foreground ML thresholds and the lock-screen relative RMS gate.
 enum SnoreDetectionTuning {
+
+    static let lockScreenSafetyFloorDB: Float = LockScreenLoudnessGate.defaultSafetyFloorDB
 
     static func apply(
         sensitivityLevel: Double,
@@ -320,8 +335,8 @@ enum SnoreDetectionTuning {
         let level = max(1, min(5, Int(sensitivityLevel.rounded())))
         let profile = profile(for: level)
         classifier.confidenceThreshold = profile.confidenceThreshold
-        classifier.energyFallbackThresholdDB = profile.energyFallbackThresholdDB
-        classifier.backgroundMinimumLevelDB = profile.backgroundMinimumLevelDB
+        classifier.lockScreenRiseDB = profile.lockScreenRiseDB
+        classifier.lockScreenSafetyFloorDB = lockScreenSafetyFloorDB
         classifier.breathingRejectionMargin = profile.breathingRejectionMargin
         classifier.rumbleConfig = profile.rumbleConfig
         detector.onsetThresholdDB = profile.onsetThresholdDB
@@ -330,8 +345,7 @@ enum SnoreDetectionTuning {
     private struct Profile {
         let confidenceThreshold: Float
         let onsetThresholdDB: Float
-        let energyFallbackThresholdDB: Float
-        let backgroundMinimumLevelDB: Float
+        let lockScreenRiseDB: Float
         let rumbleConfig: SnoreRumbleGate.Config
         let breathingRejectionMargin: Float
     }
@@ -342,8 +356,7 @@ enum SnoreDetectionTuning {
             return Profile(
                 confidenceThreshold: 0.75,
                 onsetThresholdDB: 20,
-                energyFallbackThresholdDB: -28,
-                backgroundMinimumLevelDB: -28,
+                lockScreenRiseDB: 14,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.5, minSignalDBFS: -45),
                 breathingRejectionMargin: 0.12
             )
@@ -351,8 +364,7 @@ enum SnoreDetectionTuning {
             return Profile(
                 confidenceThreshold: 0.525,
                 onsetThresholdDB: 11,
-                energyFallbackThresholdDB: -35,
-                backgroundMinimumLevelDB: -35,
+                lockScreenRiseDB: 12,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.3, minSignalDBFS: -50),
                 breathingRejectionMargin: 0.08
             )
@@ -360,8 +372,7 @@ enum SnoreDetectionTuning {
             return Profile(
                 confidenceThreshold: 0.30,
                 onsetThresholdDB: 2,
-                energyFallbackThresholdDB: -42,
-                backgroundMinimumLevelDB: -42,
+                lockScreenRiseDB: 10,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.2, minSignalDBFS: -55),
                 breathingRejectionMargin: 0.06
             )
@@ -369,8 +380,7 @@ enum SnoreDetectionTuning {
             return Profile(
                 confidenceThreshold: 0.22,
                 onsetThresholdDB: 1.25,
-                energyFallbackThresholdDB: -44,
-                backgroundMinimumLevelDB: -44,
+                lockScreenRiseDB: 9,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.15, minSignalDBFS: -57),
                 breathingRejectionMargin: 0.05
             )
@@ -378,8 +388,7 @@ enum SnoreDetectionTuning {
             return Profile(
                 confidenceThreshold: 0.15,
                 onsetThresholdDB: 0.75,
-                energyFallbackThresholdDB: -46,
-                backgroundMinimumLevelDB: -46,
+                lockScreenRiseDB: 8,
                 rumbleConfig: SnoreRumbleGate.Config(ratioThreshold: 1.1, minSignalDBFS: -58),
                 breathingRejectionMargin: 0.04
             )

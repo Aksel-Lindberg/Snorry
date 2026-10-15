@@ -44,8 +44,6 @@ final class SnoreEventDetector: @unchecked Sendable {
     /// Gaps shorter than this between active stretches still count toward the 5 s total (inter-snore pauses).
     var activeGapBridge: TimeInterval = 4.0
     private let minInhalationInterval: TimeInterval = AudioMath.minInhalationInterval
-    private let ambientAlpha: Float            = 0.02   // EMA weight when level is at or below the floor
-    private let ambientPeakAlpha: Float        = 0.002  // slow drift upward during snoring peaks
     private let inhalationWindowSize           = 30     // max inhalations tracked per bout
 
     /// dB above the ambient baseline required to register the exhale/snore peak of a breath cycle.
@@ -261,13 +259,9 @@ final class SnoreEventDetector: @unchecked Sendable {
 
     /// Seeds and tracks the noise floor from every tick so phones agree even when the classifier is active.
     private func updateAmbientBaseline(db: Float) {
-        if !hasSeededLevelFromAudio {
-            ambientBaseline = db
-            hasSeededLevelFromAudio = true
-            return
-        }
-        let alpha = db <= ambientBaseline ? ambientAlpha : ambientPeakAlpha
-        ambientBaseline = AudioMath.ema(current: ambientBaseline, new: db, alpha: alpha)
+        let previous: Float? = hasSeededLevelFromAudio ? ambientBaseline : nil
+        ambientBaseline = LockScreenLoudnessGate.nextAmbient(current: previous, sample: db)
+        hasSeededLevelFromAudio = true
     }
 
     private func updateBreathEnvelope(db: Float) {

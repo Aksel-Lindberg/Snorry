@@ -3,18 +3,17 @@ import Testing
 
 struct SnoreDetectionTuningTests {
 
-    @Test func level5LockScreenFloorMatchesEnergyFallback() {
+    @Test func level5LockScreenUsesRelativeRiseAndSharedSafetyFloor() {
         let classifier = SnoreClassifier()
         let detector = SnoreEventDetector()
 
         SnoreDetectionTuning.apply(sensitivityLevel: 5, classifier: classifier, detector: detector)
 
-        #expect(classifier.energyFallbackThresholdDB == -46)
-        #expect(classifier.backgroundMinimumLevelDB == -46)
-        #expect(max(classifier.energyFallbackThresholdDB, classifier.backgroundMinimumLevelDB) == -46)
+        #expect(classifier.lockScreenRiseDB == 8)
+        #expect(classifier.lockScreenSafetyFloorDB == -60)
     }
 
-    @Test func level1LockScreenFloorMatchesEnergyFallback() {
+    @Test func level1LockScreenUsesHighestRise() {
         let classifier = SnoreClassifier()
 
         SnoreDetectionTuning.apply(
@@ -23,7 +22,7 @@ struct SnoreDetectionTuningTests {
             detector: SnoreEventDetector()
         )
 
-        #expect(classifier.energyFallbackThresholdDB == -28)
-        #expect(classifier.backgroundMinimumLevelDB == -28)
+        #expect(classifier.lockScreenRiseDB == 14)
+        #expect(classifier.lockScreenSafetyFloorDB == -60)
     }
 }
